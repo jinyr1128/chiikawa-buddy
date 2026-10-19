@@ -34,4 +34,4 @@ if (manifest.defaultCharacter && (!cfg.character || cfg.character === 'chiikawa'
   fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n', { mode: 0o600 });
 }
 fs.rmSync(stage, { recursive: true, force: true });
-console.log(`✅ 캐릭터 ${n}개를 넣었어요${manifest.defaultCharacter ? ` · 기본 캐릭터 ${(manifest.characters ?? []).find((c) => c.id === manifest.defaultCharacter)?.name ?? ''}` : ''}`);
+console.log(n ? `✅ 캐릭터 ${n}개를 넣었어요${manifest.defaultCharacter ? ` · 기본 캐릭터 ${(manifest.characters ?? []).find((c) => c.id === manifest.defaultCharacter)?.name ?? ''}` : ''}` : '✅ 기본 캐릭터 8명 + 대사(시사 제주 사투리 등)를 넣었어요');
