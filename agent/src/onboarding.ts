@@ -33,6 +33,8 @@ export function readSessionsOf(file: Raw): boolean {
 
 // 데몬 시작 때 한 번: onboarded 키가 없고 이미 쓰던 설정도 아니면(새 설치) "onboarded": false 를 적는다.
 // 반환: 적었으면 true. 파일이 깨져 있으면 건드리지 않는다
+export const FRESH_CHARACTER = "chiikawa";
+
 export function markFreshInstall(path: string, env: NodeJS.ProcessEnv = process.env, dbExists = false): boolean {
   let cur: Raw = {};
   if (existsSync(path)) {
@@ -43,7 +45,8 @@ export function markFreshInstall(path: string, env: NodeJS.ProcessEnv = process.
   }
   if (typeof cur.onboarded === "boolean" || looksExisting(cur, env, dbExists)) return false;
   mkdirSync(dirname(path), { recursive: true });
-  writeFileAtomic(path, `${JSON.stringify({ ...cur, onboarded: false }, null, 2)}\n`, { mode: 0o600 });
+  // 치이카와 버디: 새로 설치하면 치이카와로 시작(설정 창에서 언제든 바꿀 수 있다)
+  writeFileAtomic(path, `${JSON.stringify({ character: FRESH_CHARACTER, ...cur, onboarded: false }, null, 2)}\n`, { mode: 0o600 });
   return true;
 }
 

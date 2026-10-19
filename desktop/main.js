@@ -1,6 +1,7 @@
 // 데스크톱 마스코트 — 메인 프로세스.
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
 import { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
+import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks } from './src/claude-hooks.js';
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -971,6 +972,17 @@ function menuTemplate() {
         state.bubblesHidden = !state.bubblesHidden;
         saveState();
         sendVisibility();
+        rebuildTrayMenu();
+      },
+    },
+    {
+      label: 'Claude Code 연동',
+      type: 'checkbox',
+      checked: claudeHooksOn(PORT),
+      click: (item) => {
+        const r = setClaudeHooks(item.checked, PORT);
+        if (!r.ok) dialog.showErrorBox('Claude Code 연동', r.error);
+        else send('bubble', { id: 'claude-hooks', kind: 'info', ttlMs: 8000, text: item.checked ? 'Claude Code랑 연결했어! 새 대화부터 같이 일할게.' : 'Claude Code 연동을 껐어.' });
         rebuildTrayMenu();
       },
     },

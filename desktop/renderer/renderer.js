@@ -9,7 +9,7 @@ import { createMarkdown } from '../src/markdown.js';
 import { initialChat, chatReducer, isBusy, summarizeReply, stopTargets, busyCaption } from '../src/chat.js';
 import { createAttachTray } from './attach-tray.js';
 import { hasFiles, filesFromTransfer, ATTACH_ERRORS } from '../src/attachments.js';
-import { normFocus, focusBubble, doingBubble, focusSend } from '../src/focus.js';
+import { normFocus, focusBubble, doingBubble, claudeBubble, focusSend } from '../src/focus.js';
 import { who, setWho } from './who.js';
 import { characterAssets, redrawCharacter, okCharacter, localSay, clipFor, danceClipOf, danceVariantOf, variantsOf, pickVariant, DANCE_MAX_MS, nextBlinkDelay, blinkPlan, initialActivity, activityReducer, viewOf, fitBox } from '../src/character.js';
 import { applyCharacters } from '../src/character-registry.js';
@@ -783,14 +783,19 @@ loadFocus();
 // ---- 진행 중 말풍선: 할 일에서 ▶ 로 켠 일을 집중하기 말풍선처럼 머리 위에 ----
 const doingEl = document.getElementById('doing');
 const doingText = document.getElementById('doing-text');
+const doingLabel = document.getElementById('doing-label');
 let doingTodos = [];
+let claudeRuns = []; // Claude Code hook 이 알린 일(SSE state runs) — claude-hooks.ts
 function drawDoing() {
-  const v = doingBubble(doingTodos, focus);
+  if (!doingEl) return;
+  const v = doingBubble(doingTodos, focus) || claudeBubble(claudeRuns, focus);
   const was = !doingEl.hidden;
   doingEl.hidden = !v;
   if (v) {
     doingText.textContent = v.text;
-    doingEl.title = v.more ? `진행 중: ${doingTodos.filter((t) => t.doing === true).map((t) => t.title).join(', ')}` : '할 일 보기';
+    doingLabel.textContent = v.label;
+    doingEl.dataset.claude = v.claude ? '1' : '';
+    doingEl.title = v.claude ? 'Claude Code가 일하는 중' : v.more ? `진행 중: ${doingTodos.filter((t) => t.doing === true).map((t) => t.title).join(', ')}` : '할 일 보기';
   }
   if (was !== !!v) requestAnimationFrame(recheckHit);
 }
@@ -804,7 +809,8 @@ async function loadDoing() {
 }
 let doingTimer = null;
 cy.onTodosChanged?.(() => { clearTimeout(doingTimer); doingTimer = setTimeout(loadDoing, 300); }); // 할 일이 바뀜(SSE dashboard) — 몰려 와도 한 번
-doingEl.addEventListener('click', (e) => { e.stopPropagation(); cy.openPanel('todos'); });
+doingEl.addEventListener('click', (e) => { e.stopPropagation(); if (!doingEl.dataset.claude) cy.openPanel('todos'); });
+cy.onState((p) => { claudeRuns = Array.isArray(p?.runs) ? p.runs : []; drawDoing(); }); // Claude Code 가 일하는 중이면 머리 위에
 loadDoing();
 
 // ---- 채팅: 생각 중 표시 + 내 질문의 답은 말풍선 ----

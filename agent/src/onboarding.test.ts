@@ -24,13 +24,13 @@ test("markFreshInstall: 새 설치(파일 없음·이름만 있음)는 onboarded
   const dir = tmp("cy-onb-");
   const path = join(dir, "config.json");
   assert.equal(markFreshInstall(path, {}), true);
-  assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), { onboarded: false });
+  assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), { character: "chiikawa", onboarded: false }); // 치이카와 버디: 새 설치는 치이카와로
   assert.equal(markFreshInstall(path, {}), false); // 이미 키가 있음
 
   const p2 = join(tmp("cy-onb-"), "config.json");
   writeFileSync(p2, JSON.stringify({ user: { name: "길동" } }));
   assert.equal(markFreshInstall(p2, {}), true);
-  assert.deepEqual(JSON.parse(readFileSync(p2, "utf8")), { user: { name: "길동" }, onboarded: false });
+  assert.deepEqual(JSON.parse(readFileSync(p2, "utf8")), { character: "chiikawa", user: { name: "길동" }, onboarded: false });
 });
 
 test("markFreshInstall: 이미 쓰던 설정(뇌·커넥터·Slack 토큰·데이터·env 뇌)은 건드리지 않는다", () => {

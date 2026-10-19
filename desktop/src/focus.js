@@ -107,6 +107,17 @@ export function doingBubble(list, focus) {
   return { label: '진행 중', title: xs[0].title, more: xs.length - 1, text: `${xs[0].title}${xs.length > 1 ? ` 외 ${xs.length - 1}개` : ''}`, id: xs[0].id };
 }
 
+// ---- Claude 작업 말풍선: Claude Code hook 이 알린 일(SSE state runs 중 kind "claude") → 「Claude 작업 중: 고치는 중 · main.js」 ----
+// 할 일 진행 중 말풍선이 먼저. 여러 창에서 돌면 가장 최근 것 + 「외 n개」
+export function claudeBubble(runs, focus) {
+  if (focus?.active) return null;
+  const xs = (Array.isArray(runs) ? runs : []).filter((r) => r && r.kind === 'claude' && typeof r.title === 'string')
+    .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+  if (!xs.length) return null;
+  const title = xs[0].title.replace(/^Claude · /, '');
+  return { label: 'Claude 작업 중', title, more: xs.length - 1, text: `${title}${xs.length > 1 ? ` 외 ${xs.length - 1}개` : ''}`, claude: true };
+}
+
 // ---- 잔디 단계(GitHub 기여 그래프처럼): 0 = 빈 칸, 1~4 = 오래 집중할수록 진하게 ----
 export const LEVEL_STEPS = [1, 30 * 60, 60 * 60, 2 * 3600]; // 이 초 이상이면 1·2·3·4단계
 export const LEVEL_LABELS = ['안 함', '30분 미만', '30분~1시간', '1~2시간', '2시간 이상'];

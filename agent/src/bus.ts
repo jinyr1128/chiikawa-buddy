@@ -6,6 +6,7 @@ import { parseNew, parseOps, parsePatch, type NewTodo, type TodoOp } from "./tod
 import type { TodoPatch } from "./store.ts";
 import { parseRulePatch } from "./todo-rules.ts";
 import { ActivityTracker } from "./activity.ts";
+import { ClaudeHooks } from "./claude-hooks.ts";
 import { characterId, characterClips } from "./characters.ts";
 import { RUN_STATUSES, type RunRegistry, type RunStatus } from "./runs.ts";
 import { ACTION_STATUSES, type ActionStatus, type ConfirmOut } from "./actions.ts";
@@ -277,6 +278,8 @@ export class Bus {
   charactersChanged() {
     this.send("characters", { rev: ++this.charactersRev });
   }
+  // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
+  readonly claude = new ClaudeHooks(this.activity, (b) => this.bubble(b), () => characterId());
   constructor() {
     this.activity.onChange = () => this.send("state", this.state());
     this.activity.variants = (clip) => characterClips(clip); // 지금 캐릭터의 그 칸 영상 목록(clips.ts)
@@ -372,6 +375,7 @@ export class Bus {
     return p;
   }
   close() {
+    this.claude.stop();
     this.unsubRuns?.();
     for (const c of this.clients) c.end();
     this.server?.close();
@@ -629,6 +633,10 @@ export class Bus {
     if (req.method === "POST") {
       // 브라우저 페이지가 localhost로 승인을 위조하지 못하게: 커스텀 헤더 필수(CORS preflight에 응답하지 않음)
       if (req.headers["x-cy-agent"] !== "1" || (req.headers.origin && !req.headers.origin.startsWith("file://"))) return json(res, 403, { error: "forbidden" });
+      if (url.pathname === "/claude/hook") {
+        this.claude.handle((await readJson(req)) as Record<string, unknown>);
+        return json(res, 200, { ok: true });
+      }
       if (url.pathname === "/connectors/reload") {
         return h.connectorsReload ? json(res, 200, h.connectorsReload()) : json(res, 503, { error: "reload unavailable" });
       }
