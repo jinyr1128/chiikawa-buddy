@@ -1151,8 +1151,10 @@ function onCharacter(id, force = false) {
 // 데몬에 붙을 때와 SSE characters 때 다시 읽는다. cy-asset 이 사용자 캐릭터 파일을 줄 때도 이 목록을 본다
 let charactersData = null;
 let charactersLoading = null;
+let charactersAgain = false; // 읽는 중에 또 바뀌었다는 알림이 오면 끝난 뒤 한 번 더 읽는다(몰아서 바꾸면 마지막 것을 놓치지 않게)
 function loadCharacters() {
-  charactersLoading ??= (async () => {
+  if (charactersLoading) { charactersAgain = true; return charactersLoading; }
+  charactersLoading = (async () => {
     const r = await request('GET', '/characters');
     if (!r.ok || !r.data || !Array.isArray(r.data.characters)) return;
     charactersData = r.data;
@@ -1164,7 +1166,10 @@ function loadCharacters() {
     if (sw && !sw.isDestroyed()) sw.webContents.send('characters', r.data);
     onCharacter(wantChar ?? charId, true);
     rebuildTrayMenu();
-  })().finally(() => { charactersLoading = null; });
+  })().finally(() => {
+    charactersLoading = null;
+    if (charactersAgain) { charactersAgain = false; loadCharacters(); }
+  });
   return charactersLoading;
 }
 
