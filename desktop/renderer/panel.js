@@ -12,6 +12,7 @@ import { mountModels } from './models-view.js';
 import { createFocusView } from './focus-view.js';
 import { createProjectsView } from './projects-view.js';
 import { createCalendarView } from './calendar-view.js';
+import { createInboxView } from './inbox-view.js';
 import { CALTAB_TEXT, cardRowOn, cardFolded } from '../src/calendar-tab.js';
 import { calendarRowState } from '../src/calendars.js';
 import { connectorAction, connectorDisconnectCopy, disconnectControl } from '../src/disconnect.js';
@@ -113,6 +114,11 @@ const focusView = createFocusView({ h, cy });
 const projectsView = createProjectsView({ h, cy, fill: (el, ...k) => fill(el, ...k), onChanged: () => loadSoon(), openSettings: () => cy.openSettings() });
 // 캘린더 탭: 주·월·일 보기와 일정 카드(일정 → 프로젝트·할 일)
 const calendarView = createCalendarView({ h, cy, fill: (el, ...k) => fill(el, ...k), el: $('sec-calendar'), openSetup: () => openSetup(stepForCap('calendar')), openProject: (ev) => projectsView.openFromPick(ev), onChanged: () => loadSoon() });
+
+// 알림함 탭: 출처별 알림, 안 읽은 수는 탭 배지로
+let inboxUnread = 0;
+const inboxView = createInboxView({ h, cy, el: $('sec-inbox'), onUnread: (n) => { inboxUnread = n; renderBadges(); } });
+cy.onInbox?.((p) => { inboxUnread = Math.max(0, Number(p?.unread) || 0); renderBadges(); inboxView.changed(); });
 
 // replaceChildren 에 null 을 넣으면 화면에 "null" 글자가 찍힌다
 function fill(el, ...kids) {
@@ -289,6 +295,8 @@ function goto(s) {
     if (setupPhase === 'brain') detectAgents();
   }
   if (section === 'models') loadSisa();
+  if (section === 'inbox') inboxView.show();
+  else if (prevSection === 'inbox') inboxView.hide();
   if (section === 'calendar') calendarView.show();
   else if (prevSection === 'calendar') calendarView.hide();
   if (section === 'chat') {
@@ -320,6 +328,8 @@ function renderBadges() {
   badges.setup.classList.toggle('hot', broken > 0);
   badges.setup.textContent = broken || '';
   badges.today.textContent = vm.stats.todayOpen || '';
+  badges.inbox.textContent = inboxUnread ? (inboxUnread > 99 ? '99+' : String(inboxUnread)) : '';
+  badges.inbox.classList.toggle('hot', inboxUnread > 0);
   // 채팅: 답하는 중이면 점, 아니면 안 읽은 대화 수
   const unread = seenLoaded ? unreadCount(seen, threads, section === 'chat' ? selectedId : null) : 0;
   badges.chat.className = isBusy(chat) ? 'badge dot' : 'badge';

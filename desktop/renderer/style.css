@@ -550,3 +550,23 @@ body.char-hidden #stage { visibility: hidden; }
   #char, #char-body, #char-wrap.sleepy #char-body, #dots i, #zzz, .sticker, .bubble, #focus, #focus-label::before, #doing, #doing-label::before { animation: none !important; }
 }
 
+
+/* 알림함 배지(안 읽은 알림 수) */
+#inbox-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 3;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #ff3b30;
+  color: #fff;
+  font: 700 12px/22px -apple-system, "Apple SD Gothic Neo", sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  animation: pop-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+#inbox-badge[hidden] { display: none; }

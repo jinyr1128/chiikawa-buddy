@@ -753,8 +753,21 @@ function showSession(runId, toolUseId) {
 
 // 캐릭터 클릭: 공부 중(돌고 있는 세션)이면 세션 창, 아니면 대시보드 패널
 function onCharacterClick() {
-  if (clickTarget(lastState, activeRuns) === 'session') showSession(pickRun(lastState, activeRuns));
+  // 안 읽은 알림이 있으면 알림함부로(알림함.inbox.ts) · Claude Code 작업만 돌고 있으면 세션 창이 아니라 패널
+  if (inboxUnread > 0 && !(panel && panel.isVisible() && panel.isFocused())) return showPanel('inbox');
+  const onlyClaude = Array.isArray(lastState?.runs) && lastState.runs.length > 0 && lastState.runs.every((r) => r?.kind === 'claude');
+  if (!onlyClaude && clickTarget(lastState, activeRuns) === 'session') showSession(pickRun(lastState, activeRuns));
   else togglePanel();
+}
+
+// ---- 알림함: 안 읽은 개수(SSE inbox) → 캐릭터 배지·메뉴 막대 숫자 ----
+let inboxUnread = 0;
+function onInbox(payload) {
+  inboxUnread = Math.max(0, Number(payload?.unread) || 0);
+  send('inbox', payload);
+  sendPanel('inbox', payload);
+  if (tray && process.platform === 'darwin') tray.setTitle(inboxUnread ? ` ${inboxUnread > 99 ? '99+' : inboxUnread}` : '');
+  rebuildTrayMenu();
 }
 
 // ---- 데몬 SSE ----
@@ -838,6 +851,7 @@ function onSSE({ event, data }) {
     lastState = payload;
     if (typeof payload?.character === 'string') onCharacter(payload.character);
   }
+  if (event === 'inbox') onInbox(payload);
   if (event === 'characters') loadCharacters(); // 만들거나 고치거나 지움 → 다시 읽어 창마다
   if (event === 'bubble' || event === 'state' || event === 'clear') send(event, payload);
   else if (event === 'run') sendSession('run', payload);
@@ -962,6 +976,7 @@ function menuTemplate() {
   return [
     { label: '패널 열기', click: () => showPanel(null) },
     ...(coder() ? [{ label: '작업 세션 열기', click: openSessionMenu }] : []),
+    { label: inboxUnread ? `알림함 (안 읽음 ${inboxUnread})` : '알림함', click: () => showPanel('inbox') },
     { label: '지금 브리핑', click: triggerBriefing },
     { label: '설정…', click: () => settingsUi?.show() },
     { label: '사용법 다시 보기', click: startTour },
@@ -1778,6 +1793,20 @@ function setupIPC() {
     if (!fromOurs(e) || !okEventsQuery(q)) return denied();
     return request('GET', `/calendar/events?from=${encodeURIComponent(q.from)}&to=${encodeURIComponent(q.to)}${q.fresh ? '&fresh=1' : ''}`, undefined, 60_000);
   });
+  // 알림함(GET /inbox · POST /inbox/read · /inbox/clear)
+  ipcMain.handle('inbox-list', (e, q) => {
+    if (!fromOurs(e)) return denied();
+    const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(q.source) ? q.source : '';
+    return request('GET', `/inbox${src || q?.unread ? '?' : ''}${src ? `source=${src}` : ''}${src && q?.unread ? '&' : ''}${q?.unread ? 'unread=1' : ''}`);
+  });
+  ipcMain.handle('inbox-read', (e, body) => {
+    if (!fromOurs(e)) return denied();
+    const ids = body?.ids === 'all' ? 'all' : Array.isArray(body?.ids) ? body.ids.filter((x) => typeof x === 'string' && /^[\w-]{1,64}$/.test(x)).slice(0, 1000) : null;
+    if (!ids) return denied();
+    const source = typeof body?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(body.source) ? body.source : undefined;
+    return post('/inbox/read', { ids, read: body?.read !== false, ...(source ? { source } : {}) });
+  });
+  ipcMain.handle('inbox-clear', (e) => (fromOurs(e) ? post('/inbox/clear', {}) : denied()));
   ipcMain.handle('calendar-color', (e, id, color) => (fromOurs(e) && okCalendarId(id) && (color === null || okCalendarColor(color)) ? colorCalendar(id, color) : denied()));
   ipcMain.handle('project-calendar-events', (e) => (fromOurs(e) ? request('GET', '/projects/calendar-events', undefined, 120_000) : denied()));
   // 할 일 규칙: 목록 · 켜기/끄기·글 고치기 · 지우기

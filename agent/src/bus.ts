@@ -7,6 +7,7 @@ import type { TodoPatch } from "./store.ts";
 import { parseRulePatch } from "./todo-rules.ts";
 import { ActivityTracker } from "./activity.ts";
 import { ClaudeHooks } from "./claude-hooks.ts";
+import { INBOX_SOURCES, type Inbox } from "./inbox.ts";
 import { characterId, characterClips } from "./characters.ts";
 import { RUN_STATUSES, type RunRegistry, type RunStatus } from "./runs.ts";
 import { ACTION_STATUSES, type ActionStatus, type ConfirmOut } from "./actions.ts";
@@ -279,6 +280,11 @@ export class Bus {
     this.send("characters", { rev: ++this.charactersRev });
   }
   // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
+  // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
+  inbox?: Inbox;
+  inboxChanged() {
+    if (this.inbox) this.send("inbox", { unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() });
+  }
   readonly claude = new ClaudeHooks(this.activity, (b) => this.bubble(b), () => characterId());
   constructor() {
     this.activity.onChange = () => this.send("state", this.state());
@@ -386,6 +392,12 @@ export class Bus {
     if (!hostOk(req.headers.host, (this.server?.address() as AddressInfo | null)?.port)) return json(res, 403, { error: "forbidden host" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
+    if (req.method === "GET" && url.pathname === "/inbox") {
+      if (!this.inbox) return json(res, 503, { error: "inbox unavailable" });
+      const source = url.searchParams.get("source") ?? undefined;
+      if (source && !(INBOX_SOURCES as readonly string[]).includes(source)) return json(res, 400, { error: "bad source" });
+      return json(res, 200, { items: this.inbox.list({ source, unreadOnly: url.searchParams.get("unread") === "1" }), unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() });
+    }
     if (req.method === "GET" && url.pathname === "/dashboard") return json(res, 200, await h.dashboard());
     if (req.method === "GET" && url.pathname === "/chat/history") return json(res, 200, await h.chatHistory());
     // 첨부 파일 하나 — 읽기라도 쓰기와 같은 헤더 규칙(다른 웹 페이지가 <img> 로 못 읽게)
@@ -558,6 +570,7 @@ export class Bus {
       for (const b of fresh) res.write(`event: bubble\ndata: ${JSON.stringify(b)}\n\n`);
       if (h.runs) res.write(`event: runs\ndata: ${JSON.stringify({ active: h.runs.active() })}\n\n`);
       if (h.focus) res.write(`event: focus\ndata: ${JSON.stringify(h.focus.view())}\n\n`);
+      if (this.inbox) res.write(`event: inbox\ndata: ${JSON.stringify({ unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() })}\n\n`);
       try { this.onOverlay?.(); } catch (e: any) { console.warn("[bus] onOverlay:", e?.message ?? e); }
       const ping = setInterval(() => res.write(": ping\n\n"), 25e3);
       req.on("close", () => { clearInterval(ping); this.clients.delete(res); });
@@ -633,6 +646,15 @@ export class Bus {
     if (req.method === "POST") {
       // 브라우저 페이지가 localhost로 승인을 위조하지 못하게: 커스텀 헤더 필수(CORS preflight에 응답하지 않음)
       if (req.headers["x-cy-agent"] !== "1" || (req.headers.origin && !req.headers.origin.startsWith("file://"))) return json(res, 403, { error: "forbidden" });
+      if (url.pathname === "/inbox/read" || url.pathname === "/inbox/clear") {
+        if (!this.inbox) return json(res, 503, { error: "inbox unavailable" });
+        if (url.pathname === "/inbox/clear") return json(res, 200, { removed: this.inbox.clearRead() });
+        const b = (await readJson(req)) as { ids?: unknown; read?: unknown; source?: unknown };
+        const ids = b?.ids === "all" ? "all" : Array.isArray(b?.ids) ? (b.ids as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 1000) : null;
+        if (!ids) return json(res, 400, { error: "ids must be a list or \"all\"" });
+        const source = typeof b.source === "string" && (INBOX_SOURCES as readonly string[]).includes(b.source) ? b.source : undefined;
+        return json(res, 200, { changed: this.inbox.mark(ids, b.read !== false, source), unread: this.inbox.unread() });
+      }
       if (url.pathname === "/claude/hook") {
         this.claude.handle((await readJson(req)) as Record<string, unknown>);
         return json(res, 200, { ok: true });

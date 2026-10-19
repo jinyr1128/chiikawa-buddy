@@ -16,6 +16,7 @@ import { applyCharacters } from '../src/character-registry.js';
 import { BubbleExpiry } from '../src/bubble-expiry.js';
 import { createHoverAsk, hoverAskAllowed } from '../src/hover-ask.js';
 import { createPressTracker, missedClick, missedPress, staleHold } from '../src/press.js';
+import { badgeText, badgeTitle } from '../src/inbox.js';
 
 const cy = window.cy;
 const stack = document.getElementById('stack');
@@ -1227,4 +1228,13 @@ wrap.addEventListener('contextmenu', (e) => {
   e.preventDefault();
   resetPress(); // 메뉴가 떠 있는 동안 mouseup 이 안 오므로 누름 상태를 미리 푼다
   cy.characterMenu();
+});
+
+// ---- 알림함 배지: 안 읽은 알림 수를 캐릭터 오른쪽 위에. 캐릭터를 누르면 알림함이 열린다(main.js onCharacterClick) ----
+const inboxBadge = document.getElementById('inbox-badge');
+cy.onInbox?.((p) => {
+  const t = badgeText(p?.unread);
+  inboxBadge.hidden = !t;
+  inboxBadge.textContent = t;
+  wrap.title = badgeTitle(p?.bySource);
 });

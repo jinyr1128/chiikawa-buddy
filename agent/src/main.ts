@@ -8,6 +8,7 @@ import { Weather, setWeatherPeek, weatherDue, weatherLine, weatherOf } from "./w
 import { failText as weatherFailText, noPlaceText as weatherNoPlaceText, weatherText } from "./weather-say.ts";
 import { Store } from "./store.ts";
 import { Bus, EXIT_PORT_TAKEN } from "./bus.ts";
+import { Inbox, setInbox, notify } from "./inbox.ts";
 import { runs } from "./runs.ts";
 import { modelChoices } from "./models.ts";
 import { codingChoice, setClaudeProbe } from "./coding.ts";
@@ -100,6 +101,11 @@ console.log(`[brain] ${cfg.brain.provider}`);
 if (cfg.github?.enabled === undefined) probeGh({ bin: cfg.github?.bin }).then((ok) => console.log(`[cy-agent] GitHub(gh) 읽기 도구 ${ok ? "켬" : "끔 — gh auth status 실패"}`));
 const store = new Store(cfg.dbPath);
 runs.attach(store.db); // 작업 세션 기록(세션 창)을 cy.db 에
+// 알림함: 메일·Slack·캘린더·Claude 알림을 출처와 함께 쌓는다(inbox.ts) — ~/.cy-agent/inbox.json
+const inbox = new Inbox(join(HOME_DIR, "inbox.json"));
+setInbox(inbox);
+bus.inbox = inbox;
+inbox.onChange = () => bus.inboxChanged();
 bus.activity.bindRuns(runs); // 돌고 있는 run(대화 제외) → 캐릭터 "공부 중"
 // 집중하기(포커스 타이머): 기록은 cy.db, 바뀌면 SSE focus · 그만하면 「N분 집중했어요」 말풍선. AI 없이도 돈다
 const focus = new Focus(store);
@@ -477,6 +483,7 @@ const stopCalendar = asRoutine(calendar.schedule.bind(calendar))((m, text, mins)
   // 영상 번호는 데몬이 고른다. 그 영상에 전용 한마디가 있으면 일정 말풍선 글 대신(같은 자리표시 {mins}·{title}·{time}·{where})
   const d = bus.activity.play(8000, "plan");
   const detail = alertDetail(m);
+  notify({ source: "calendar", key: `meeting:${m.id}@${m.start}#${mins}`, account: (m as { calendar?: string }).calendar, title: text, body: detail, link: m.link ?? m.webLink });
   bus.bubble({ id: `meeting:${m.id}@${m.start}#${mins}`, text: d.say ? fillVars(d.say, alertVars(m, mins)) : text, kind: "todo", ttlMs: Math.max(60e3, Date.parse(m.start) - Date.now()), link: m.link ?? m.webLink, ...(detail ? { detail } : {}) });
 }, (r) => console.log("[calendar]", JSON.stringify({ meetings: r.meetings, events: r.events, calls: r.calls, errors: r.errors, costUsd: r.costUsd, ...(r.reason ? { reason: r.reason } : {}) })));
 

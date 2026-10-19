@@ -5,6 +5,7 @@
 import type { Store } from "./store.ts";
 import { mailTargets, type Conn, type MailImapAccount, type MailImapConn, type MailTarget } from "./connectors.ts";
 import { addLogSecret } from "./log.ts";
+import { notify } from "./inbox.ts";
 import { fetchRecentMail, type MailFailCode, type MailFetchOpts, type MailFetchResult, type MailItem } from "./mail-imap.ts";
 import { attachLine, findMail, mailBodyChunk, mailRef, pickMails, type MailCut } from "./mail-pick.ts";
 
@@ -312,6 +313,14 @@ export class MailSync {
     list[i] = r.ok
       ? { ...base, phase: "ok", at, lastOkAt: at, count: r.items.length, filtered: r.filtered }
       : { ...base, phase: "failed", at, ...keep, reason: paused ? `${r.reason.replace(/\s*$/, "")} ${PAUSED_NOTE}` : r.reason, code: r.code, ...(paused ? { paused: true } : {}) };
+    if (r.ok) {
+      // 알림함: 이 계정에 새로 들어온 안 읽은 메일(광고·뉴스레터는 뺀다) — inbox.ts
+      const seen = new Set(readAccountItems(this.store, a.id).map((m) => m.uid));
+      for (const m of r.items) {
+        if (seen.has(m.uid) || !m.unread || m.bulk) continue;
+        notify({ source: "mail", key: `mail:${a.user}:${m.messageId ?? m.uid}`, account: a.user, title: `${m.from || m.fromAddr} · ${m.subject || "(제목 없음)"}`, body: m.snippet, link: m.link, at: m.date });
+      }
+    }
     writeAccountItems(this.store, a.id, r.ok ? r.items.map((m) => ({ ...m, account: a.user })) : kept);
     const s = mailAggregate(list, c.sinceHours);
     writeMailState(this.store, s);

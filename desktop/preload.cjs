@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('cy', {
   openLink: (url) => ipcRenderer.send('open-link', String(url)),
   decide: (proposalId, action) => ipcRenderer.invoke('decide', String(proposalId), String(action)),
   togglePanel: () => ipcRenderer.send('toggle-panel'),
+  onInbox: on('inbox'),
   openPanel: (section) => ipcRenderer.send('open-panel', section == null ? null : String(section)),
   // attachments: 먼저 올려 둔 첨부 id(chatAttach) — 있으면 글 없이도 보낸다
   // clientId(선택): 이 말에 붙인 id — SSE thinking 에 그대로 와서, 답이 POST 응답보다 먼저 와도 내 말의 답으로 알아본다

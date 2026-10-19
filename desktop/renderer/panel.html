@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="attach.css">
   <link rel="stylesheet" href="projects.css">
   <link rel="stylesheet" href="calendar.css">
+  <link rel="stylesheet" href="inbox.css">
 </head>
 <body>
   <div id="app">
@@ -36,6 +37,8 @@
 
       <div id="content">
         <section id="sec-setup" class="sec" role="tabpanel" hidden></section>
+        <!-- 알림함: 메일·Slack·캘린더·Claude 알림(renderer/inbox-view.js) -->
+        <section id="sec-inbox" class="sec" role="tabpanel" hidden></section>
         <section id="sec-overview" class="sec" role="tabpanel"></section>
         <section id="sec-projects" class="sec" role="tabpanel" hidden></section>
         <!-- 캘린더: 주·월·일 보기, 캘린더 칩(보이기/숨기기·색), 일정 카드(renderer/calendar-view.js) -->

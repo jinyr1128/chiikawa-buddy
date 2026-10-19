@@ -4,6 +4,7 @@
 // - Notification(권한 승인 대기 등) → 일정 알림 영상 + 말풍선 · Stop → 「다 했어」 말풍선
 // - 신호가 끊기면(앱 종료·강제 종료) STALE_MS 뒤 저절로 쉬는 상태로
 import { basename } from "node:path";
+import { notify } from "./inbox.ts";
 
 export type ClaudeHookEvent = {
   hook_event_name?: string;
@@ -110,12 +111,14 @@ export class ClaudeHooks {
         if (ev.notification_type === "idle_prompt") return;
         const msg = typeof ev.message === "string" ? ev.message.slice(0, 200) : "확인이 필요해요";
         this.activity.play(6000, "plan");
+        notify({ source: "claude", key: `claude-wait:${id}:${this.now()}`, account: project || undefined, title: "Claude가 확인을 기다려요", body: msg });
         this.bubble({ id: `claude-wait-${id}`, kind: "info", ttlMs: 30e3, text: say(this.character(), "wait", `Claude가 기다려요${project ? ` · ${project}` : ""}`), detail: msg });
         return;
       }
       case "Stop": {
         const had = this.sessions.has(id);
         this.end(id);
+        if (had) notify({ source: "claude", key: `claude-done:${id}:${this.now()}`, account: project || undefined, title: "Claude 작업 끝" });
         if (had) this.bubble({ id: `claude-done-${id}`, kind: "done", ttlMs: 10e3, text: say(this.character(), "done", `Claude 작업 끝났어${project ? ` · ${project}` : ""}!`) });
         return;
       }

@@ -10,6 +10,7 @@
 //  4) 내가 멤버인 채널 history 라운드로빈(maxHistory개). 조용한 채널은 점점 덜 본다(백오프). 커서는 채널별 마지막 ts
 //  5) 모르는 사람 이름(slack_get_users) · 모르는 채널 이름(slack_get_channel_info)
 // 메시지 본문은 로컬 SQLite에만 두고 로그에는 개수만 남긴다.
+import { notify } from "../inbox.ts";
 import { HOME_DIR, type Config } from "../config.ts";
 import { CONNECTORS } from "../connectors.ts";
 import { SlackApiTransport, slackWebClient, type SlackDirect } from "./slack-api.ts";
@@ -695,6 +696,14 @@ export class SlackRun {
     this.store.link(id, "in", `channel:${conv}`);
     if (threadTs && threadTs !== m.ts) this.store.link(id, "replyTo", `message:${conv}:${threadTs}`);
     if (!prev) { this.counts.messages++; if (mentionsMe) this.counts.mentions++; }
+    // 알림함: 남이 보낸 새 DM·나를 부른 멘션(inbox.ts)
+    if (!prev && author !== me && (isDM || mentionsMe)) {
+      notify({
+        source: "slack", key: id, account: c?.label ?? conv,
+        title: `${authorName}${isDM ? " · DM" : " · 나를 불렀어요"}`, body: oneLine(text),
+        link: permalinkOf(this.teamUrl, conv, m.ts, threadTs), at: tsIso(m.ts),
+      });
+    }
   }
 }
 
