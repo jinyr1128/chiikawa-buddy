@@ -130,7 +130,7 @@ test("고정 문구: 캐릭터 기본 → 고친 문구가 이긴다, 캐릭터 
     assert.deepEqual([...keys].filter((k) => !c.phrases[k]), [], `${id}: 빠진 문구`);
   }
   setCharacter("rakko");
-  assert.equal(phrase("meeting_alert", { mins: 10, title: "파르페", time: "15:00", where: "" }), "음!! 〈파르페〉 10분 전!! 15:00");
+  assert.equal(phrase("meeting_alert", { mins: 10, title: "파르페", time: "15:00", where: "" }), "〈파르페〉 10분 전이야. 15:00 천천히 준비하자.");
   assert.deepEqual(defaultLines("hello"), CHARACTERS.rakko.phrases.hello);
   setPhrases({ meeting_alert: ["내 문구 {mins}"] });
   assert.equal(phrase("meeting_alert", { mins: 5 }), "내 문구 5");
@@ -218,7 +218,7 @@ test("춤춰 줘·응원해 줘 칩: 캐릭터 말, 누를 때마다 줄을 고�
   assert.ok(isQuickAsk("dance") && isQuickAsk("cheer"));
   const src = { today: () => [], open: () => [], calendar: () => ({ enabled: false, meetings: [] }) };
   setCharacter("rakko");
-  assert.equal(localAsk("dance", src)?.text, "춤은 못 추지만, 멋있는 걸 보여 주지. (쓩)");
+  assert.equal(localAsk("dance", src)?.text, "춤은 서툴지만… 이 정도면 괜찮을까. (쓩)");
   const cheers = new Set(Array.from({ length: 40 }, () => localAsk("cheer", src)?.text));
   assert.ok(cheers.size > 1, "응원은 누를 때마다 다른 줄");
   for (const t of cheers) assert.ok(CHARACTERS.rakko.cheer!.some((l) => t!.includes(l)), String(t));
