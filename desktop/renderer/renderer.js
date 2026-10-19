@@ -152,7 +152,7 @@ let studyVariant = 0;
 let lastStudy;
 const STUDY_ROTATE_MS = 10_000;
 let studyRotate = null;
-const clipOf = (k) => act.focus === 'on' && k === 'studying' ? (clipFor(charA, 'study', 0) ?? { src: charA.open, kind: 'img', scene: false }) : (k === 'dancing' ? clipFor(charA, danceClipOf(act), danceVariantOf(act)) : k === 'studying' ? clipFor(charA, 'study', studyVariant) : null);
+const clipOf = (k) => (k === 'dancing' ? clipFor(charA, danceClipOf(act), danceVariantOf(act)) : k === 'studying' ? clipFor(charA, 'study', studyVariant) : null);
 function startVideo(k) {
   const v = videos[k];
   const c = clipOf(k);
@@ -172,8 +172,7 @@ function startVideo(k) {
 let shownClip = null;
 function applyActivity() {
   const view = viewOf(act);
-  wrap.classList.toggle('focus-calm', act.focus === 'on' && view === 'studying');
-  const clip = view === 'dancing' ? `${danceClipOf(act)}:${danceVariantOf(act)}` : act.focus === 'on' ? 'focus-calm' : null; // 종류·번호가 바뀌면 새 영상
+  const clip = view === 'dancing' ? `${danceClipOf(act)}:${danceVariantOf(act)}` : null; // 종류·번호가 바뀌면 새 영상
   if (view === shownView && clip === shownClip) return;
   if (view === 'studying' && shownView !== 'studying') pickStudy();
   const sameView = view === shownView;
@@ -185,7 +184,7 @@ function applyActivity() {
   clearInterval(studyRotate);
   studyRotate = null;
   // 일하는 동안(집중 자리) 영상이 여러 개면 STUDY_ROTATE_MS 마다 다른 것으로 번갈아(오래 일해도 한 가지만 나오지 않게)
-  if (act.focus !== 'on' && view === 'studying' && variantsOf(charA, 'study').length > 1) {
+  if (view === 'studying' && variantsOf(charA, 'study').length > 1) {
     studyRotate = setInterval(() => {
       if (shownView !== 'studying') return;
       pickStudy();
@@ -199,7 +198,6 @@ function applyActivity() {
 }
 // 집중 영상 고르기(여러 개면 지난번과 다른 것). 그 영상에 한마디가 있으면 잠깐 말풍선으로
 function pickStudy() {
-  if (act.focus === 'on') return;
   const list = variantsOf(charA, 'study');
   studyVariant = pickVariant(list.length, lastStudy);
   if (list.length > 1) lastStudy = studyVariant;
