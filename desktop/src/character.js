@@ -162,9 +162,10 @@ export const clipFor = (a, kind, variant = 0) => {
 };
 
 // 그림 비율 그대로 상자 안에 꽉 차게(contain) — 둥근 테두리·그림자가 그림 크기에 맞게. 모르는 크기면 상자 그대로
-export function fitBox(w, h, boxW, boxH) {
+// wide: 가로로 긴 그림은 상자 넓이의 몇 배까지 옆으로 넘쳐도 되는지(1 = 상자 안에만). 높이는 상자를 넘지 않는다
+export function fitBox(w, h, boxW, boxH, wide = 1) {
   if (!(w > 0 && h > 0 && boxW > 0 && boxH > 0)) return { w: boxW, h: boxH };
-  const k = Math.min(boxW / w, boxH / h);
+  const k = Math.min((boxW * Math.max(1, wide)) / w, boxH / h);
   return { w: Math.round(w * k), h: Math.round(h * k) };
 }
 

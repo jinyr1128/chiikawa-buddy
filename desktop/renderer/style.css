@@ -657,3 +657,15 @@ body.char-hidden #stage { visibility: hidden; }
 .toast-more { grid-template-columns: 34px 1fr; padding: 9px 14px 9px 11px; }
 .toast-more .toast-title { font-weight: 700; }
 .toast-close { opacity: 0.55; }
+
+/* 주고받기 대사(src/speakers.js): 한 줄에 한 사람, 캐릭터 대표 색. 색 글자가 잘 보이게 바탕은 늘 어둡게 */
+.speech-box { --bubble-bg: #26262b; --bubble-fg: #f5f5f7; --bubble-muted: #a1a1a6; color: var(--bubble-fg); }
+.toast.speech-box { background: rgba(38, 38, 43, 0.92); }
+.speech-line { display: block; line-height: 1.4; }
+.speech-line b { font-weight: 750; }
+.bubble .text:has(.speech-line) { display: block; }
+.toast-title:has(.speech-line) { white-space: normal; }
+.toast-title .speech-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast.speech-box, .toast.speech-box:hover { background: rgba(38, 38, 43, 0.92); border-color: rgba(255, 255, 255, 0.08); color: #f5f5f7; }
+.toast.speech-box .toast-time { color: rgba(235, 235, 245, 0.55); }
+.toast.speech-box .toast-body { color: rgba(235, 235, 245, 0.75); }

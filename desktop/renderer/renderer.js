@@ -11,6 +11,7 @@ import { createAttachTray } from './attach-tray.js';
 import { hasFiles, filesFromTransfer, ATTACH_ERRORS } from '../src/attachments.js';
 import { normFocus, focusBubble, doingBubble, claudeBubble, focusSend } from '../src/focus.js';
 import { who, setWho } from './who.js';
+import { renderSpeech } from '../src/speakers.js';
 import { characterAssets, redrawCharacter, okCharacter, localSay, clipFor, danceClipOf, danceVariantOf, variantsOf, pickVariant, DANCE_MAX_MS, nextBlinkDelay, blinkPlan, initialActivity, activityReducer, viewOf, fitBox } from '../src/character.js';
 import { applyCharacters } from '../src/character-registry.js';
 import { BubbleExpiry } from '../src/bubble-expiry.js';
@@ -92,10 +93,12 @@ scheduleBlink();
 
 // ---- 사용자 캐릭터: 정사각형이 아닌 그림·영상도 비율대로 상자 안에(둥근 테두리가 그림 크기에 맞게) ----
 // 기본 캐릭터는 CSS 그대로(object-fit: contain)
+const WIDE_SCENE = 1.8;
 function fitEl(el, w, h, on) {
   if (!on) { el.classList.remove('fit'); el.style.width = el.style.height = el.style.left = el.style.top = ''; return; }
   const bw = el.parentElement.clientWidth, bh = el.parentElement.clientHeight;
-  const f = fitBox(w, h, bw, bh);
+  // 가로로 긴 장면(둘이 나란히 앉은 장면 등)은 상자에 가두면 납작하게 작아진다 → 옆으로 1.8배까지(창은 양옆으로 넉넉하다)
+  const f = fitBox(w, h, bw, bh, WIDE_SCENE);
   el.classList.add('fit');
   Object.assign(el.style, { width: `${f.w}px`, height: `${f.h}px`, left: `${Math.round((bw - f.w) / 2)}px`, top: `${bh - f.h}px` }); // 아래 가운데(기본 캐릭터와 같은 기준점)
 }
@@ -468,6 +471,8 @@ function fillEl(item, b) {
 // ---- 말풍선 글: 마크다운(목록·표·굵게·코드·색·형광펜)이면 안전하게 그리고, 아니면 글자 그대로 ----
 const toHtml = createMarkdown(Marked);
 function setRich(el, src) {
+  el.closest('.bubble')?.classList.remove('speech-box');
+  if (renderSpeech(el, src)) { el.classList.remove('md'); return; } // 「모몽가: … / 카니: …」 주고받기는 한 줄씩, 대표 색으로
   if (!looksMarkdown(src)) {
     el.classList.remove('md');
     el.textContent = src ?? '';
@@ -807,7 +812,8 @@ function drawDoing() {
   const was = !doingEl.hidden;
   doingEl.hidden = !v;
   if (v) {
-    doingText.textContent = v.text;
+    doingEl.classList.remove('speech-box');
+    if (!renderSpeech(doingText, v.text)) doingText.textContent = v.text;
     doingLabel.textContent = v.label;
     doingEl.dataset.claude = v.claude ? '1' : '';
     doingEl.title = v.claude ? 'Claude Code가 일하는 중' : v.more ? `진행 중: ${doingTodos.filter((t) => t.doing === true).map((t) => t.title).join(', ')}` : '할 일 보기';
@@ -1277,7 +1283,9 @@ function toastCard(x) {
   const main = el('div', 'toast-main');
   const head = el('div', 'toast-head');
   head.append(el('b', null, [inboxSourceLabel(x.source), x.account].filter(Boolean).join(' · ')), el('span', 'toast-time', toastTime(x.at)));
-  main.append(head, el('div', 'toast-title', x.title));
+  const title = el('div', 'toast-title', x.title);
+  renderSpeech(title, x.title);
+  main.append(head, title);
   if (x.body) main.append(el('div', 'toast-body', x.body));
   const openIt = () => { cy.inboxOpen?.(x); readOne(x); };
   const acts = el('div', 'toast-acts');

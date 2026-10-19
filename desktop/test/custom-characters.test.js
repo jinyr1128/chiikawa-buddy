@@ -81,6 +81,9 @@ test('비율 맞추기(contain): 정사각형이 아니어도 상자 안에 꽉,
   assert.deepEqual(fitBox(200, 100, 160, 160), { w: 160, h: 80 });
   assert.deepEqual(fitBox(100, 400, 160, 160), { w: 40, h: 160 });
   assert.deepEqual(fitBox(10, 10, 160, 160), { w: 160, h: 160 }, '작은 그림도 키운다');
+  assert.deepEqual(fitBox(500, 200, 140, 140, 1.8), { w: 252, h: 101 }, '가로로 긴 장면은 옆으로 넘쳐서 덜 납작하게');
+  assert.deepEqual(fitBox(300, 200, 140, 140, 1.8), { w: 210, h: 140 }, '높이는 상자까지');
+  assert.deepEqual(fitBox(100, 400, 160, 160, 1.8), { w: 40, h: 160 }, '세로로 긴 그림은 그대로');
   assert.deepEqual(fitBox(0, 0, 160, 120), { w: 160, h: 120 });
 });
 
