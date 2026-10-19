@@ -134,6 +134,14 @@ contextBridge.exposeInMainWorld('cy', {
   // · 더하기({ name?, url }) → 데몬이 시험으로 읽고 저장 { ok, name, events, items } | { ok: false, error, duplicate? }
   // · 별칭 고치기(id, name) · 켜기/끄기(id, on) · 하나 빼기(id) → { ok, items, note?, error? }
   calendarList: () => ipcRenderer.invoke('calendar-list'),
+  connectionsOverview: () => ipcRenderer.invoke('connections-overview'),
+  localIntegrations: () => ipcRenderer.invoke('local-integrations'),
+  claudeHooksSet: (on) => ipcRenderer.invoke('claude-hooks-set', !!on),
+  hermesHooksSet: (on) => ipcRenderer.invoke('hermes-hooks-set', !!on),
+  slackConnect: (token) => ipcRenderer.invoke('slack-connect', String(token ?? '')),
+  slackDisconnect: () => ipcRenderer.invoke('slack-disconnect'),
+  openMacApp: (name) => ipcRenderer.send('open-mac-app', String(name ?? '')),
+  githubLogin: () => ipcRenderer.send('github-login'),
   activity: () => ipcRenderer.invoke('activity'),
   dndGet: () => ipcRenderer.invoke('dnd-get'),
   dndSet: (mins) => ipcRenderer.invoke('dnd-set', mins),

@@ -14,6 +14,7 @@ import { createProjectsView } from './projects-view.js';
 import { createCalendarView } from './calendar-view.js';
 import { createInboxView } from './inbox-view.js';
 import { createHomeView } from './home-view.js';
+import { createConnectionsView } from './connections-view.js';
 import { CALTAB_TEXT, cardRowOn, cardFolded } from '../src/calendar-tab.js';
 import { calendarRowState } from '../src/calendars.js';
 import { connectorAction, connectorDisconnectCopy, disconnectControl } from '../src/disconnect.js';
@@ -119,6 +120,7 @@ const calendarView = createCalendarView({ h, cy, fill: (el, ...k) => fill(el, ..
 // 알림함 탭: 출처별 알림, 안 읽은 수는 탭 배지로
 let inboxUnread = 0;
 const homeView = createHomeView({ h, cy, el: $('sec-home'), goto: (x) => goto(x), renderMd: (el, src) => md(el, src), who: () => SECTION_LABELS && document.getElementById('brand-name')?.textContent?.replace(/ 매니저$/, '') });
+const connectView = createConnectionsView({ h, cy, el: $('sec-connect') });
 const inboxView = createInboxView({ h, cy, el: $('sec-inbox'), onUnread: (n) => { inboxUnread = n; renderBadges(); } });
 cy.onDnd?.(() => homeView.changed());
 cy.onInbox?.((p) => { inboxUnread = Math.max(0, Number(p?.unread) || 0); renderBadges(); inboxView.changed(); homeView.changed(); });
@@ -306,6 +308,8 @@ function goto(s) {
     if (setupPhase === 'brain') detectAgents();
   }
   if (section === 'models') loadSisa();
+  if (section === 'connect') connectView.show();
+  else if (prevSection === 'connect') connectView.hide();
   if (section === 'home') homeView.show();
   else if (prevSection === 'home') homeView.hide();
   if (section === 'inbox') inboxView.show();

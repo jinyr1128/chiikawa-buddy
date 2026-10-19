@@ -101,8 +101,8 @@ export function createHomeView({ h, cy, el, goto, renderMd, who }) {
     const warn = chips.filter((c) => c.tone === 'warn');
     return h('div.home-conn', {},
       h('span.home-conn-title', { text: warn.length ? `확인이 필요한 연결 ${warn.length}개` : '연결' }),
-      ...chips.map((c) => h(`button.home-chip.${c.tone}`, { type: 'button', title: c.hint || (c.tone === 'off' ? '안 씀 — 눌러서 연결' : '연결됨'), onclick: () => goto('setup') }, h('i'), c.label)),
-      h('button.ghost.small', { type: 'button', onclick: () => goto('setup') }, '연결 관리'));
+      ...chips.map((c) => h(`button.home-chip.${c.tone}`, { type: 'button', title: c.hint || (c.tone === 'off' ? '안 씀 — 눌러서 연결' : '연결됨'), onclick: () => goto('connect') }, h('i'), c.label)),
+      h('button.ghost.small', { type: 'button', onclick: () => goto('connect') }, '연결 관리'));
   }
 
   function headRow() {

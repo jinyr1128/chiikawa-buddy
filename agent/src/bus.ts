@@ -284,6 +284,8 @@ export class Bus {
     this.send("characters", { rev: ++this.charactersRev });
   }
   // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
+  // 연결 관리 화면(connections-overview.ts) — 데몬이 꽂는다
+  connections?: { overview(): Promise<unknown>; connectSlack(b: unknown): Promise<unknown>; disconnectSlack(): unknown };
   // Slack 답장용 사용자 토큰(config connectors.slack.userToken) — 데몬이 꽂는다
   slackToken?: () => string | undefined;
   // 노션 연동(notion.ts) — 데몬이 꽂는다
@@ -405,6 +407,7 @@ export class Bus {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
     // 홈 화면: 지금 캐릭터 상태(돌고 있는 일 — Claude·Codex·Hermes 작업 포함)
+    if (req.method === "GET" && url.pathname === "/connections/overview") return this.connections ? json(res, 200, await this.connections.overview()) : json(res, 503, { error: "unavailable" });
     if (req.method === "GET" && url.pathname === "/activity") return json(res, 200, this.state());
     if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
@@ -677,6 +680,12 @@ export class Bus {
         if (!this.notion) return json(res, 503, { error: "notion unavailable" });
         if (url.pathname.endsWith("/disconnect")) return json(res, 200, this.notion.disconnect());
         const r = (await this.notion.connect(await readJson(req))) as { ok: boolean; error?: string };
+        return json(res, r.ok ? 200 : 400, r);
+      }
+      if (url.pathname === "/connectors/slack" || url.pathname === "/connectors/slack/disconnect") {
+        if (!this.connections) return json(res, 503, { error: "unavailable" });
+        const r = (url.pathname.endsWith("/disconnect") ? this.connections.disconnectSlack() : await this.connections.connectSlack(await readJson(req))) as { ok: boolean };
+        if (r.ok) setTimeout(() => { try { h.connectorsReload?.(); } catch { /* 다음에 */ } }, 300); // 데몬이 Slack 을 다시 읽는다(앱이 띄운 데몬이면 잠깐 다시 켜짐)
         return json(res, r.ok ? 200 : 400, r);
       }
       if (url.pathname === "/github/merge") return json(res, 200, await githubMerge(await readJson(req)));

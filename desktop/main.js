@@ -1580,6 +1580,19 @@ function setupIPC() {
   ipcMain.handle('notion-status', (e) => (fromOurs(e) ? request('GET', '/connectors/notion') : denied()));
   ipcMain.handle('notion-connect', (e, b) => (fromOurs(e) && b && typeof b.token === 'string' && b.token.length < 300 && typeof b.email === 'string' && b.email.length < 200 ? post('/connectors/notion', { token: b.token, email: b.email }, 60_000) : denied()));
   ipcMain.handle('notion-disconnect', (e) => (fromOurs(e) ? post('/connectors/notion/disconnect', {}) : denied()));
+  // 연결 관리 화면
+  ipcMain.handle('connections-overview', (e) => (fromOurs(e) ? request('GET', '/connections/overview', undefined, 30_000) : denied()));
+  ipcMain.handle('local-integrations', (e) => (fromOurs(e) ? { claudeHooks: claudeHooksOn(PORT), hermes: { available: hermesAvailable(), on: hermesHooksOn() } } : denied()));
+  ipcMain.handle('claude-hooks-set', (e, on) => { if (!fromOurs(e)) return denied(); const r = setClaudeHooks(!!on, PORT); rebuildTrayMenu(); return r; });
+  ipcMain.handle('hermes-hooks-set', (e, on) => { if (!fromOurs(e)) return denied(); const r = setHermesHooks(!!on, PORT); rebuildTrayMenu(); return r; });
+  ipcMain.handle('slack-connect', (e, token) => (fromOurs(e) && typeof token === 'string' && token.length < 300 ? post('/connectors/slack', { token }, 30_000) : denied()));
+  ipcMain.handle('slack-disconnect', (e) => (fromOurs(e) ? post('/connectors/slack/disconnect', {}) : denied()));
+  ipcMain.on('open-mac-app', (e, name) => { if (fromOurs(e) && process.platform === 'darwin' && ['Calendar'].includes(name)) execFile('open', ['-a', name], () => {}); });
+  // GitHub 로그인: 터미널 창에 gh auth login(브라우저 로그인) — 비밀번호는 브라우저의 GitHub 화면에만
+  ipcMain.on('github-login', (e) => {
+    if (!fromOurs(e) || process.platform !== 'darwin') return;
+    execFile('osascript', ['-e', 'tell application "Terminal" to activate', '-e', 'tell application "Terminal" to do script "PATH=/opt/homebrew/bin:/usr/local/bin:$PATH gh auth login --hostname github.com --git-protocol https --web"'], () => {});
+  });
   // 홈: 지금 상태·방해 금지
   ipcMain.handle('activity', (e) => (fromOurs(e) ? request('GET', '/activity') : denied()));
   ipcMain.handle('dnd-get', (e) => (fromOurs(e) ? dndView() : denied()));

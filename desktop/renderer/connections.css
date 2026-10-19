@@ -1,0 +1,36 @@
+/* 연결 관리(renderer/connections-view.js) */
+.connect { display: flex; flex-direction: column; gap: 10px; }
+.conn-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.conn-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.conn-card.open { border-color: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.conn-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+.conn-icon { font-size: 20px; width: 26px; text-align: center; }
+.conn-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.conn-title b { font-size: 14px; }
+.conn-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.conn-status i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.conn-status.ok i { background: var(--ok); }
+.conn-status.warn i { background: var(--p2); }
+.conn-status.warn { color: var(--p2); }
+.conn-actions { display: flex; gap: 6px; }
+.conn-chev { color: var(--muted); width: 14px; }
+.conn-body { padding: 2px 16px 14px 50px; display: flex; flex-direction: column; gap: 10px; }
+.conn-body h4 { margin: 6px 0 0; font-size: 12.5px; }
+.conn-blurb { margin: 0; font-size: 12.5px; color: var(--muted); }
+.conn-steps { margin: 0; padding-left: 18px; font-size: 12.5px; display: flex; flex-direction: column; gap: 3px; }
+.conn-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.conn-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.conn-form label { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--muted); flex: 1 1 200px; }
+.conn-form input, .conn-form select { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; font-size: 13px; }
+.conn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.conn-list li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 0; }
+.conn-list li span:not(.conn-status):not(.conn-dot) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conn-list small { color: var(--muted); font-size: 11.5px; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conn-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.conn-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.conn-row small { display: block; color: var(--muted); font-size: 11.5px; }
+.conn-ok { margin: 0; font-size: 12.5px; color: var(--ok); }
+.conn-err { margin: 0; font-size: 12.5px; color: var(--p1); overflow-wrap: anywhere; }
+.conn-more summary { cursor: pointer; font-size: 12.5px; color: var(--accent); }
+.conn-more[open] { display: flex; flex-direction: column; gap: 8px; }
+button.danger { color: var(--p1); }
