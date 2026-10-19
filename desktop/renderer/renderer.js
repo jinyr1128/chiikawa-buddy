@@ -1280,7 +1280,7 @@ function toastCard(x) {
   if (x.body) main.append(el('div', 'toast-body', x.body));
   const openIt = () => { cy.inboxOpen?.(x); readOne(x); };
   const acts = el('div', 'toast-acts');
-  acts.append(toastBtn(x.source === 'claude' ? 'Claude 열기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt), toastBtn('읽음', '', () => readOne(x)));
+  acts.append(toastBtn(x.source === 'claude' ? 'Claude 열기' : x.source === 'codex' ? 'Codex 열기' : x.source === 'hermes' ? 'Hermes 열기' : x.source === 'notion' ? '노션에서 보기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt), toastBtn('읽음', '', () => readOne(x)));
   main.append(acts);
   const close = el('button', 'toast-close', '✕');
   close.type = 'button';

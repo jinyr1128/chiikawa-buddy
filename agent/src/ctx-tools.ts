@@ -22,6 +22,7 @@ import { sessionsAllowed } from "./onboarding.ts";
 import { workHoursLine, workHoursOf } from "./work-hours.ts";
 import { weatherPeekLine } from "./weather.ts";
 import { mailContextParts, readMailItems } from "./mail-sync.ts";
+import { notionReadText, notionSearchText } from "./notion.ts";
 import { findMail, mailBodyBlock, MAIL_TOOL_CHARS, refFrom } from "./mail-pick.ts";
 import { calendarToolText, calendarTz, rangeArgs, readCalendarBlock, type CalendarRead } from "./calendar-ai.ts";
 
@@ -90,6 +91,7 @@ export const CTX_GUIDE = `- 업무 맥락은 프롬프트에 넣지 않았다. �
   - 어제·최근에 한 작업 → sessions_recent(project?, hours?) — 한 세션의 마지막 요청·응답 전문은 session_get(id)
   - 답 안 한 Slack DM·멘션 → slack_unanswered · 다가오는 회의(respond_event 의 event_id) → meetings_upcoming
   - 일정(오늘·내일 밖도: 다음 주·이번 달·특정 날짜·요일) → calendar_events(from, to) — 사용자가 말한 기간을 YYYY-MM-DD 로 넣는다(주는 월요일 시작, 말이 없으면 오늘부터 7일). 결과에 없는 날의 일정을 지어내지 말고, 없으면 없다고 말한다. 결과 끝에 「from=… 로 다시」가 있으면 이어 부른다. 캘린더를 MCP 로 연결했으면 그 캘린더 도구로 읽는다
+  - 노션(연결했을 때): 페이지·문서 찾기 → notion_search(query) · 한 페이지 글 → notion_read(id)
   - 최근 받은 메일(메일 앱 비밀번호 연결 — 보낸 사람·제목·본문 앞부분) → mail_recent · 한 통의 전체 본문(사용자가 본문·원문·자세히를 원하면) → mail_read(id=ref)
   - 프로젝트 현황(내가 만든 프로젝트·할 일 수 포함)·오늘 커밋·진행 중인 제안 → dashboard_summary · 최근 7일 프로젝트(레포 경로) → projects_recent
   - 사용자 취향·습관·자주 일하는 사람 → profile_get
@@ -255,6 +257,8 @@ export function ctxHandlers(cfg: Config, store: Store, deps: CtxDeps = {}) {
         `- ${p.name} (${p.path}) — 마지막 활동 ${fmtTime(p.lastActive)}, 24h 세션 ${p.sessions24h}, 오늘 커밋 ${p.commitsToday}${p.branch ? `, ${p.branch}` : ""}${p.lastTitle ? ` · 최근: ${clip(p.lastTitle, 60)}` : ""}`), ...mine].join("\n"));
     }),
     // 길면 나눠서: 한 번에 MAIL_TOOL_CHARS 안팎, 남으면 「from=N 으로 다시」
+    notion_search: (a: { query?: string } = {}) => guard("노션 찾기", async () => outAll("노션 찾기 결과 (읽기 전용)", await notionSearchText(String(a.query ?? "")))),
+    notion_read: (a: { id?: string } = {}) => guard("노션 페이지", async () => outAll("노션 페이지 글 (읽기 전용)", await notionReadText(String(a.id ?? "")))),
     mail_recent: (a: { from?: number } = {}) => guard("최근 받은 메일", () => {
       const p = mailContextParts(store);
       if (!p) return outAll("최근 받은 메일 (받은편지함 읽기 전용)", "(메일 앱 비밀번호 연결이 없다 — 메일 MCP 가 연결돼 있으면 그 도구로 읽는다)");
@@ -308,6 +312,8 @@ export function ctxMcpServer(cfg: Config, store: Store, deps: CtxDeps = {}) {
     tool("slack_unanswered", "아직 답 안 한 Slack DM·멘션(로컬 수집 확정 목록)", { hours: z.number().int().min(1).max(168).optional().describe("기본 24") }, h.slack_unanswered, RO),
     tool("dashboard_summary", "내가 만든 프로젝트(id·기한·남은 할 일)·오늘 커밋 수·진행 중인 제안·마지막 브리핑", {}, h.dashboard_summary, RO),
     tool("projects_recent", "최근 7일 프로젝트(레포 경로·마지막 활동·세션·커밋·브랜치)", {}, h.projects_recent, RO),
+    tool("notion_search", "노션에서 페이지·DB 찾기(연결한 페이지만, 읽기 전용) — 결과 줄의 id 로 notion_read", { query: z.string().max(200).optional().describe("찾을 말(비우면 최근 바뀐 순)") }, h.notion_search, RO),
+    tool("notion_read", "노션 페이지 하나의 글(블록 텍스트) 읽기 — id 는 notion_search 의 id=…", { id: z.string().max(40).describe("페이지 id") }, h.notion_read, RO),
     tool("mail_recent", "최근 받은 메일(메일 앱 비밀번호로 데몬이 가져온 받은편지함 — 보낸 사람·제목·본문 앞부분). 많으면 나눠 오니 끝 줄의 from 으로 이어 부른다", { from: z.number().int().min(0).optional().describe("몇 번째 메일부터(이어 읽기)") }, h.mail_recent, RO),
     tool("mail_read", "메일 한 통(또는 여러 통)의 전체 본문 — id 는 mail_recent 줄의 ref(mail:…)", { id: z.string().max(1000).optional().describe("ref, 예: mail:abc@example.com"), ids: z.array(z.string().max(1000)).optional().describe("여러 통이면") }, h.mail_read, RO),
     tool("calendar_events", "기간의 일정(날짜별: 요일 날짜 · 시각~시각 · 제목 · 캘린더 별칭 · 장소·회의 링크 유무). 다음 주·이번 달·특정 날짜처럼 사용자가 말한 기간을 넣는다. 길면 나눠 오니 끝 줄의 from 으로 이어 부른다", { from: z.string().optional().describe("시작 날짜 YYYY-MM-DD(또는 ISO 시각). 없으면 오늘"), to: z.string().optional().describe("끝 날짜 YYYY-MM-DD(그날까지 들어감, 또는 ISO 시각). 없으면 from 부터 days 일"), days: z.number().int().min(1).optional().describe("to 가 없을 때 며칠(기본 7)") }, h.calendar_events, RO),

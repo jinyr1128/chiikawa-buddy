@@ -612,6 +612,8 @@ body.char-hidden #stage { visibility: hidden; }
 .toast[data-source="mail"] .toast-icon { background: #fde9e7; }
 .toast[data-source="calendar"] .toast-icon { background: #e7f0fd; }
 .toast[data-source="claude"] .toast-icon { background: #f6ece4; }
+.toast[data-source="codex"] .toast-icon { background: #e8f3ee; }
+.toast[data-source="notion"] .toast-icon { background: #f1f1ef; }
 .toast-main { min-width: 0; }
 .toast-head { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
 .toast-head b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

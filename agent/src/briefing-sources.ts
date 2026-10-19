@@ -107,6 +107,7 @@ export function briefingTask(c: Connectors | null = CONNECTORS, ready: ReadonlyS
     : "";
   return `${BRIEFING_HEAD} 다음을 확인해서 사용자가 지금 챙겨야 할 것을 정리해:
 ${steps.map((s, i) => `${i + 1}) ${s}`).join("\n")}${skip}
+위에 "아직 확인 안 한 알림"(자리를 비운 동안 쌓인 것)이나 "노션" 칸이 있으면 거기서도 해야 할 일·처리할 일을 뽑아. 노션의 마감 임박 할 일은 그 마감에 맞춰 우선순위를 정하고(지남·오늘 = 1), AI 작업이 끝났다는 알림은 결과 확인이 필요할 때만 할 일로, 한도 알림은 할 일로 만들지 않는다.
 기존 할 일 중 끝난 게 확인되면 done_todo_ids에 넣어.
 ${TODO_KEY_RULE}
 reply_md는 우선순위별로 묶고 각 항목에 링크를 달아.

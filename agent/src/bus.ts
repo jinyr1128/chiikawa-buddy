@@ -8,6 +8,7 @@ import { parseRulePatch } from "./todo-rules.ts";
 import { ActivityTracker } from "./activity.ts";
 import { ClaudeHooks } from "./claude-hooks.ts";
 import { listMacCalendars } from "./maccal.ts";
+import { hermesToClaude } from "./hermes-hooks.ts";
 import { INBOX_SOURCES, type Inbox } from "./inbox.ts";
 import { characterId, characterClips } from "./characters.ts";
 import { RUN_STATUSES, type RunRegistry, type RunStatus } from "./runs.ts";
@@ -281,6 +282,8 @@ export class Bus {
     this.send("characters", { rev: ++this.charactersRev });
   }
   // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
+  // 노션 연동(notion.ts) — 데몬이 꽂는다
+  notion?: { status(): unknown; connect(b: unknown): Promise<unknown>; disconnect(): unknown };
   // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
   inbox?: Inbox;
   // 새 알림 하나 → 캐릭터 위 팝업(앱이 몰려 오면 묶어서 보여 준다)
@@ -397,6 +400,7 @@ export class Bus {
     if (!hostOk(req.headers.host, (this.server?.address() as AddressInfo | null)?.port)) return json(res, 403, { error: "forbidden host" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
+    if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
       try { return json(res, 200, { calendars: await listMacCalendars() }); } catch (e: any) { return json(res, 503, { error: String(e?.message ?? e) }); }
     }
@@ -662,6 +666,17 @@ export class Bus {
         if (!ids) return json(res, 400, { error: "ids must be a list or \"all\"" });
         const source = typeof b.source === "string" && (INBOX_SOURCES as readonly string[]).includes(b.source) ? b.source : undefined;
         return json(res, 200, { changed: this.inbox.mark(ids, b.read !== false, source), unread: this.inbox.unread() });
+      }
+      if (url.pathname === "/connectors/notion" || url.pathname === "/connectors/notion/disconnect") {
+        if (!this.notion) return json(res, 503, { error: "notion unavailable" });
+        if (url.pathname.endsWith("/disconnect")) return json(res, 200, this.notion.disconnect());
+        const r = (await this.notion.connect(await readJson(req))) as { ok: boolean; error?: string };
+        return json(res, r.ok ? 200 : 400, r);
+      }
+      if (url.pathname === "/hermes/hook") {
+        const ev = hermesToClaude(await readJson(req));
+        if (ev) this.claude.handle(ev, "hermes");
+        return json(res, 200, { ok: true });
       }
       if (url.pathname === "/claude/hook") {
         this.claude.handle((await readJson(req)) as Record<string, unknown>);

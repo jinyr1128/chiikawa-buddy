@@ -2,6 +2,7 @@
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
 import { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
 import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks } from './src/claude-hooks.js';
+import { isInstalled as hermesHooksOn, setInstalled as setHermesHooks, hermesAvailable } from './src/hermes-hooks.js';
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -760,6 +761,21 @@ function onCharacterClick() {
   else togglePanel();
 }
 
+// ---- 돌아왔을 때 브리핑: 30분 넘게 비웠고 그사이 안 읽은 알림이 있으면 한 번(마지막 자동 브리핑 30분 안이면 건너뛴다) ----
+const AWAY_MS = 30 * 60e3;
+let awaySince = null;
+let lastBackBriefing = 0;
+async function backFromAway() {
+  if (!awaySince) return;
+  const gone = Date.now() - awaySince;
+  awaySince = null;
+  if (gone < AWAY_MS || Date.now() - lastBackBriefing < AWAY_MS || inboxUnread <= 0) return;
+  lastBackBriefing = Date.now();
+  const mins = Math.round(gone / 60e3);
+  send('bubble', { id: 'back-briefing', kind: 'info', ttlMs: 12000, text: `${mins >= 60 ? `${Math.floor(mins / 60)}시간 ${mins % 60}분` : `${mins}분`} 동안 알림 ${inboxUnread}개가 쌓였어요. 해야 할 일로 정리할게요.` });
+  await post('/briefing').catch(() => {});
+}
+
 // ---- 알림함: 안 읽은 개수(SSE inbox) → 캐릭터 배지·메뉴 막대 숫자 ----
 let inboxUnread = 0;
 function onInbox(payload) {
@@ -1024,6 +1040,17 @@ function menuTemplate() {
         rebuildTrayMenu();
       },
     },
+    ...(hermesAvailable() ? [{
+      label: 'Hermes 연동',
+      type: 'checkbox',
+      checked: hermesHooksOn(),
+      click: (item) => {
+        const r = setHermesHooks(item.checked, PORT);
+        if (!r.ok) dialog.showErrorBox('Hermes 연동', r.error);
+        else send('bubble', { id: 'hermes-hooks', kind: 'info', ttlMs: 8000, text: item.checked ? 'Hermes랑 연결했어! Hermes를 다시 켜면 같이 일할게.' : 'Hermes 연동을 껐어.' });
+        rebuildTrayMenu();
+      },
+    }] : []),
     { label: connected ? `${who()} 켜짐` : `${who()} 꺼짐`, enabled: false },
     { type: 'separator' },
     { label: '종료', click: () => app.quit() },
@@ -1505,6 +1532,10 @@ function setupIPC() {
   // 연결된 캘린더 목록(가린 이름만) · 하나 빼기(id)
   // 캘린더: 목록(별칭·가린 주소·결과) · 더하기(별칭 + 주소, 데몬이 시험으로 읽고 저장) · 별칭 고치기 · 켜기/끄기 · 하나 빼기(id)
   ipcMain.handle('calendar-list', async (e) => (fromOurs(e) ? { ok: true, items: await calendarList() } : denied()));
+  // 노션 연결(GET·POST /connectors/notion) — 열쇠는 데몬이 확인하고 config.json 에만 둔다
+  ipcMain.handle('notion-status', (e) => (fromOurs(e) ? request('GET', '/connectors/notion') : denied()));
+  ipcMain.handle('notion-connect', (e, b) => (fromOurs(e) && b && typeof b.token === 'string' && b.token.length < 300 && typeof b.email === 'string' && b.email.length < 200 ? post('/connectors/notion', { token: b.token, email: b.email }, 60_000) : denied()));
+  ipcMain.handle('notion-disconnect', (e) => (fromOurs(e) ? post('/connectors/notion/disconnect', {}) : denied()));
   // 맥 캘린더 목록(GET /calendars/mac) — 처음엔 macOS 허락 창을 기다리느라 오래 걸릴 수 있다
   ipcMain.handle('maccal-list', (e) => (fromOurs(e) ? request('GET', '/calendars/mac', undefined, 130_000) : denied()));
   ipcMain.handle('calendar-add', (e, body) => {
@@ -1828,7 +1859,7 @@ function setupIPC() {
   // 알림함(GET /inbox · POST /inbox/read · /inbox/clear)
   ipcMain.handle('inbox-list', (e, q) => {
     if (!fromOurs(e)) return denied();
-    const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(q.source) ? q.source : '';
+    const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|system)$/.test(q.source) ? q.source : '';
     return request('GET', `/inbox${src || q?.unread ? '?' : ''}${src ? `source=${src}` : ''}${src && q?.unread ? '&' : ''}${q?.unread ? 'unread=1' : ''}`);
   });
   // 알림 「열기」: Slack 은 Slack 앱에서 그 메시지로, Claude 는 Claude 앱으로, 나머지(메일·회의 링크)는 브라우저로
@@ -1837,6 +1868,8 @@ function setupIPC() {
     const link = typeof item.link === 'string' ? item.link : '';
     const openApp = (appName, url) => execFile('open', ['-a', appName, ...(url ? [url] : [])], (err) => { if (err && url) shell.openExternal(url).catch(() => {}); });
     if (item.source === 'claude' && process.platform === 'darwin') return openApp('Claude');
+    if (item.source === 'codex' && process.platform === 'darwin') return openApp('ChatGPT');
+    if (item.source === 'hermes' && process.platform === 'darwin') return openApp('Hermes'); // Codex Desktop 은 ChatGPT 앱 안에 있다
     if (!(item.source === 'slack' && item.appLink) && (!link || !isSafeLink(link))) return showPanel('inbox');
     // Slack: 앱 주소(slack://channel?…)가 있으면 켜져 있는 Slack 앱에서 그 대화로 바로(브라우저 탭이 늘지 않게)
     if (item.source === 'slack' && typeof item.appLink === 'string' && /^slack:\/\/channel\?[\w=&.%-]+$/.test(item.appLink)) return shell.openExternal(item.appLink).catch(() => {});
@@ -1848,7 +1881,7 @@ function setupIPC() {
     if (!fromOurs(e)) return denied();
     const ids = body?.ids === 'all' ? 'all' : Array.isArray(body?.ids) ? body.ids.filter((x) => typeof x === 'string' && /^[\w-]{1,64}$/.test(x)).slice(0, 1000) : null;
     if (!ids) return denied();
-    const source = typeof body?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(body.source) ? body.source : undefined;
+    const source = typeof body?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|system)$/.test(body.source) ? body.source : undefined;
     return post('/inbox/read', { ids, read: body?.read !== false, ...(source ? { source } : {}) });
   });
   ipcMain.handle('inbox-clear', (e) => (fromOurs(e) ? post('/inbox/clear', {}) : denied()));
@@ -2301,6 +2334,15 @@ if (SQUIRREL) {
     // 화면 구성 바뀜·절전/잠금 뒤 캐릭터를 다시 맨 위로(윈도우)
     for (const ev of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(ev, () => keepOnTop(win));
     for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => keepOnTop(win));
+    // 자리를 비웠다 돌아오면(화면 잠금·잠자기·30분 넘게 손 안 댐) 그동안 쌓인 알림으로 브리핑 — 해야 할 일·처리할 일을 정리
+    for (const ev of ['lock-screen', 'suspend']) powerMonitor.on(ev, () => { awaySince ??= Date.now(); });
+    for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => setTimeout(backFromAway, 5000));
+    setInterval(() => {
+      let idle = 0;
+      try { idle = powerMonitor.getSystemIdleTime(); } catch { return; }
+      if (idle >= AWAY_MS / 1000) awaySince ??= Date.now() - idle * 1000;
+      else if (awaySince && idle < 60) backFromAway();
+    }, 60e3).unref?.();
     // 클릭 투과 보강(윈도우): 커서를 직접 물어 hit 검사 · 절전/잠금·화면 바뀜 뒤엔 forward 훅을 바로 다시 건다
     startHitWatch();
     for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => hitWatch?.rearmNow());

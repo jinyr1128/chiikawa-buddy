@@ -6,7 +6,7 @@ import { createMarkdown } from '../src/markdown.js';
 import { shapeDashboard, overlayHidden, priorityLabel, SECTIONS, SECTION_LABELS, normalizeSection, relativeTime, clockTime, visibleSections, connectorChipView } from '../src/dashboard.js';
 import { needsSetup, stepForCap } from '../src/setup.js';
 import { isFeature, isAgent, buildWalk, agentSteps } from '../src/setup-flow.js';
-import { renderSetup, clearApiDraft, readSlot, clearMailDraft, resetCalendarEditor } from './setup-view.js';
+import { renderSetup, clearApiDraft, readSlot, clearMailDraft, resetCalendarEditor, clearNotionDraft } from './setup-view.js';
 import { mailConnected, mailConnectedText, withMailAccount, withoutMailAccount } from '../src/mail-connect.js';
 import { mountModels } from './models-view.js';
 import { createFocusView } from './focus-view.js';
@@ -157,6 +157,9 @@ let afterConnect = ''; // 'claudecode'·'codexcli': 그 도구 연결을 마치�
 let setupCalendars = []; // 저장된 캘린더(main calendar-list: 별칭·가린 이름·결과, 주소 없음). 데몬 설정 파일 기준이라 어디서 들어와도 같다
 const calendarScreen = () => setupPhase === 'extras' || (setupPhase === 'connect' && (setupLink === 'gcal' || setupLink === 'outlook'));
 let setupSlotError = null; // 저장하려다 막힌 칸 값({ id, value, text }, 예: 이미 연결된 캘린더)
+let setupNotion = { status: null, busy: false, result: null }; // 노션 카드: 상태(GET /connectors/notion) · 확인 중 · 결과
+async function disconnectNotion() { const r = await cy.notionDisconnect?.().catch(() => null); setupNotion = { ...setupNotion, status: null, result: null }; loadNotion(); return r?.ok ? { ok: true } : { ok: false, error: '연결 해제를 못 했어요.' }; }
+async function loadNotion() { try { const r = await cy.notionStatus?.(); if (r?.ok) { setupNotion = { ...setupNotion, status: r.data }; if (section === 'setup') renderSetupView(false); } } catch { /* 데몬 꺼짐 */ } }
 let setupMail = { busy: false, result: null }; // 메일(앱 비밀번호) 카드: 확인하는 중 · 마지막 결과({ ok, text })
 let cannedOpen = false; // 채팅: AI가 있을 때 ＋ 로 연 정해진 답 버튼 줄(renderChatLock)
 let sisa = { provider: '', hasKey: false, persona: '', canned: {}, done: {}, connected: [], chatModels: {} };
@@ -208,6 +211,7 @@ async function detectAgents() {
   if (section === 'setup') renderSetupView(false);
 }
 async function loadSetupSettings() {
+  loadNotion();
   let r = null;
   try { r = await cy.setupLoad?.(); } catch { /* 데몬이 꺼져 있으면 빈 칸 */ }
   if (!r?.ok) return;
@@ -771,6 +775,26 @@ function renderSetupView(resetScroll) {
     // 더 연결하기의 [연결 해제]: 그 커넥터를 끄고(구글·Outlook 은 캘린더 하나) 「연결됨」 표시도 뗀다
     servers: Object.fromEntries((vm.connectors || []).filter((c) => c.server).map((c) => [c.cap, c.server])),
     onCopyText: (text) => cy.copyText(text),
+    // 노션(내부 통합 열쇠): 데몬이 열쇠를 확인하고 저장한 뒤 바로 한 번 읽는다
+    notion: {
+      status: setupNotion.status,
+      busy: setupNotion.busy,
+      result: setupNotion.result,
+      defaultEmail: (vm.connectors || []).find((c) => c.cap === 'mail')?.accounts?.[0]?.user ?? '',
+      onOpen: (url) => { try { cy.openLink(url); } catch { /* 무시 */ } },
+      onConnect: async (body) => {
+        if (setupNotion.busy) return;
+        setupNotion = { ...setupNotion, busy: true, result: null };
+        redraw(false);
+        let r;
+        try { r = await cy.notionConnect(body); } catch { r = { ok: false, data: { error: '연결하지 못했어요.' } }; }
+        const d = r?.data ?? {};
+        if (r?.ok && d.ok !== false) { clearNotionDraft(); setupNotion = { ...setupNotion, busy: false, result: { ok: true, text: `노션 「${d.workspace || d.bot || '워크스페이스'}」 연결했어요. 마감 임박 ${d.mine ?? 0}개 · 최근 바뀐 페이지 ${d.recent ?? 0}개.` } }; loadNotion(); }
+        else setupNotion = { ...setupNotion, busy: false, result: { ok: false, text: d.error || '연결하지 못했어요.' } };
+        redraw(false);
+      },
+      onDisconnect: disconnectNotion,
+    },
     // 메일(앱 비밀번호): 데몬이 로그인해 보고 되면 저장한다. 결과·실패 이유는 카드 아래에
     mail: {
       mail: mailConnected(vm.connectors),

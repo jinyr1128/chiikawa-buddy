@@ -18,6 +18,7 @@ export type ClaudeHookEvent = {
   message?: string;
   notification_type?: string;
   transcript_path?: string;
+  limit_when?: string; // Codex 처럼 기록을 따로 읽은 쪽이 한도에 걸렸다고 알려 줄 때(" (오후 7시에 …)" 또는 "")
 };
 
 type ActivityLike = { begin(kind: string, title: string): () => void; play(ms?: number, clip?: "plan" | "dance" | "cheer" | "lunch"): { say?: string } };
@@ -135,7 +136,7 @@ export class ClaudeHooks {
     this.sweep.unref?.();
   }
 
-  handle(ev: ClaudeHookEvent) {
+  handle(ev: ClaudeHookEvent, source: "claude" | "codex" | "hermes" = "claude") {
     const name = ev.hook_event_name;
     const id = typeof ev.session_id === "string" && ev.session_id ? ev.session_id.slice(0, 80) : "unknown";
     const project = typeof ev.cwd === "string" && ev.cwd ? basename(ev.cwd) : "";
@@ -156,7 +157,7 @@ export class ClaudeHooks {
         const msg = typeof ev.message === "string" ? ev.message.slice(0, 200) : "확인이 필요해요";
         const text = this.say("claude_wait", { project: where });
         this.activity.play(6000, "plan");
-        notify({ source: "claude", key: `claude-wait:${id}:${this.now()}`, account: project || undefined, title: text, body: msg });
+        notify({ source, key: `claude-wait:${id}:${this.now()}`, account: project || undefined, title: text, body: msg });
         this.bubble({ id: `claude-wait-${id}`, kind: "info", ttlMs: 30e3, text, detail: msg });
         return;
       }
@@ -164,17 +165,17 @@ export class ClaudeHooks {
         const had = this.sessions.has(id);
         this.end(id);
         // 토큰(사용량 한도)을 다 써서 멈췄으면 「다 했어」 대신 그 캐릭터의 「토큰 다 됐어」
-        const limit = limitFromLines(this.readTail(ev.transcript_path));
+        const limit = typeof ev.limit_when === "string" ? { hit: true, when: ev.limit_when } : limitFromLines(this.readTail(ev.transcript_path));
         if (limit.hit) {
           const text = this.say("claude_limit", { project: where, when: limit.when });
           this.activity.play(6000, "plan");
-          notify({ source: "claude", key: `claude-limit:${id}:${this.now()}`, account: project || undefined, title: text });
+          notify({ source, key: `claude-limit:${id}:${this.now()}`, account: project || undefined, title: text });
           this.bubble({ id: `claude-limit-${id}`, kind: "info", ttlMs: 60e3, text });
           return;
         }
         if (!had) return;
         const text = this.say("claude_done", { project: where });
-        notify({ source: "claude", key: `claude-done:${id}:${this.now()}`, account: project || undefined, title: text });
+        notify({ source, key: `claude-done:${id}:${this.now()}`, account: project || undefined, title: text });
         this.bubble({ id: `claude-done-${id}`, kind: "done", ttlMs: 10e3, text });
         return;
       }

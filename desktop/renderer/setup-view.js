@@ -492,6 +492,50 @@ function mailBlock({ mail, busy, result, noAi, onConnect, onDisconnect, onRemove
   box.append(...kids);
   return box;
 }
+// 노션(읽기 전용 내부 통합 열쇠): 열쇠·내 이메일 → [연결]. 연결되면 상태 줄과 [연결 해제]
+const notionDraft = { token: '', email: '' };
+let notionConfirming = false;
+const NOTION_STEPS = [
+  '아래 **노션 통합 만들기**를 눌러 노션에 로그인한 뒤 **새 통합**을 만들어요. 이름은 「치이카와 비서」, 종류는 **내부**로 해요.',
+  '**기능**에서 **콘텐츠 읽기**·**댓글 읽기**·**이메일 주소를 포함한 사용자 정보 읽기**만 켜요(쓰기는 끄기).',
+  '**내부 통합 시크릿**(ntn_ 로 시작)을 복사해 아래 칸에 붙여요. 이메일 칸에는 노션 로그인 이메일을 적어요(나에게 배정된 할 일을 찾는 데 써요).',
+  '알림받고 싶은 페이지·할 일 데이터베이스에서 오른쪽 위 **···** → **연결** → 「치이카와 비서」를 추가해요. 추가한 곳만 읽어요.',
+];
+function notionBlock({ status, busy, result, defaultEmail, onConnect, onDisconnect, onOpen }) {
+  const box = h('div.setup-folder.setup-notion', { dataset: { id: 'notion' } });
+  const on = !!status?.connected;
+  const kids = [h('span.setup-pick-title', { text: on ? '노션 · 연결됨' : '노션' }),
+    h('p.setup-blurb', { text: '나에게 배정된 할 일의 마감(지남·오늘·내일), 연결한 페이지의 수정·새 댓글을 캐릭터 위 알림과 알림함으로 받아요. 채팅·브리핑에서도 노션 내용을 찾아 읽어요. 읽기만 해요.' })];
+  if (on) {
+    const line = status.phase === 'failed' ? `지금은 못 가져왔어요: ${status.error ?? ''}` : `마감 임박 ${status.mine ?? 0}개 · 최근 바뀐 페이지 ${status.recent ?? 0}개${status.email ? ` · ${status.email}` : ''}`;
+    kids.push(h(status.phase === 'failed' ? 'p.setup-gate' : 'p.setup-gate.ok', { text: line }));
+  }
+  if (result) kids.push(h(result.ok ? 'p.setup-gate.ok' : 'p.setup-gate', null, ...richNodes(result.text)));
+  if (!on || busy) {
+    kids.push(h('ol.setup-mail-steps', null, NOTION_STEPS.map((t) => h('li', null, ...richNodes(t)))));
+    if (onOpen) kids.push(h('div.setup-fields.row', null, h('button.ghost', { type: 'button', text: '노션 통합 만들기', onclick: () => onOpen('https://www.notion.so/profile/integrations') })));
+    const token = h('input', { type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: 'ntn_…', 'aria-label': '노션 내부 통합 시크릿', value: notionDraft.token, dataset: { slot: 'notion-token' } });
+    token.addEventListener('input', () => { notionDraft.token = token.value; });
+    if (!notionDraft.email && defaultEmail) notionDraft.email = defaultEmail;
+    const email = h('input', { type: 'text', inputmode: 'email', autocomplete: 'off', spellcheck: 'false', placeholder: 'me@company.com', 'aria-label': '노션 로그인 이메일', value: notionDraft.email, dataset: { slot: 'notion-email' } });
+    email.addEventListener('input', () => { notionDraft.email = email.value; });
+    kids.push(h('div.setup-fields', null, h('label', null, h('span', { text: '내부 통합 시크릿' }), token), h('label', null, h('span', { text: '노션 로그인 이메일' }), email)));
+    kids.push(h('small.setup-mail-note', { text: '열쇠는 이 맥의 치이카와 비서 설정 파일에만 저장해요. 화면에는 다시 보이지 않아요.' }));
+    const connect = h('button.primary', { type: 'button', text: busy ? '확인하는 중…' : '연결', disabled: !!busy });
+    connect.addEventListener('click', () => onConnect?.({ token: notionDraft.token.trim(), email: notionDraft.email.trim() }));
+    kids.push(h('div.setup-fields.row', null, h('span.spacer'), connect));
+  } else if (onDisconnect) {
+    kids.push(disconnectControl(document, {
+      ask: '노션 연결을 끊을까요?', note: '저장한 노션 열쇠를 지우고 노션 알림을 멈춰요. 노션의 페이지는 그대로예요.', done: '노션 연결을 끊었어요.',
+      open: notionConfirming, onOpen: () => { notionConfirming = true; }, onClose: () => { notionConfirming = false; },
+      onConfirm: async () => { const r = await onDisconnect(); notionConfirming = false; return r; },
+    }));
+  }
+  box.append(...kids);
+  return box;
+}
+export function clearNotionDraft() { notionDraft.token = ''; }
+
 // 주소 칸에 쓰는 중에 다시 그려도 커서가 그 자리에 남게
 function redrawKeep(input) {
   focusSlot = input.dataset.slot || null;
@@ -499,7 +543,7 @@ function redrawKeep(input) {
   redraw?.();
 }
 
-function extrasView({ done = {}, repos = [], coder = true, readSessions = false, servers = {}, calendars = [], mail = null, onOpen, onDisconnect, onCopy, onAddRepo, onPickFolder, onRemoveRepo, onToggleSessions, onFinish, onBack }) {
+function extrasView({ done = {}, repos = [], coder = true, readSessions = false, servers = {}, calendars = [], mail = null, notion = null, onOpen, onDisconnect, onCopy, onAddRepo, onPickFolder, onRemoveRepo, onToggleSessions, onFinish, onBack }) {
   const items = EXTRAS.filter((id) => id !== 'repos').map(hubItem).filter(Boolean);
   const input = h('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: '/Users/나/code', 'aria-label': '레포 폴더', value: repoDraft });
   input.addEventListener('input', () => { repoDraft = input.value; });
@@ -513,6 +557,7 @@ function extrasView({ done = {}, repos = [], coder = true, readSessions = false,
     extra: h('div', null,
       h('div.setup-picks', null, items.map((item) => extraItem(item, done, onOpen, onDisconnect, onCopy, servers, calendars))),
       mail ? mailBlock(mail) : null,
+      notion ? notionBlock(notion) : null,
       h('div.setup-folder', null,
         h('span.setup-pick-title', { text: repos.length ? `${repo.title} · ${repos.length}개` : repo.title }),
         h('p.setup-blurb', { text: coder ? repo.blurb : `${repo.blurb} (지금은 Claude Code 가 없어서 커밋만 보여 줘요)` }),
@@ -662,7 +707,7 @@ function drawSetup(root, state) {
   }
   if (phase === 'extras') {
     const keep = focusSlot;
-    root.replaceChildren(extrasView({ done, repos, coder, readSessions, servers: state.servers, calendars: state.calendars, mail: state.mail, onOpen: onOpenExtra, onDisconnect: onDisconnectExtra, onCopy: state.onCopyText, onAddRepo, onPickFolder, onRemoveRepo, onToggleSessions, onFinish: onFinishExtras, onBack }));
+    root.replaceChildren(extrasView({ done, repos, coder, readSessions, servers: state.servers, calendars: state.calendars, mail: state.mail, notion: state.notion, onOpen: onOpenExtra, onDisconnect: onDisconnectExtra, onCopy: state.onCopyText, onAddRepo, onPickFolder, onRemoveRepo, onToggleSessions, onFinish: onFinishExtras, onBack }));
     if (keep) {
       const el = root.querySelector(`[data-slot="${keep}"]`);
       if (el) { el.focus({ preventScroll: true }); const at = caret ?? el.value.length; el.setSelectionRange(at, at); }
