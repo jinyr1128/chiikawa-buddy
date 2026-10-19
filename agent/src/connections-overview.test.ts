@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connectSlack, disconnectSlack, slackInfo } from "./connections-overview.ts";
 
-const res = (ok: boolean, scopes: string, extra: object = {}) => (async () => ({ json: async () => ({ ok, team: "goorm", user: "me", ...extra }), headers: { get: () => scopes } })) as any;
+const res = (ok: boolean, scopes: string, extra: object = {}) => (async () => ({ json: async () => ({ ok, team: "acme", user: "me", ...extra }), headers: { get: () => scopes } })) as any;
 
 test("Slack 앱 안에서 연결: 열쇠 모양 확인 → auth.test → config 에 저장(다른 칸은 그대로), 답장 권한 여부", async () => {
   const p = join(mkdtempSync(join(tmpdir(), "cs-")), "config.json");

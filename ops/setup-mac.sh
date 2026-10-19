@@ -1,13 +1,14 @@
 #!/bin/bash
 # 치이카와 매니저 한 번에 설치(애플 실리콘 맥). 레포 폴더에서: ./ops/setup-mac.sh
-#  1) GitHub 릴리스에서 앱(zip 또는 dmg)과 캐릭터 묶음을 받는다(비공개 저장소 → gh 로그인 필요). --build 면 소스로 직접 만든다
+#  1) 이 폴더를 받아 온 GitHub 저장소의 릴리스에서 앱(zip)과 캐릭터 묶음(있으면)을 받는다. 공개 저장소면 로그인 없이, 비공개면 gh 로그인. --build 면 소스로 직접 만든다
 #  2) 앱을 응용 프로그램 폴더에 넣고(격리 표시 지움) 캐릭터 묶음을 ~/.cy-agent 에 넣는다
 #  3) Claude Code 를 쓰면 Claude Code 연동(hook)을, Hermes 가 있으면 Hermes 연동을 켠다
 #  4) 앱을 켠다. Slack·메일·캘린더·노션은 앱의 「연결 관리」에서 각자 계정으로 연결한다(열쇠·비밀번호는 각자 것)
 # 옵션: --build · --tag v0.4.0 · --prefix <앱 넣을 폴더> · --home <데이터 폴더> · --no-hooks · --no-open · --repo owner/name
 set -euo pipefail
 
-REPO="jinyr1128/chiikawa-buddy"
+REPO="$(git -C "$(dirname "$0")/.." remote get-url origin 2>/dev/null | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
+[ -n "$REPO" ] || REPO="jinyr1128/chiikawa-buddy"
 TAG=""
 PREFIX="/Applications"
 HOME_DIR="${CY_AGENT_HOME:-$HOME/.cy-agent}"
@@ -53,25 +54,28 @@ if [ "$BUILD" = 1 ]; then
   PACK=""
 else
   say "GitHub 릴리스에서 앱·캐릭터 받기"
-  command -v gh >/dev/null || { command -v brew >/dev/null && brew install gh || die "gh 가 필요해요: brew install gh"; }
-  gh auth status --hostname github.com >/dev/null 2>&1 || die "GitHub 로그인이 필요해요. 터미널에서 'gh auth login --web' 을 한 번 하고 다시 실행해 주세요(비공개 저장소라 초대받은 계정이어야 해요)."
-  # 최신 태그를 한 번만 정해 앱과 캐릭터가 같은 릴리스에서 내려오게 한다.
-  if [ -z "$TAG" ]; then TAG="$(gh release view -R "$REPO" --json tagName --jq .tagName)"; fi
-  ASSETS="$(gh release view "$TAG" -R "$REPO" --json assets --jq '.assets[].name')"
   PACK="$WORK/chiikawa-characters.zip"
-  if printf '%s\n' "$ASSETS" | grep -qx 'chiikawa-manager-arm64.zip'; then
+  # 1) 공개 저장소: 로그인 없이 바로 받는다(캐릭터 묶음은 있으면 받는다 — 인스타 공유용 판에는 없다)
+  if [ -z "$TAG" ]; then
+    LATEST="$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest" 2>/dev/null || true)"
+    case "$LATEST" in */releases/tag/*) TAG="${LATEST##*/}" ;; esac
+  fi
+  DL="https://github.com/$REPO/releases/download/$TAG"
+  if [ -n "$TAG" ] && curl -fsSL -o "$WORK/chiikawa-manager-arm64.zip" "$DL/chiikawa-manager-arm64.zip" 2>/dev/null; then
+    curl -fsSL -o "$WORK/SHA256SUMS.txt" "$DL/SHA256SUMS.txt" || die "검증 파일(SHA256SUMS.txt)을 못 받았어요."
+    curl -fsSL -o "$PACK" "$DL/chiikawa-characters.zip" 2>/dev/null || rm -f "$PACK"
+  else
+    # 2) 비공개 저장소: 초대받은 계정으로 gh 로그인이 필요하다
+    command -v gh >/dev/null || { command -v brew >/dev/null && brew install gh || die "gh 가 필요해요: brew install gh"; }
+    gh auth status --hostname github.com >/dev/null 2>&1 || die "GitHub 로그인이 필요해요. 터미널에서 'gh auth login --web' 을 한 번 하고 다시 실행해 주세요(비공개 저장소라 초대받은 계정이어야 해요)."
+    if [ -z "$TAG" ]; then TAG="$(gh release view -R "$REPO" --json tagName --jq .tagName)"; fi
     gh release download "$TAG" -R "$REPO" --pattern 'chiikawa-manager-arm64.zip' --pattern 'chiikawa-characters.zip' --pattern 'SHA256SUMS.txt' -D "$WORK" \
       || die "릴리스를 못 받았어요. 초대받은 GitHub 계정인지 확인해 주세요."
-    (cd "$WORK" && shasum -a 256 -c SHA256SUMS.txt) || die "다운로드 파일 검증에 실패했어요."
-    ditto -x -k "$WORK/chiikawa-manager-arm64.zip" "$WORK/unpacked"
-    SRC_APP="$WORK/unpacked/$APP_NAME.app"
-  else
-    gh release download "$TAG" -R "$REPO" --pattern '*.dmg' --pattern 'chiikawa-characters.zip' -D "$WORK" \
-      || die "릴리스를 못 받았어요. 저장소 초대 여부를 확인해 주세요."
-    DMG="$(find "$WORK" -name '*.dmg' -maxdepth 1 -print -quit)"
-    hdiutil attach -nobrowse -readonly -mountpoint "$WORK/mnt" "$DMG" >/dev/null
-    SRC_APP="$WORK/mnt/$APP_NAME.app"
   fi
+  (cd "$WORK" && shasum -a 256 -c --ignore-missing SHA256SUMS.txt) || die "다운로드 파일 검증에 실패했어요."
+  [ -f "$PACK" ] || { PACK=""; echo "캐릭터 묶음 없음 — 기본 캐릭터 8명으로 시작해요(움짤 캐릭터는 앱에서 직접 넣을 수 있어요)."; }
+  ditto -x -k "$WORK/chiikawa-manager-arm64.zip" "$WORK/unpacked"
+  SRC_APP="$(find "$WORK/unpacked" -maxdepth 1 -name '*.app' -print -quit)" # 한글 이름 인코딩과 상관없이
   [ -d "$SRC_APP" ] || die "배포 파일 안에서 앱을 찾지 못했어요."
   codesign --verify --deep --strict "$SRC_APP" || die "앱 서명 검증에 실패했어요."
 
@@ -98,7 +102,7 @@ NODE_BIN="$(command -v node || true)"
 run_node() { if [ -n "$NODE_BIN" ]; then "$NODE_BIN" "$@"; else ELECTRON_RUN_AS_NODE=1 "$APP/Contents/MacOS/chiikawa-buddy" "$@"; fi; }
 
 if [ -n "${PACK:-}" ] && [ -f "$PACK" ]; then
-  say "캐릭터 넣기(짭몽가·찐몽가·움짤 캐릭터·시사 제주 사투리)"
+  say "캐릭터 넣기"
   CY_AGENT_HOME="$HOME_DIR" run_node "$ROOT/ops/character-pack/import.mjs" "$PACK"
 fi
 

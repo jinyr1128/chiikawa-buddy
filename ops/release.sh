@@ -11,7 +11,8 @@ APP="$(find "$ROOT/desktop/dist/app" -maxdepth 2 -name '*.app' -print -quit)" # 
 [ -d "$APP" ] || { echo '앱 빌드 결과 없음'; exit 1; }
 codesign --verify --deep --strict "$APP"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/chiikawa-manager-arm64.zip"
-node "$ROOT/ops/character-pack/export.mjs" "$DIST/chiikawa-characters.zip" 찐몽가
+# CHAR_PACK_LITE=1: 공개 공유판 — 움짤 캐릭터는 빼고 기본 캐릭터 대사(시사 사투리 등)만
+node "$ROOT/ops/character-pack/export.mjs" "$DIST/chiikawa-characters.zip" 찐몽가 ${CHAR_PACK_LITE:+--lite}
 (cd "$DIST" && shasum -a 256 chiikawa-manager-arm64.zip chiikawa-characters.zip > SHA256SUMS.txt)
 if [ "${1:-}" = '--publish' ]; then
   NOTES="${RELEASE_NOTES:-$ROOT/docs/releases/v$VER.md}"

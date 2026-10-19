@@ -8,13 +8,16 @@ import { execFileSync } from 'node:child_process';
 
 const HOME = process.env.CY_AGENT_HOME ?? path.join(os.homedir(), '.cy-agent');
 const src = path.join(HOME, 'characters');
-const out = path.resolve(process.argv[2] ?? 'chiikawa-characters.zip');
-const preferName = process.argv[3] ?? '짭몽가';
+// --lite: 움짤 캐릭터(u-*)는 빼고 기본 캐릭터 대사 고친 것(overrides — 시사 제주 사투리 등 글자뿐)만. 공개 공유판용
+const LITE = process.argv.includes('--lite');
+const args = process.argv.slice(2).filter((a) => a !== '--lite');
+const out = path.resolve(args[0] ?? 'chiikawa-characters.zip');
+const preferName = args[1] ?? '짭몽가';
 if (!fs.existsSync(src)) { console.error(`캐릭터 폴더가 없어요: ${src}`); process.exit(1); }
 
 const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'cpack-'));
 const dst = path.join(stage, 'characters');
-fs.cpSync(src, dst, { recursive: true, filter: (p) => !/\.DS_Store$|\.tmp-/.test(p) });
+fs.cpSync(src, dst, { recursive: true, filter: (p) => !/\.DS_Store$|\.tmp-/.test(p) && !(LITE && /[\\/]u-[^\\/]+([\\/]|$)/.test(path.relative(src, p) ? `/${path.relative(src, p)}` : '')) });
 // 목록과 기본 캐릭터(새로 깐 사람이 처음 볼 캐릭터)
 const chars = fs.readdirSync(dst).filter((d) => d.startsWith('u-')).map((id) => {
   const c = JSON.parse(fs.readFileSync(path.join(dst, id, 'character.json'), 'utf8'));
