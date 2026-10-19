@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); // desktop/
 const REPO = path.join(ROOT, '..');
-const APP_NAME = '시사';
+const APP_NAME = '치이카와 비서';
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const VERSION = pkg.version;
 
@@ -102,10 +102,10 @@ const paths = await packager({
   arch: ARCH,
   electronVersion: ELECTRON_VERSION,
   name: APP_NAME, // 시사.app · Dock·Cmd+Tab·Finder 에 보이는 이름
-  executableName: 'shisa',
+  executableName: 'chiikawa-buddy',
   appVersion: VERSION,
   buildVersion: VERSION,
-  appBundleId: 'com.cy-agent.desktop',
+  appBundleId: 'com.chiikawa-buddy.desktop',
   appCategoryType: 'public.app-category.productivity',
   appCopyright: 'MIT License',
   icon: path.join(ICON_DIR, 'icon.icns'),
@@ -139,7 +139,7 @@ if (MAKE_DMG) {
   try {
     run('ditto', [APP, path.join(root, `${APP_NAME}.app`)]);
     fs.symlinkSync('/Applications', path.join(root, '응용 프로그램'));
-    const dmg = path.join(DIST, `Shisa-${VERSION}-${ARCH}.dmg`); // 파일 이름은 영문(GitHub 릴리스가 한글 파일 이름을 못 받는다). 앱 이름은 그대로 「시사」
+    const dmg = path.join(DIST, `ChiikawaBuddy-${VERSION}-${ARCH}.dmg`); // 파일 이름은 영문(GitHub 릴리스가 한글 파일 이름을 못 받는다). 앱 이름은 그대로 「시사」
     fs.rmSync(dmg, { force: true });
     run('hdiutil', ['create', '-volname', `${APP_NAME} ${VERSION}`, '-srcfolder', root, '-fs', 'HFS+', '-format', 'UDZO', '-imagekey', 'zlib-level=9', '-ov', dmg]);
     const mb = (fs.statSync(dmg).size / 1024 / 1024).toFixed(1);

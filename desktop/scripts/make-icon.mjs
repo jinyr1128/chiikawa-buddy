@@ -122,6 +122,7 @@ function main() {
     const repoChar = path.join(ASSETS, '..', '..', 'assets', 'character');
     const picks = [
       ...(REPO_ONLY ? [] : [path.join(home, 'assets', 'character', 'eyes_open@2x.png'), path.join(home, 'assets', 'character', 'eyes_open.png')]),
+      path.join(ASSETS, '..', '..', 'assets', 'characters', 'chiikawa', 'eyes_open.png'), // 치이카와 버디: 앱 아이콘은 치이카와
       path.join(repoChar, 'eyes_open@2x.png'),
       path.join(repoChar, 'eyes_open.png'),
       ...(REPO_ONLY ? [] : [path.join(home, 'assets', 'character.png')]),
