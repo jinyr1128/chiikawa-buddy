@@ -19,6 +19,10 @@ export const CHARACTER_CLIPS = {
       },
       {
         "file": "dance"
+      },
+      {
+        "file": "dance2",
+        "scene": true
       }
     ],
     "lunch": [
@@ -47,6 +51,10 @@ export const CHARACTER_CLIPS = {
       },
       {
         "file": "plan"
+      },
+      {
+        "file": "lunch",
+        "scene": true
       }
     ],
     "lunch": [
@@ -77,6 +85,10 @@ export const CHARACTER_CLIPS = {
       },
       {
         "file": "plan",
+        "scene": true
+      },
+      {
+        "file": "dance",
         "scene": true
       }
     ],
@@ -109,6 +121,10 @@ export const CHARACTER_CLIPS = {
       {
         "file": "plan",
         "scene": true
+      },
+      {
+        "file": "dance",
+        "scene": true
       }
     ],
     "lunch": "plan"
@@ -135,6 +151,9 @@ export const CHARACTER_CLIPS = {
       },
       {
         "file": "plan"
+      },
+      {
+        "file": "dance"
       }
     ],
     "lunch": [
@@ -176,6 +195,10 @@ export const CHARACTER_CLIPS = {
       {
         "file": "plan",
         "scene": true
+      },
+      {
+        "file": "cheer",
+        "scene": true
       }
     ]
   },
@@ -214,6 +237,10 @@ export const CHARACTER_CLIPS = {
       {
         "file": "plan",
         "scene": true
+      },
+      {
+        "file": "cheer",
+        "scene": true
       }
     ],
     "lunch": [
@@ -239,6 +266,10 @@ export const CHARACTER_CLIPS = {
       },
       {
         "file": "cheer",
+        "scene": true
+      },
+      {
+        "file": "lunch",
         "scene": true
       }
     ],

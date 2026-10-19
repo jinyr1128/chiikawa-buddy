@@ -11,7 +11,7 @@ import { createAttachTray } from './attach-tray.js';
 import { hasFiles, filesFromTransfer, ATTACH_ERRORS } from '../src/attachments.js';
 import { normFocus, focusBubble, doingBubble, claudeBubble, focusSend } from '../src/focus.js';
 import { who, setWho } from './who.js';
-import { renderSpeech } from '../src/speakers.js';
+import { renderSpeech, paintSpeaker, characterColor } from '../src/speakers.js';
 import { characterAssets, redrawCharacter, okCharacter, localSay, clipFor, danceClipOf, danceVariantOf, variantsOf, pickVariant, DANCE_MAX_MS, nextBlinkDelay, blinkPlan, initialActivity, activityReducer, viewOf, fitBox } from '../src/character.js';
 import { applyCharacters } from '../src/character-registry.js';
 import { BubbleExpiry } from '../src/bubble-expiry.js';
@@ -35,7 +35,10 @@ const CHAR_KEY = 'cy-character';
 const savedCharacter = () => { try { return localStorage.getItem(CHAR_KEY); } catch { return null; } };
 // 사용자 캐릭터·고친 대사(데몬 GET /characters → 메인 → 'characters'). 지난번 목록을 먼저 써서 켤 때 시사가 잠깐 보이지 않게
 const CHARS_KEY = 'cy-characters';
-try { const c = JSON.parse(localStorage.getItem(CHARS_KEY) ?? 'null'); if (c) applyCharacters(c); } catch { /* 없거나 깨짐 → 기본값 */ }
+let charMeta = {}; // id → { name, from } (말풍선 대표 색 — src/speakers.js)
+const keepMeta = (data) => { charMeta = Object.fromEntries((data?.characters ?? []).filter((c) => c?.id).map((c) => [c.id, { name: c.name, from: c.from }])); };
+const myColor = () => { const id = charA?.id ?? wantChar; return characterColor({ id, ...charMeta[id] }); };
+try { const c = JSON.parse(localStorage.getItem(CHARS_KEY) ?? 'null'); if (c) { applyCharacters(c); keepMeta(c); } } catch { /* 없거나 깨짐 → 기본값 */ }
 let wantChar = savedCharacter(); // 데몬이 고른 id 그대로(목록을 받기 전엔 모를 수 있다)
 let charA = characterAssets(wantChar);
 const probe = (url) => new Promise((ok) => {
@@ -472,7 +475,9 @@ function fillEl(item, b) {
 const toHtml = createMarkdown(Marked);
 function setRich(el, src) {
   el.closest('.bubble')?.classList.remove('speech-box');
+  el.style.color = '';
   if (renderSpeech(el, src)) { el.classList.remove('md'); return; } // 「모몽가: … / 카니: …」 주고받기는 한 줄씩, 대표 색으로
+  paintSpeaker(el, myColor()); // 혼자 하는 말은 그 캐릭터 대표 색
   if (!looksMarkdown(src)) {
     el.classList.remove('md');
     el.textContent = src ?? '';
@@ -719,6 +724,7 @@ function setMood(m) {
 // 사용자 캐릭터·고친 대사: 받으면 넣고(다음에 켤 때 먼저 쓰게 남겨 둔다) 지금 캐릭터를 다시 그린다
 function takeCharacters(data) {
   if (!data || !applyCharacters(data)) return;
+  keepMeta(data);
   try { localStorage.setItem(CHARS_KEY, JSON.stringify(data)); } catch { /* 못 남겨도 지금은 바뀐다 */ }
   setCharacter(wantChar, true);
 }
@@ -813,7 +819,8 @@ function drawDoing() {
   doingEl.hidden = !v;
   if (v) {
     doingEl.classList.remove('speech-box');
-    if (!renderSpeech(doingText, v.text)) doingText.textContent = v.text;
+    doingText.style.color = '';
+    if (!renderSpeech(doingText, v.text)) { doingText.textContent = v.text; if (v.claude) paintSpeaker(doingText, myColor()); }
     doingLabel.textContent = v.label;
     doingEl.dataset.claude = v.claude ? '1' : '';
     doingEl.title = v.claude ? 'Claude Code가 일하는 중' : v.more ? `진행 중: ${doingTodos.filter((t) => t.doing === true).map((t) => t.title).join(', ')}` : '할 일 보기';
@@ -1284,7 +1291,7 @@ function toastCard(x) {
   const head = el('div', 'toast-head');
   head.append(el('b', null, [inboxSourceLabel(x.source), x.account].filter(Boolean).join(' · ')), el('span', 'toast-time', toastTime(x.at)));
   const title = el('div', 'toast-title', x.title);
-  renderSpeech(title, x.title);
+  if (!renderSpeech(title, x.title) && ['claude', 'codex', 'hermes'].includes(x.source)) paintSpeaker(title, myColor()); // AI 작업 알림은 캐릭터가 하는 말
   main.append(head, title);
   if (x.body) main.append(el('div', 'toast-body', x.body));
   const openIt = () => { cy.inboxOpen?.(x); readOne(x); };

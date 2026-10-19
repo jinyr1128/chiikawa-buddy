@@ -11,3 +11,13 @@ test('주고받기 대사: 사람마다 한 줄·대표 색, 보통 대사는 �
   assert.equal(speakerLines(undefined), null);
   assert.equal(Object.keys(SPEAKER_COLORS).length >= 8, true);
 });
+
+test('캐릭터 대표 색: 이름 > 기본 캐릭터 id > 이름 속 캐릭터 > 바탕(from)', async () => {
+  const { characterColor, SPEAKER_COLORS: C } = await import('../src/speakers.js');
+  assert.equal(characterColor({ id: 'u-1', name: '우사기' }), C.우사기);
+  assert.equal(characterColor({ id: 'hachi' }), C.하치와레);
+  assert.equal(characterColor({ id: 'u-2', name: '카니와 모몽가' }), C.카니);
+  assert.equal(characterColor({ id: 'u-3', name: '세이렌', from: 'hachi' }), C.하치와레);
+  assert.equal(characterColor({ id: 'u-4', name: '아노코', from: 'kani' }), C.카니);
+  assert.equal(characterColor({ id: 'u-5', name: '새 캐릭터' }), null);
+});

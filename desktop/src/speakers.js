@@ -46,3 +46,26 @@ export function renderSpeech(el, text, doc = globalThis.document) {
   }));
   return true;
 }
+
+// 기본 캐릭터 id → 대표 색(사용자 캐릭터는 이름, 없으면 바탕이 된 캐릭터 from 의 색: 세이렌 → 하치와레, 아노코 → 카니)
+export const BASE_COLORS = Object.freeze({
+  chiikawa: SPEAKER_COLORS.치이카와, usagi: SPEAKER_COLORS.우사기, hachi: SPEAKER_COLORS.하치와레, shisa: SPEAKER_COLORS.시사,
+  kuri: SPEAKER_COLORS.쿠리만쥬, rakko: SPEAKER_COLORS.랏코, kani: SPEAKER_COLORS.카니, momonga: SPEAKER_COLORS.모몽가,
+});
+// c: { id, name?, from? } → 색 | null
+export function characterColor(c) {
+  if (!c) return null;
+  if (c.name && SPEAKER_COLORS[c.name]) return SPEAKER_COLORS[c.name];
+  if (BASE_COLORS[c.id]) return BASE_COLORS[c.id];
+  const inName = c.name && Object.keys(SPEAKER_COLORS).find((n) => c.name.includes(n));
+  if (inName) return SPEAKER_COLORS[inName];
+  return BASE_COLORS[c.from] ?? null;
+}
+
+// 혼자 하는 말: 글자를 그 캐릭터 색으로, 말풍선·카드는 어두운 바탕으로. color 가 없으면 원래대로
+export function paintSpeaker(el, color) {
+  const box = el?.closest?.('.bubble, #doing, .toast');
+  if (!el) return;
+  el.style.color = color || '';
+  if (color) box?.classList.add('speech-box');
+}
