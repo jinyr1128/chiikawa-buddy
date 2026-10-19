@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { withHooks, hooksInstalled, setInstalled, isInstalled, HOOK_EVENTS, MARK } from '../src/claude-hooks.js';
+import { withHooks, hooksInstalled, setInstalled, isInstalled, refreshInstalled, statusCommand, HOOK_EVENTS, MARK } from '../src/claude-hooks.js';
 import { claudeBubble } from '../src/focus.js';
 
 test('켜면 모든 이벤트에 들어가고, 남의 hook 은 그대로', () => {
@@ -35,6 +35,22 @@ test('파일로: 백업을 남기고, 깨진 파일은 건드리지 않는다', 
   const r = setInstalled(true, 47823, file);
   assert.equal(r.ok, false);
   assert.equal(fs.readFileSync(file, 'utf8'), '{ broken');
+});
+
+test('상태 줄: 비어 있으면 우리 것을 넣고 끄면 뺀다, 남의 상태 줄은 그대로', () => {
+  const on = withHooks({}, true, 47823);
+  assert.equal(on.statusLine.command, statusCommand(47823));
+  assert.equal(withHooks(on, false, 47823).statusLine, undefined);
+  const theirs = { type: 'command', command: 'my-status.sh' };
+  assert.deepEqual(withHooks({ statusLine: theirs }, true, 47823).statusLine, theirs);
+  assert.deepEqual(withHooks({ statusLine: theirs }, false, 47823).statusLine, theirs);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cb-'));
+  const file = path.join(dir, 'settings.json');
+  const old = withHooks({}, true, 47823); delete old.statusLine;
+  fs.writeFileSync(file, JSON.stringify(old));
+  assert.equal(refreshInstalled(47823, file).changed, true);
+  assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).statusLine.command, statusCommand(47823));
+  assert.equal(refreshInstalled(47823, file).changed, false);
 });
 
 test('Claude 작업 말풍선: claude run 만, 최근 것 먼저, 집중 중엔 숨김', () => {

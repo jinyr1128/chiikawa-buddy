@@ -9,6 +9,12 @@
    - 소스로 만들어야 하면 `./ops/setup-mac.sh --build` (Node.js 24+, `xcode-select --install` 필요).
 4. 끝나면 확인: `curl -s http://127.0.0.1:47823/health` 가 `{"ok":true…}` 이면 앱이 켜진 것. 메뉴 막대 아이콘 → 「홈」을 열어 보라고 안내한다.
 5. 연결은 사용자가 앱의 「연결 관리」에서 각자 계정으로 한다(Slack 토큰·메일 앱 비밀번호·노션 시크릿은 **사용자가 직접 붙여 넣는다** — AI 가 받아 적거나 대신 입력하지 않는다). 각 카드에 버튼과 단계가 있다.
-6. 처음 캘린더를 고를 때 macOS 가 「캘린더 접근」을 물으면 [허용]을 누르라고 알린다.
+6. 처음 캘린더를 고를 때(또는 새 버전을 처음 켤 때) macOS 가 「캘린더 접근」을 물으면 [전체 접근 허용]을 누르라고 알린다.
+7. AI 작업 표시 확인(사용자가 쓰는 도구만):
+   - Claude Code: `node ops/claude-hooks.mjs status` 가 「연동 켜짐」이면 된다. 터미널용 `claude` 가 로그인 전이면 **사용자가 직접** `claude auth login` 으로 브라우저에서 승인한다.
+   - Codex: 설정이 필요 없다. CLI 를 원하면 `npm i -g @openai/codex` 후 사용자가 `codex login`.
+   - `curl -s http://127.0.0.1:47823/usage` 로 AI 사용량(한도 %·오늘 토큰)이 읽히는지 본다. 한도 %는 그 도구를 한 번 쓰고 나면 채워진다.
+
+업데이트: 저장소 폴더에서 `git pull && ./ops/setup-mac.sh` (앱을 끄고 새 버전으로 바꾼 뒤 다시 켠다. 설정·캐릭터는 그대로).
 
 지우기: `osascript -e 'tell application "치이카와 매니저" to quit'; rm -rf "/Applications/치이카와 매니저.app"` (데이터는 `~/.cy-agent`, Claude 연동 끄기는 `node ops/claude-hooks.mjs off`, Hermes 는 `node ops/hermes-hooks.mjs off`).

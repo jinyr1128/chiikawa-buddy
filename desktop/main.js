@@ -1,7 +1,8 @@
 // 데스크톱 마스코트 — 메인 프로세스.
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
 import { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
-import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks } from './src/claude-hooks.js';
+import { faceBox } from './src/tray-face.js';
+import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks, refreshInstalled as refreshClaudeHooks } from './src/claude-hooks.js';
 import { isInstalled as hermesHooksOn, setInstalled as setHermesHooks, hermesAvailable } from './src/hermes-hooks.js';
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -1115,9 +1116,47 @@ function trayImage() {
       return img;
     }
   }
+  const face = process.platform === 'darwin' ? trayFace() : null;
+  if (face) return face;
   const img = nativeImage.createFromPath(path.join(__dirname, 'assets', 'trayTemplate.png'));
   img.setTemplateImage(true);
   return img;
+}
+
+// 맥 메뉴 막대: 지금 캐릭터 얼굴(무슨 캐릭터인지 바로 보이게). face.png 가 있으면 그걸, 없으면 대기 그림에서 머리를 잘라 낸다
+const trayFaces = new Map(); // 캐릭터 id + 파일 → 그림(바꿀 때마다 다시 자르지 않게)
+function characterIdleFile(id) {
+  const c = charactersData?.characters?.find((x) => x.id === id);
+  if (c?.custom) {
+    const dir = path.join(AGENT_HOME, 'characters', id);
+    for (const f of ['face.png', c.media?.eyes_open].filter(Boolean)) {
+      const p = path.join(dir, path.basename(f));
+      if (fs.existsSync(p)) return p;
+    }
+    if (c.from && c.from !== id) return characterIdleFile(c.from);
+    return null;
+  }
+  for (const rel of [`characters/${id}/face.png`, `characters/${id}/eyes_open.png`]) {
+    const hit = assetCandidates(rel, { user: USER_ASSETS, repo: app.isPackaged ? null : REPO_ASSETS, bundle: app.isPackaged ? BUNDLE.assetsDir : null, bundled: path.join(__dirname, 'assets') }, path.join).find((f) => fs.existsSync(f));
+    if (hit) return hit;
+  }
+  return null;
+}
+function trayFace() {
+  try {
+    const file = characterIdleFile(charId);
+    if (!file) return null;
+    const key = `${charId}:${file}`;
+    if (trayFaces.has(key)) return trayFaces.get(key);
+    const src = nativeImage.createFromPath(file);
+    if (src.isEmpty()) return null;
+    const { width, height } = src.getSize();
+    const crop = path.basename(file) === 'face.png' ? src : src.crop(faceBox(src.toBitmap(), width, height));
+    const img = nativeImage.createEmpty();
+    for (const sc of [1, 2]) img.addRepresentation({ scaleFactor: sc, width: 18 * sc, height: 18 * sc, buffer: crop.resize({ width: 18 * sc, height: 18 * sc, quality: 'best' }).toPNG() });
+    trayFaces.set(key, img);
+    return img;
+  } catch { return null; }
 }
 
 function createTray() {
@@ -1208,7 +1247,7 @@ function onCharacter(id, force = false) {
   if (next === charId && !force) return;
   charId = next;
   app.setName(appTitle());
-  if (tray) tray.setToolTip(appTitle());
+  if (tray) { tray.setToolTip(appTitle()); tray.setImage(trayImage()); }
   rebuildTrayMenu();
   createAppMenu();
   setDockMenu();
@@ -1595,6 +1634,7 @@ function setupIPC() {
   });
   // 홈: 지금 상태·방해 금지
   ipcMain.handle('activity', (e) => (fromOurs(e) ? request('GET', '/activity') : denied()));
+  ipcMain.handle('ai-usage', (e) => (fromOurs(e) ? request('GET', '/usage') : denied()));
   ipcMain.handle('dnd-get', (e) => (fromOurs(e) ? dndView() : denied()));
   ipcMain.handle('dnd-set', (e, mins) => { if (!fromOurs(e)) return denied(); setDnd(mins === 'eod' ? 'eod' : Math.max(0, Math.min(24 * 60, Number(mins) || 0))); return dndView(); });
   // 맥 캘린더 목록(GET /calendars/mac) — 처음엔 macOS 허락 창을 기다리느라 오래 걸릴 수 있다
@@ -2382,6 +2422,7 @@ if (SQUIRREL) {
     registerAssetProtocol();
     registerAttachProtocol();
     setupIPC();
+    refreshClaudeHooks(PORT); // 연동을 켜 둔 사람은 사용량 상태 줄도(비어 있을 때만)
     createAppMenu();
     setupAppActivation();
     registerDebugShortcut();

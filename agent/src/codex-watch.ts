@@ -52,7 +52,8 @@ export class CodexWatch {
   }
 
   start(intervalMs = 3000) {
-    if (this.timer || !existsSync(this.dir)) return;
+    // Codex 를 앱보다 나중에 깔아도 보이게: 폴더가 없어도 지켜보기는 켜 두고, 생기면 그때부터 읽는다
+    if (this.timer) return;
     this.timer = setInterval(() => { try { this.tick(); } catch { /* 다음에 다시 */ } }, intervalMs);
     this.timer.unref?.();
   }
@@ -76,6 +77,7 @@ export class CodexWatch {
   }
 
   tick() {
+    if (!existsSync(this.dir)) return;
     for (const p of this.recentFiles()) {
       let st: FileState | undefined = this.files.get(p);
       const size = statSync(p).size;

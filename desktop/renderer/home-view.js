@@ -9,19 +9,20 @@ const fmtTime = (iso) => new Date(iso).toLocaleTimeString('ko-KR', { hour: 'nume
 
 export function createHomeView({ h, cy, el, goto, renderMd, who }) {
   let visible = false;
-  let data = { activity: null, inbox: [], unread: 0, events: [], notion: null, dnd: null };
+  let data = { activity: null, inbox: [], unread: 0, events: [], notion: null, dnd: null, usage: null };
   let vm = null;
   let timer = null;
 
   async function load() {
     const now = new Date();
     const end = new Date(now); end.setDate(end.getDate() + 1); end.setHours(23, 59, 0, 0);
-    const [act, inbox, cal, notion, dnd] = await Promise.all([
+    const [act, inbox, cal, notion, dnd, usage] = await Promise.all([
       cy.activity?.().catch(() => null),
       cy.inboxList?.({ unread: true }).catch(() => null),
       cy.calendarEvents?.({ from: new Date(now.getTime() - 3600e3).toISOString(), to: end.toISOString() }).catch(() => null),
       cy.notionStatus?.().catch(() => null),
       cy.dndGet?.().catch(() => null),
+      cy.aiUsage?.().catch(() => null),
     ]);
     data = {
       activity: act?.ok ? act.data : null,
@@ -30,6 +31,7 @@ export function createHomeView({ h, cy, el, goto, renderMd, who }) {
       events: cal?.ok && Array.isArray(cal.data?.events) ? cal.data.events.filter((e) => e.allDay !== true && Date.parse(e.end) > Date.now()).sort((a, b) => a.start.localeCompare(b.start)) : [],
       notion: notion?.ok ? notion.data : null,
       dnd: dnd ?? null,
+      usage: usage?.ok ? usage.data : null,
     };
     render();
   }
@@ -45,6 +47,39 @@ export function createHomeView({ h, cy, el, goto, renderMd, who }) {
     const rows = ai.map((r) => h('li.home-row', {}, h('span.home-tag', { text: KIND[r.kind] }), h('span.home-row-main', { text: r.title }), h('span.home-row-side', { text: relativeTime(r.startedAt) })));
     const others = runs.filter((r) => !KIND[r.kind]).map((r) => h('li.home-row', {}, h('span.home-tag.muted', { text: '정리' }), h('span.home-row-main', { text: r.title })));
     return card('지금 하는 일', [rows.length || others.length ? h('ul.home-list', {}, rows, others) : empty('지금은 쉬는 중이에요.')]);
+  }
+
+  // AI 사용량: 한도 % 막대(5시간·주간) + 다시 차는 시각 + 오늘 쓴 토큰. 터미널(CLI)에선 남은 양이 안 보여서
+  function usageCard() {
+    const u = data.usage;
+    const tok = (n) => (n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4).toLocaleString('ko-KR')}만` : `${n || 0}`);
+    const when = (iso) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const same = d.toDateString() === new Date().toDateString();
+      return `${same ? '' : `${d.getMonth() + 1}/${d.getDate()} `}${fmtTime(iso)} 초기화`;
+    };
+    const bar = (label, l) => {
+      if (!l) return null;
+      const tone = l.pct >= 90 ? 'bad' : l.pct >= 70 ? 'warn' : 'ok';
+      return h('div.home-usage-row', {},
+        h('span.home-usage-label', { text: label }),
+        h(`span.home-usage-bar.${tone}`, {}, h('i', { style: `width:${Math.max(2, l.pct)}%` })),
+        h('span.home-usage-pct', { text: `${l.pct}%` }),
+        h('span.home-row-side', { text: when(l.resetsAt) }));
+    };
+    const block = (name, t, hint) => {
+      if (!t) return null;
+      const bars = [bar('5시간', t.fiveHour), bar('주간', t.week)].filter(Boolean);
+      return h('div.home-usage', {},
+        h('div.home-usage-head', {}, h('b', { text: name }), t.plan ? h('span.home-tag.muted', { text: t.plan }) : null, h('span.home-row-side', { text: `오늘 ${tok(t.todayTokens)} 토큰` })),
+        bars.length ? bars : h('p.home-note', { text: hint }));
+    };
+    if (!u) return card('AI 사용량', [empty('사용량을 아직 못 읽었어요.')]);
+    return card('AI 사용량', [
+      block('Claude', u.claude, '한도 %는 터미널에서 Claude Code 를 한 번 쓰면 보여요(연결 관리 → Claude Code 연동 켜기).'),
+      block('Codex', u.codex, '한도 %는 Codex 를 한 번 쓰면 보여요.'),
+    ]);
   }
 
   function inboxCard() {
@@ -120,7 +155,7 @@ export function createHomeView({ h, cy, el, goto, renderMd, who }) {
     if (!visible) return;
     el.replaceChildren(
       headRow(),
-      h('div.home-grid', {}, nowCard(), inboxCard(), calendarCard(), todayCard()),
+      h('div.home-grid', {}, nowCard(), usageCard(), inboxCard(), calendarCard(), todayCard()),
       briefingCard(),
       connRow(),
     );

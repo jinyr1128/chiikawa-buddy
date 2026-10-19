@@ -18,6 +18,12 @@ export function hookCommand(port) {
   return `curl -s -m 1 -X POST -H 'x-cy-agent: 1' -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:${port}/claude/hook >/dev/null 2>&1 || true # ${MARK}`;
 }
 
+// 상태 줄(statusLine): Claude Code(터미널)가 화면 아래 줄을 그릴 때 넘겨주는 사용량(5시간·주간 한도 %)을 앱에 넘기고,
+// 앱이 돌려준 짧은 글(「5시간 23% · 주간 40%」)을 그대로 보여 준다. 앱이 꺼져 있으면 빈 줄. 사용자가 직접 만든 상태 줄이 있으면 건드리지 않는다
+export function statusCommand(port) {
+  return `curl -s -m 1 -X POST -H 'x-cy-agent: 1' -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:${port}/claude/status 2>/dev/null || true # ${MARK}`;
+}
+
 const ours = (h) => String(h?.command ?? '').includes(MARK);
 
 // 순수 함수: settings 객체 → 우리 hook 을 넣은(on) / 뺀(off) 새 객체
@@ -32,6 +38,11 @@ export function withHooks(settings, on, port) {
     if (groups.length) hooks[ev] = groups; else delete hooks[ev];
   }
   if (Object.keys(hooks).length) next.hooks = hooks; else delete next.hooks;
+  const sl = next.statusLine;
+  if (!sl || ours(sl)) {
+    if (on) next.statusLine = { type: 'command', command: statusCommand(port), padding: 0 };
+    else delete next.statusLine;
+  }
   return next;
 }
 
@@ -62,4 +73,13 @@ export function setInstalled(on, port, file = settingsPath()) {
   } catch (e) {
     return { ok: false, error: e instanceof SyntaxError ? `${file} 형식이 깨져 있어서 건드리지 않았어요` : String(e?.message ?? e) };
   }
+}
+
+// 예전 버전으로 연동만 켜 둔 사람: 앱이 켜질 때 비어 있는 상태 줄 자리에 사용량 줄을 채운다(남의 상태 줄은 그대로)
+export function refreshInstalled(port, file = settingsPath()) {
+  try {
+    const cur = readSettings(file);
+    if (!hooksInstalled(cur, port) || cur.statusLine) return { ok: true, changed: false };
+    return { ...setInstalled(true, port, file), changed: true };
+  } catch { return { ok: false, changed: false }; }
 }

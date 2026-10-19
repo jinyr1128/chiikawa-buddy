@@ -143,6 +143,7 @@ contextBridge.exposeInMainWorld('cy', {
   openMacApp: (name) => ipcRenderer.send('open-mac-app', String(name ?? '')),
   githubLogin: () => ipcRenderer.send('github-login'),
   activity: () => ipcRenderer.invoke('activity'),
+  aiUsage: () => ipcRenderer.invoke('ai-usage'),
   dndGet: () => ipcRenderer.invoke('dnd-get'),
   dndSet: (mins) => ipcRenderer.invoke('dnd-set', mins),
   onDnd: on('dnd'),

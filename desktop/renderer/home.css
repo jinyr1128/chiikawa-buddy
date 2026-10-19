@@ -32,3 +32,16 @@
 .home-chip.warn i { background: var(--p2); }
 .home-chip.off { color: var(--muted); }
 .nav-sep { height: 1px; margin: 8px 10px; background: var(--line); }
+
+/* AI 사용량 */
+.home-usage { padding: 6px 0; }
+.home-usage + .home-usage { border-top: 1px solid var(--line); }
+.home-usage-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 13px; }
+.home-usage-head .home-row-side { margin-left: auto; }
+.home-usage-row { display: grid; grid-template-columns: 38px 1fr 40px auto; align-items: center; gap: 8px; font-size: 12.5px; padding: 2px 0; }
+.home-usage-label { color: var(--muted); }
+.home-usage-bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.home-usage-bar i { display: block; height: 100%; border-radius: 99px; background: #4caf7a; }
+.home-usage-bar.warn i { background: #f0a030; }
+.home-usage-bar.bad i { background: #e05050; }
+.home-usage-pct { text-align: right; font-variant-numeric: tabular-nums; }

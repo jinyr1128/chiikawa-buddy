@@ -35,11 +35,14 @@ cd chiikawa-buddy
 |---|---|
 | `--build` | 릴리스를 받지 않고 소스로 직접 만들어요(Node.js 24 이상 + `xcode-select --install` 필요) |
 | `--no-hooks` | Claude Code·Hermes 연동을 켜지 않아요 |
-| `--tag v0.4.0` | 그 버전으로 설치해요 |
+| `--tag v0.4.1` | 그 버전으로 설치해요 |
+
+**업데이트**도 같은 방법이에요: 저장소 폴더에서 `git pull && ./ops/setup-mac.sh`. 새 버전을 처음 켜면 macOS가 「캘린더 접근」을 다시 물을 수 있어요 → [전체 접근 허용].
 
 ## 쓰는 법
 
-- 메뉴 막대(화면 위 오른쪽) 아이콘 → **홈**을 눌러요. 지금 AI가 하는 일, 확인할 알림, 오늘 일정, 오늘 할 일, 최근 브리핑을 한 화면에서 봐요.
+- 메뉴 막대(화면 위 오른쪽)에 **지금 캐릭터의 얼굴 아이콘**이 있어요(모몽가면 모몽가 얼굴). 눌러서 **홈**을 열어요. 지금 AI가 하는 일, **AI 사용량**, 확인할 알림, 오늘 일정, 오늘 할 일, 최근 브리핑을 한 화면에서 봐요.
+- **AI 사용량**: Claude·Codex 한도를 몇 % 썼는지(5시간·주간)와 언제 초기화되는지, 오늘 쓴 토큰을 막대로 보여 줘요. 터미널에서 Claude Code를 쓰면 화면 아래 상태 줄에도 `🐹 5시간 34% · 주간 12%`처럼 나와요.
 - **캐릭터 바꾸기**도 메뉴 막대에서 해요. Dock에는 아이콘이 없어요.
 - **알림 카드**는 캐릭터 위에 떠요. [열기]를 누르면 Slack 앱이나 메일, 회의로 바로 가고, [읽음]·[답장]·[머지]도 카드에서 할 수 있어요. 읽기 전에는 사라지지 않아요.
 - **방해 금지**는 메뉴 막대나 홈에서 켜요. 회의 중에는 저절로 조용해지고, 머지 승인과 오류만 예외로 보여요.
@@ -49,8 +52,8 @@ cd chiikawa-buddy
 
 | 도구 | 방법 |
 |---|---|
-| Claude Code (CLI·데스크톱 Code 탭·IDE) | `~/.claude/settings.json` 의 hook(설치 스크립트나 「연결 관리」에서 켬) |
-| Codex (CLI·ChatGPT 앱) | `~/.codex/sessions` 기록을 읽음(설정 필요 없음) |
+| Claude Code (CLI·데스크톱 Code 탭·IDE) | `~/.claude/settings.json` 의 hook + 사용량 상태 줄(설치 스크립트나 「연결 관리」에서 켬. 내가 만든 상태 줄이 있으면 건드리지 않아요) |
+| Codex (CLI·ChatGPT 앱) | `~/.codex/sessions` 기록을 읽음(설정 필요 없음, 앱보다 나중에 깔아도 돼요). CLI 설치: `npm i -g @openai/codex` → `codex login` |
 | Hermes Agent | `~/.hermes/config.yaml` 의 셸 hook(설치 스크립트나 「연결 관리」에서 켬) |
 
 일하는 중에는 캐릭터가 작업 움짤을 틀고, 머리 위에 「main.js 고치기 중이라고오!!!」처럼 캐릭터 말투로 지금 하는 일을 보여 줘요. 일이 끝났거나, 내 확인이 필요하거나, 토큰이 다 되면 캐릭터 대사와 알림 카드로 알려 줘요. 토큰이 다 됐을 때는 언제 다시 쓸 수 있는지도 함께 알려 줘요.
@@ -71,7 +74,7 @@ cd chiikawa-buddy
 
 ```bash
 node ops/character-pack/export.mjs chiikawa-characters.zip 짭몽가   # 내 캐릭터 → zip (설정·열쇠는 안 들어감)
-gh release upload v0.4.0 chiikawa-characters.zip --clobber          # 릴리스에 올리기
+gh release upload v0.4.1 chiikawa-characters.zip --clobber          # 릴리스에 올리기
 ```
 
 ---

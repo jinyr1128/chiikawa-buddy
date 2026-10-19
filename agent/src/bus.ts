@@ -7,6 +7,7 @@ import type { TodoPatch } from "./store.ts";
 import { parseRulePatch } from "./todo-rules.ts";
 import { ActivityTracker } from "./activity.ts";
 import { ClaudeHooks } from "./claude-hooks.ts";
+import { AiUsage } from "./usage.ts";
 import { listMacCalendars } from "./maccal.ts";
 import { hermesToClaude } from "./hermes-hooks.ts";
 import { githubMerge, githubReply } from "./github-sync.ts";
@@ -299,6 +300,8 @@ export class Bus {
   inboxChanged() {
     if (this.inbox) this.send("inbox", { unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() });
   }
+  // AI 사용량(한도 %·오늘 토큰) — usage.ts
+  readonly usage = new AiUsage();
   readonly claude = new ClaudeHooks(this.activity, (b) => this.bubble(b));
   constructor() {
     this.activity.onChange = () => this.send("state", this.state());
@@ -409,6 +412,7 @@ export class Bus {
     // 홈 화면: 지금 캐릭터 상태(돌고 있는 일 — Claude·Codex·Hermes 작업 포함)
     if (req.method === "GET" && url.pathname === "/connections/overview") return this.connections ? json(res, 200, await this.connections.overview()) : json(res, 503, { error: "unavailable" });
     if (req.method === "GET" && url.pathname === "/activity") return json(res, 200, this.state());
+    if (req.method === "GET" && url.pathname === "/usage") return json(res, 200, this.usage.snapshot());
     if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
       try { return json(res, 200, { calendars: await listMacCalendars() }); } catch (e: any) { return json(res, 503, { error: String(e?.message ?? e) }); }
@@ -695,6 +699,11 @@ export class Bus {
         const ev = hermesToClaude(await readJson(req));
         if (ev) this.claude.handle(ev, "hermes");
         return json(res, 200, { ok: true });
+      }
+      if (url.pathname === "/claude/status") { // Claude Code 상태 줄: 받은 사용량을 기억하고 보여 줄 한 줄을 글로 돌려준다
+        const line = this.usage.fromClaudeStatus(await readJson(req));
+        res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
+        return void res.end(line);
       }
       if (url.pathname === "/claude/hook") {
         this.claude.handle((await readJson(req)) as Record<string, unknown>);
