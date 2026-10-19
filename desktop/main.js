@@ -852,6 +852,7 @@ function onSSE({ event, data }) {
     if (typeof payload?.character === 'string') onCharacter(payload.character);
   }
   if (event === 'inbox') onInbox(payload);
+  if (event === 'inbox_item' && !state.bubblesHidden) send('inbox_item', payload); // 캐릭터 위 알림 팝업
   if (event === 'characters') loadCharacters(); // 만들거나 고치거나 지움 → 다시 읽어 창마다
   if (event === 'bubble' || event === 'state' || event === 'clear') send(event, payload);
   else if (event === 'run') sendSession('run', payload);
@@ -1799,6 +1800,7 @@ function setupIPC() {
     const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(q.source) ? q.source : '';
     return request('GET', `/inbox${src || q?.unread ? '?' : ''}${src ? `source=${src}` : ''}${src && q?.unread ? '&' : ''}${q?.unread ? 'unread=1' : ''}`);
   });
+  ipcMain.on('inbox-read-one', (e, id) => { if (fromOurs(e) && typeof id === 'string' && /^[\w-]{1,64}$/.test(id)) post('/inbox/read', { ids: [id] }).catch(() => {}); });
   ipcMain.handle('inbox-read', (e, body) => {
     if (!fromOurs(e)) return denied();
     const ids = body?.ids === 'all' ? 'all' : Array.isArray(body?.ids) ? body.ids.filter((x) => typeof x === 'string' && /^[\w-]{1,64}$/.test(x)).slice(0, 1000) : null;

@@ -28,6 +28,7 @@ export class Inbox {
   private items: InboxItem[] = [];
   private keys = new Set<string>();
   onChange?: (unread: number) => void;
+  onAdd?: (item: InboxItem) => void; // 새 알림 하나(캐릭터 위 팝업)
   private path?: string;
   private now: () => Date;
 
@@ -61,6 +62,7 @@ export class Inbox {
     this.items.sort((a, b) => b.at.localeCompare(a.at));
     while (this.items.length > MAX_ITEMS) { const x = this.items.pop()!; this.keys.delete(x.key); }
     this.changed();
+    this.onAdd?.(item);
     return true;
   }
 

@@ -282,6 +282,10 @@ export class Bus {
   // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
   // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
   inbox?: Inbox;
+  // 새 알림 하나 → 캐릭터 위 팝업(앱이 몰려 오면 묶어서 보여 준다)
+  inboxItem(item: unknown) {
+    this.send("inbox_item", item);
+  }
   inboxChanged() {
     if (this.inbox) this.send("inbox", { unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() });
   }

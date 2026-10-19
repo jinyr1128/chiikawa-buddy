@@ -106,6 +106,7 @@ const inbox = new Inbox(join(HOME_DIR, "inbox.json"));
 setInbox(inbox);
 bus.inbox = inbox;
 inbox.onChange = () => bus.inboxChanged();
+inbox.onAdd = (item) => bus.inboxItem(item);
 bus.activity.bindRuns(runs); // 돌고 있는 run(대화 제외) → 캐릭터 "공부 중"
 // 집중하기(포커스 타이머): 기록은 cy.db, 바뀌면 SSE focus · 그만하면 「N분 집중했어요」 말풍선. AI 없이도 돈다
 const focus = new Focus(store);

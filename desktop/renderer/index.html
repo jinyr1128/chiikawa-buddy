@@ -10,6 +10,8 @@
 </head>
 <body>
   <main id="stage">
+    <!-- 알림 팝업: 메일·Slack·캘린더·Claude 새 알림을 반투명 카드로(src/toasts.js) -->
+    <section id="toasts" aria-live="polite" aria-label="새 알림"></section>
     <section id="stack" aria-live="polite"></section>
     <!-- 집중하기: 경과 시간 · 일시정지/다시 시작 · 그만하기(renderer.js, src/focus.js) -->
     <div id="focus" class="hit" role="timer" aria-label="집중 시간" hidden>

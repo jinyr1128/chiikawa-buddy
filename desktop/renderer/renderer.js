@@ -16,7 +16,8 @@ import { applyCharacters } from '../src/character-registry.js';
 import { BubbleExpiry } from '../src/bubble-expiry.js';
 import { createHoverAsk, hoverAskAllowed } from '../src/hover-ask.js';
 import { createPressTracker, missedClick, missedPress, staleHold } from '../src/press.js';
-import { badgeText, badgeTitle } from '../src/inbox.js';
+import { badgeText, badgeTitle, inboxSourceLabel, inboxIcon } from '../src/inbox.js';
+import { createToastQueue } from '../src/toasts.js';
 
 const cy = window.cy;
 const stack = document.getElementById('stack');
@@ -1238,3 +1239,84 @@ cy.onInbox?.((p) => {
   inboxBadge.textContent = t;
   wrap.title = badgeTitle(p?.bySource);
 });
+
+// ---- 알림 팝업: 새 메일·Slack·일정·Claude 알림을 캐릭터 위에 반투명 카드로(맥 알림처럼) ----
+// 누르면 원래 화면(메일·Slack 메시지·회의 링크)을 열고 읽음, ✕ 는 닫기만. 8초 뒤 저절로 사라지고 마우스를 올리면 멈춘다
+const toastsEl = document.getElementById('toasts');
+const toastQ = createToastQueue();
+const toastTimers = new Map();
+const TOAST_MS = 8000;
+function toastTime(at) {
+  const d = Date.now() - Date.parse(at);
+  if (!Number.isFinite(d) || d < 60e3) return '방금';
+  if (d < 3600e3) return `${Math.floor(d / 60e3)}분 전`;
+  return new Date(at).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+}
+function armToast(id, ms = TOAST_MS) {
+  clearTimeout(toastTimers.get(id));
+  toastTimers.set(id, setTimeout(() => dropToast(id), ms));
+}
+function dropToast(id) {
+  clearTimeout(toastTimers.get(id));
+  toastTimers.delete(id);
+  toastQ.remove(id);
+  drawToasts();
+}
+function toastCard(t) {
+  const x = t.item ?? t.summary.latest;
+  const src = t.item ? x.source : t.summary.source;
+  const card = document.createElement('div');
+  card.className = 'toast hit';
+  card.dataset.source = src;
+  const icon = document.createElement('div');
+  icon.className = 'toast-icon';
+  icon.textContent = inboxIcon(src);
+  const main = document.createElement('div');
+  main.className = 'toast-main';
+  const head = document.createElement('div');
+  head.className = 'toast-head';
+  const who = document.createElement('b');
+  who.textContent = t.item ? [inboxSourceLabel(src), x.account].filter(Boolean).join(' · ') : `${inboxSourceLabel(src)} 새 알림 ${t.summary.n}개`;
+  const time = document.createElement('span');
+  time.className = 'toast-time';
+  time.textContent = toastTime(x.at);
+  head.append(who, time);
+  const title = document.createElement('div');
+  title.className = 'toast-title';
+  title.textContent = t.item ? x.title : `최근: ${x.title}`;
+  main.append(head, title);
+  if (t.item && x.body) {
+    const body = document.createElement('div');
+    body.className = 'toast-body';
+    body.textContent = x.body;
+    main.append(body);
+  }
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'toast-close';
+  close.title = '닫기';
+  close.setAttribute('aria-label', '닫기');
+  close.textContent = '✕';
+  close.addEventListener('click', (e) => { e.stopPropagation(); dropToast(t.id); });
+  card.append(icon, main, close);
+  card.title = t.item ? (x.link ? '눌러서 열기' : '눌러서 알림함 보기') : '눌러서 알림함 보기';
+  card.addEventListener('click', () => {
+    if (t.item && x.link) { cy.openLink(x.link); cy.inboxReadOne?.(x.id); }
+    else cy.openPanel('inbox');
+    dropToast(t.id);
+  });
+  card.addEventListener('mouseenter', () => clearTimeout(toastTimers.get(t.id)));
+  card.addEventListener('mouseleave', () => armToast(t.id, 4000));
+  return card;
+}
+function drawToasts() {
+  toastsEl.replaceChildren(...toastQ.list().map(toastCard));
+  requestAnimationFrame(recheckHit);
+}
+cy.onInboxItem?.((item) => {
+  const list = toastQ.push(item);
+  for (const t of list) if (!toastTimers.has(t.id) || t.summary) armToast(t.id);
+  for (const id of [...toastTimers.keys()]) if (!list.some((t) => t.id === id)) { clearTimeout(toastTimers.get(id)); toastTimers.delete(id); }
+  drawToasts();
+});
+cy.onVisibility(({ hidden }) => toastsEl.classList.toggle('hidden', !!hidden));

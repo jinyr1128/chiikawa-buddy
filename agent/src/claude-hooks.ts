@@ -61,6 +61,7 @@ export function toolDetail(tool: string | undefined, input: Record<string, unkno
 // 캐릭터마다 말투: 소리 + (뜻) 형식인 캐릭터는 괄호로
 const SOUND: Record<string, { done: string; wait: string }> = {
   chiikawa: { done: "헤헤", wait: "앗…!" },
+  momonga: { done: "헤헷, 칭찬해!", wait: "아앙?!" },
   usagi: { done: "우라!", wait: "하?" },
   kani: { done: "헤헤헤…", wait: "으아…" },
   kuri: { done: "캬아", wait: "…?" },
