@@ -318,7 +318,7 @@ export class MailSync {
       const seen = new Set(readAccountItems(this.store, a.id).map((m) => m.uid));
       for (const m of r.items) {
         if (seen.has(m.uid) || !m.unread || m.bulk) continue;
-        notify({ source: "mail", key: `mail:${a.user}:${m.messageId ?? m.uid}`, account: a.user, title: `${m.from || m.fromAddr} · ${m.subject || "(제목 없음)"}`, body: m.snippet, link: m.link, at: m.date });
+        notify({ source: "mail", key: `mail:${a.user}:${m.messageId ?? m.uid}`, account: a.user, title: `${m.from || m.fromAddr} · ${m.subject || "(제목 없음)"}`, body: m.snippet, link: m.link?.replace("/mail/u/0/", `/mail/u/?authuser=${encodeURIComponent(a.user)}`), at: m.date });
       }
     }
     writeAccountItems(this.store, a.id, r.ok ? r.items.map((m) => ({ ...m, account: a.user })) : kept);

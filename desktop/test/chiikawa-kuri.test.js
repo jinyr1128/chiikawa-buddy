@@ -25,7 +25,7 @@ test('치이카와·쿠리만쥬: 이름·깜빡임·칸별 영상(파일이 있
       for (const v of a.variants[k]) assert.ok(fs.existsSync(fileOf(v.src)) && fs.existsSync(fileOf(v.poster)), v.src);
     }
   }
-  assert.match(characterAssets('chiikawa').variants.plan[1].say, /^으아앙\.\.\. \(.*\{mins\}분 전/);
+  assert.match(characterAssets('chiikawa').variants.plan[1].say, /^에에에… \(.*\{mins\}분 전/);
   assert.equal(characterAssets('chiikawa').variants.study[0].scene, false, '흰 배경을 지운 투명 영상');
 });
 
@@ -37,6 +37,6 @@ test('기존 캐릭터 점심 영상: 시사·하치와레·랏코·우사기는
 
 test('치이카와·쿠리만쥬 말투: 칸은 우사기와 같다', () => {
   for (const id of ['chiikawa', 'kuri']) assert.deepEqual(flat(CHARACTER_LINES[id]).sort(), flat(CHARACTER_LINES.usagi).sort(), id);
-  assert.match(CHARACTER_LINES.kuri.local.lunch, /^얌 얌 얌 \(/);
+  assert.match(CHARACTER_LINES.kuri.local.lunch, /^캬\S* \(/);
   assert.equal(CHARACTER_LINES.kuri.name, '쿠리만쥬');
 });

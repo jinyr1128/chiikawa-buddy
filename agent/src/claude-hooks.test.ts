@@ -24,7 +24,7 @@ test("질문 → 도구 → 끝: 작업 중 제목이 바뀌고 끝나면 다 �
   assert.deepEqual(live(begun), ["Claude · 고치는 중 · main.js"]);
   hooks.handle({ hook_event_name: "Stop", session_id: "s1", cwd: "/a/myproj" });
   assert.deepEqual(live(begun), []);
-  assert.equal(bubbles.at(-1)?.text, "헤헤 (Claude 작업 끝났어 · myproj!)");
+  assert.equal(bubbles.at(-1)?.text, "와…!! (Claude 작업 끝났어 · myproj!)");
   hooks.stop();
 });
 

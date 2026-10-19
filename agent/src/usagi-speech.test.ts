@@ -16,7 +16,7 @@ import { join } from "node:path";
 afterEach(() => { installCharacters({}); setCharacter("shisa"); setPhrases({}); });
 
 function intent(text: string) {
-  assert.match(text, /^(?:우나(?: 야하)?|야하!|푸루루루루루루루|이야하~!!!|우라라 야하\.|하아~~\?)\(/u, text);
+  assert.match(text, /^(?:우나(?: 야하)?|야하!|푸루루루루루루루|이야하~!!!|우라라 야하\.|하아~~\?|아앙\?|우라라\?|우라!)\(/u, text);
   const start = text.indexOf("(");
   let depth = 0;
   for (let i = start; i < text.length; i++) {

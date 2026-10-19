@@ -288,6 +288,7 @@ export class SlackRun {
   counts: SlackIngestCounts;
   me?: string;
   teamUrl?: string;
+  teamId?: string; // 알림을 Slack 앱에서 바로 열 때(slack://channel?team=…)
   protected queue: Call[] = [];
   protected inflight = new Map<string, Call>();
   protected stages: (() => void)[];
@@ -313,6 +314,7 @@ export class SlackRun {
     this.counts = counts;
     this.me = ing.meta("me") ?? undefined;
     this.teamUrl = ing.meta("teamUrl");
+    this.teamId = ing.meta("teamId");
     this.budget = ing.deps.maxCalls;
     this.historyLeft = ing.deps.maxHistory;
     // 내 id·채널 목록을 이미 알면 첫 묶음부터 검색·history를 같이 낸다(턴 수 절약)
@@ -360,9 +362,10 @@ export class SlackRun {
 
   // ── 내 id·채널 목록(오래됐으면)
   protected discover() {
-    if (!this.me || !this.teamUrl) {
+    if (!this.me || !this.teamUrl || !this.teamId) {
       this.push("slack_whoami", {}, (d) => {
         if (d?.user_id) { this.me = d.user_id; this.ing.setMeta("me", d.user_id); }
+        if (d?.team_id) { this.teamId = d.team_id; this.ing.setMeta("teamId", d.team_id); }
         if (d?.url) { this.teamUrl = d.url; this.ing.setMeta("teamUrl", d.url); }
       });
     }
@@ -702,6 +705,8 @@ export class SlackRun {
         source: "slack", key: id, account: c?.label ?? conv,
         title: `${authorName}${isDM ? " · DM" : " · 나를 불렀어요"}`, body: oneLine(text),
         link: permalinkOf(this.teamUrl, conv, m.ts, threadTs), at: tsIso(m.ts),
+        // Slack 앱에서 바로(브라우저 거치지 않게): 그 대화방 + 메시지
+        ...(this.teamId ? { appLink: `slack://channel?team=${this.teamId}&id=${conv}&message=${m.ts}${threadTs && threadTs !== m.ts ? `&thread_ts=${threadTs}` : ""}` } : {}),
       });
     }
   }

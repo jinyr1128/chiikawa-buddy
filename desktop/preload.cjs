@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('cy', {
   togglePanel: () => ipcRenderer.send('toggle-panel'),
   onInbox: on('inbox'),
   onInboxItem: on('inbox_item'),
+  inboxOpen: (item) => ipcRenderer.send('inbox-open', { source: String(item?.source ?? ''), link: String(item?.link ?? ''), appLink: String(item?.appLink ?? '') }),
+  inboxReadAll: (source) => ipcRenderer.invoke('inbox-read', { ids: 'all', read: true, ...(source ? { source: String(source) } : {}) }),
   inboxReadOne: (id) => ipcRenderer.send('inbox-read-one', String(id ?? '')),
   openPanel: (section) => ipcRenderer.send('open-panel', section == null ? null : String(section)),
   // attachments: 먼저 올려 둔 첨부 id(chatAttach) — 있으면 글 없이도 보낸다

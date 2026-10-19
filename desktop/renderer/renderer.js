@@ -1298,10 +1298,30 @@ function toastCard(t) {
   close.setAttribute('aria-label', '닫기');
   close.textContent = '✕';
   close.addEventListener('click', (e) => { e.stopPropagation(); dropToast(t.id); });
+  // 버튼: [열기] 그 메시지·메일·회의로 바로(읽음도) · [읽음] 열지 않고 읽음만 · 묶음 카드는 [알림함]·[모두 읽음]
+  const acts = document.createElement('div');
+  acts.className = 'toast-acts';
+  const btn = (label, cls, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `toast-btn ${cls}`;
+    b.textContent = label;
+    b.addEventListener('click', (e) => { e.stopPropagation(); fn(); dropToast(t.id); });
+    return b;
+  };
+  const openIt = () => { cy.inboxOpen?.(x); cy.inboxReadOne?.(x.id); };
+  if (t.item) {
+    acts.append(btn(x.source === 'claude' ? 'Claude 열기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt));
+    acts.append(btn('읽음', '', () => cy.inboxReadOne?.(x.id)));
+  } else {
+    acts.append(btn('알림함 보기', 'primary', () => cy.openPanel('inbox')));
+    acts.append(btn('모두 읽음', '', () => cy.inboxReadAll?.(src)));
+  }
+  main.append(acts);
   card.append(icon, main, close);
-  card.title = t.item ? (x.link ? '눌러서 열기' : '눌러서 알림함 보기') : '눌러서 알림함 보기';
+  card.title = t.item ? '눌러서 바로 열기' : '눌러서 알림함 보기';
   card.addEventListener('click', () => {
-    if (t.item && x.link) { cy.openLink(x.link); cy.inboxReadOne?.(x.id); }
+    if (t.item) openIt();
     else cy.openPanel('inbox');
     dropToast(t.id);
   });

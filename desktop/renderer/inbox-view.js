@@ -38,7 +38,7 @@ export function createInboxView({ h, cy, el, onUnread }) {
   function row(x) {
     const open = () => {
       if (!x.read) markRead([x.id]);
-      if (x.link) cy.openLink?.(x.link);
+      cy.inboxOpen?.(x);
     };
     return h('div.inbox-row', { role: 'button', tabindex: '0', dataset: { read: x.read ? '1' : '' }, title: x.link ? '눌러서 원래 화면 열기' : '눌러서 읽음 표시', onclick: open, onkeydown: (e) => { if (e.key === 'Enter') open(); } },
       h('span.inbox-dot', { 'aria-label': x.read ? '읽음' : '안 읽음' }),

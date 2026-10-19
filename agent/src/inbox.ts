@@ -16,6 +16,7 @@ export type InboxItem = {
   title: string;          // 한 줄(보낸 사람·제목 등)
   body?: string;          // 앞부분 조금
   link?: string;          // 누르면 열 주소(Gmail·Slack·회의 링크)
+  appLink?: string;       // 앱에서 바로 여는 주소(slack://…) — 있으면 link 보다 먼저
   at: string;             // 일어난 때 ISO
   read: boolean;
 };
@@ -54,6 +55,7 @@ export class Inbox {
       title: clip(n.title.trim(), 200)!,
       ...(n.body ? { body: clip(n.body, 400) } : {}),
       ...(typeof n.link === "string" && /^https?:\/\//.test(n.link) ? { link: n.link } : {}),
+      ...(typeof n.appLink === "string" && /^slack:\/\/channel\?[\w=&.%-]+$/.test(n.appLink) ? { appLink: n.appLink } : {}),
       at: n.at && Number.isFinite(Date.parse(n.at)) ? new Date(n.at).toISOString() : this.now().toISOString(),
       read: false,
     };

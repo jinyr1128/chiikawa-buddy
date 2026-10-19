@@ -978,6 +978,20 @@ function menuTemplate() {
     { label: '패널 열기', click: () => showPanel(null) },
     ...(coder() ? [{ label: '작업 세션 열기', click: openSessionMenu }] : []),
     { label: inboxUnread ? `알림함 (안 읽음 ${inboxUnread})` : '알림함', click: () => showPanel('inbox') },
+    {
+      // 캐릭터 바로 바꾸기: 기본 캐릭터 + 직접 만든 캐릭터(GET /characters)
+      label: '캐릭터 바꾸기',
+      submenu: (charactersData?.characters?.length ? charactersData.characters : []).map((c) => ({
+        label: c.name || c.id,
+        type: 'radio',
+        checked: (wantChar ?? charId) === c.id,
+        click: async () => {
+          const r = await request('PUT', '/settings', { character: c.id });
+          if (!r.ok) dialog.showErrorBox('캐릭터 바꾸기', r.data?.error ?? '바꾸지 못했어요');
+          rebuildTrayMenu();
+        },
+      })),
+    },
     { label: '지금 브리핑', click: triggerBriefing },
     { label: '설정…', click: () => settingsUi?.show() },
     { label: '사용법 다시 보기', click: startTour },
@@ -1110,6 +1124,7 @@ function setDockMenu() {
 // force: 같은 id 라도 이름·그림이 바뀌었을 수 있다(캐릭터 목록을 새로 받음)
 function onCharacter(id, force = false) {
   wantChar = id;
+  setTimeout(rebuildTrayMenu, 0); // 메뉴 막대 「캐릭터 바꾸기」 체크 표시
   const next = okCharacter(id);
   if (next === charId && !force) return;
   charId = next;
@@ -1140,6 +1155,7 @@ function loadCharacters() {
     const sw = settingsUi?.window;
     if (sw && !sw.isDestroyed()) sw.webContents.send('characters', r.data);
     onCharacter(wantChar ?? charId, true);
+    rebuildTrayMenu();
   })().finally(() => { charactersLoading = null; });
   return charactersLoading;
 }
@@ -1799,6 +1815,18 @@ function setupIPC() {
     if (!fromOurs(e)) return denied();
     const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|system)$/.test(q.source) ? q.source : '';
     return request('GET', `/inbox${src || q?.unread ? '?' : ''}${src ? `source=${src}` : ''}${src && q?.unread ? '&' : ''}${q?.unread ? 'unread=1' : ''}`);
+  });
+  // 알림 「열기」: Slack 은 Slack 앱에서 그 메시지로, Claude 는 Claude 앱으로, 나머지(메일·회의 링크)는 브라우저로
+  ipcMain.on('inbox-open', (e, item) => {
+    if (!fromOurs(e) || !item || typeof item !== 'object') return;
+    const link = typeof item.link === 'string' ? item.link : '';
+    const openApp = (appName, url) => execFile('open', ['-a', appName, ...(url ? [url] : [])], (err) => { if (err && url) shell.openExternal(url).catch(() => {}); });
+    if (item.source === 'claude' && process.platform === 'darwin') return openApp('Claude');
+    if (!(item.source === 'slack' && item.appLink) && (!link || !isSafeLink(link))) return showPanel('inbox');
+    // Slack: 앱 주소(slack://channel?…)가 있으면 켜져 있는 Slack 앱에서 그 대화로 바로(브라우저 탭이 늘지 않게)
+    if (item.source === 'slack' && typeof item.appLink === 'string' && /^slack:\/\/channel\?[\w=&.%-]+$/.test(item.appLink)) return shell.openExternal(item.appLink).catch(() => {});
+    if (item.source === 'slack' && process.platform === 'darwin' && /^https:\/\/[\w-]+\.slack\.com\//.test(link)) return openApp('Slack', link);
+    shell.openExternal(link).catch(() => {});
   });
   ipcMain.on('inbox-read-one', (e, id) => { if (fromOurs(e) && typeof id === 'string' && /^[\w-]{1,64}$/.test(id)) post('/inbox/read', { ids: [id] }).catch(() => {}); });
   ipcMain.handle('inbox-read', (e, body) => {

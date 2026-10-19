@@ -183,7 +183,7 @@ export const CHARACTER_CLIPS = {
       {
         "file": "plan2",
         "scene": true,
-        "say": "으아앙... (〈{title}〉 {mins}분 전이야! {time}{where})"
+        "say": "에에에… (〈{title}〉 {mins}분 전이야! {time}{where})"
       }
     ],
     "study": [

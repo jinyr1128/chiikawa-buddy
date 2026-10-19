@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('cy', {
   inboxList: (q) => ipcRenderer.invoke('inbox-list', { source: String(q?.source ?? ''), unread: !!q?.unread }),
   inboxRead: (ids, read = true, source) => ipcRenderer.invoke('inbox-read', { ids: ids === 'all' ? 'all' : Array.isArray(ids) ? ids.map(String) : [], read: read !== false, ...(source ? { source: String(source) } : {}) }),
   inboxClear: () => ipcRenderer.invoke('inbox-clear'),
+  inboxOpen: (item) => ipcRenderer.send('inbox-open', { source: String(item?.source ?? ''), link: String(item?.link ?? ''), appLink: String(item?.appLink ?? '') }),
   onSisa: on('sisa'), // 설정 창 등에서 AI·연결을 끊으면 새 저장 모양(publicView)
   onSection: on('section'),
   onChat: on('chat'),
