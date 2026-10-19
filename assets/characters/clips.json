@@ -15,35 +15,35 @@
     ],
     "plan": "dance",
     "cheer": "dance",
-    "study": [{ "file": "studying" }],
+    "study": [{ "file": "studying" }, { "file": "dance" }],
     "lunch": [{ "file": "lunch", "scene": true }]
   },
   "hachi": {
     "plan": [{ "file": "plan" }],
     "dance": "plan",
     "cheer": [{ "file": "cheer", "scene": true }],
-    "study": [{ "file": "study" }],
+    "study": [{ "file": "study" }, { "file": "plan" }],
     "lunch": [{ "file": "lunch", "scene": true }]
   },
   "rakko": {
     "plan": [{ "file": "plan", "scene": true }],
     "dance": [{ "file": "dance", "scene": true }],
     "cheer": "plan",
-    "study": [{ "file": "study", "scene": true }],
+    "study": [{ "file": "study", "scene": true }, { "file": "plan", "scene": true }],
     "lunch": [{ "file": "lunch", "scene": true }]
   },
   "momonga": {
     "plan": [{ "file": "plan", "scene": true }],
     "dance": [{ "file": "dance", "scene": true }],
     "cheer": "plan",
-    "study": [{ "file": "study", "scene": true }],
+    "study": [{ "file": "study", "scene": true }, { "file": "plan", "scene": true }],
     "lunch": "plan"
   },
   "usagi": {
     "plan": [{ "file": "plan" }],
     "dance": [{ "file": "dance" }],
     "cheer": [{ "file": "cheer" }],
-    "study": [{ "file": "study" }],
+    "study": [{ "file": "study" }, { "file": "plan" }],
     "lunch": [{ "file": "lunch" }]
   },
   "kani": {
@@ -51,7 +51,7 @@
     "dance": [{ "file": "dance", "scene": true }],
     "cheer": [{ "file": "cheer", "scene": true }],
     "lunch": [{ "file": "lunch", "scene": true }],
-    "study": [{ "file": "study", "scene": true }]
+    "study": [{ "file": "study", "scene": true }, { "file": "plan", "scene": true }]
   },
   "chiikawa": {
     "dance": [
@@ -63,14 +63,14 @@
       { "file": "plan", "scene": true },
       { "file": "plan2", "scene": true, "say": "에에에… (〈{title}〉 {mins}분 전이야! {time}{where})" }
     ],
-    "study": [{ "file": "study" }],
+    "study": [{ "file": "study" }, { "file": "plan", "scene": true }],
     "lunch": [{ "file": "lunch", "scene": true }]
   },
   "kuri": {
     "cheer": [{ "file": "cheer", "scene": true }],
     "dance": "cheer",
     "plan": "cheer",
-    "study": [{ "file": "study", "scene": true }],
+    "study": [{ "file": "study", "scene": true }, { "file": "cheer", "scene": true }],
     "lunch": [{ "file": "lunch", "scene": true }]
   }
 }

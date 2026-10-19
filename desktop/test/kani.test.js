@@ -17,7 +17,7 @@ test('카니: 고를 수 있고, 눈 뜬·감은 그림으로 깜빡이고, 춤�
   const want = { dance: 'dance', cheer: 'cheer', plan: 'plan', lunch: 'lunch', study: 'study' };
   for (const [k, f] of Object.entries(want)) {
     const v = a.variants[k];
-    assert.equal(v.length, 1, k);
+    assert.equal(v.length, k === 'study' ? 2 : 1, k); // 작업 중은 일정 알림 영상과 번갈아
     assert.match(v[0].src, new RegExp(`characters/kani/${f}\\.webm$`), k);
     assert.equal(v[0].scene, true, `${k}: 배경 있는 장면이라 테두리`);
     assert.ok(fs.existsSync(fileOf(v[0].src)) && fs.existsSync(fileOf(v[0].poster)), k);

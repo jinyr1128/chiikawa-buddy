@@ -35,7 +35,7 @@ test("치이카와 영상: 춤 두 개 중 랜덤, 일정 알림 두 번째(우�
     assert.equal(d.say, d.variant === 1 ? plan[1].say : undefined);
   }
   bus.activity.stop();
-  assert.deepEqual(characterClips("study").map((x) => x.file), ["study"]);
+  assert.deepEqual(characterClips("study").map((x) => x.file), ["study", "plan"]);
   assert.deepEqual(characterClips("lunch").map((x) => x.file), ["lunch"]);
 });
 
@@ -52,7 +52,7 @@ test("쿠리만쥬: 소리는 「캬」뿐, 할 말은 괄호 안에", () => {
   // 춤·일정 알림 영상이 없어 응원 영상(맥주 캔), 집중은 술상, 점심은 타코
   assert.deepEqual(characterClips("dance").map((x) => x.file), ["cheer"]);
   assert.deepEqual(characterClips("plan").map((x) => x.file), ["cheer"]);
-  assert.deepEqual(characterClips("study").map((x) => x.file), ["study"]);
+  assert.deepEqual(characterClips("study").map((x) => x.file), ["study", "cheer"]);
   assert.deepEqual(characterClips("lunch").map((x) => x.file), ["lunch"]);
   assert.match(CHARACTERS.kuri.tone, /「캬」만/);
   assert.match(phrase("meeting_alert", { mins: 5, title: "x", time: "1", where: "" }), /^캬\S* \(.*〈x〉/);

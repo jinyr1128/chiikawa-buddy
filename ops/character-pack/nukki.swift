@@ -17,7 +17,7 @@ let fixedDelay = args.count > 3 ? Double(args[3]) ?? 0.1 : 0.1
 guard args.count >= 3, let src = frameFiles.isEmpty ? CGImageSourceCreateWithURL(URL(fileURLWithPath: args[1]) as CFURL, nil) : CGImageSourceCreateWithURL(frameFiles[0] as CFURL, nil) else { print("0 0"); exit(1) }
 let n = frameFiles.isEmpty ? CGImageSourceGetCount(src) : frameFiles.count
 let ctx = CIContext()
-let maxSide = 360.0
+let maxSide = Double(ProcessInfo.processInfo.environment["NUKKI_MAX"] ?? "360") ?? 360.0 // 더 크게: NUKKI_MAX=720
 guard let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: args[2]) as CFURL, UTType.png.identifier as CFString, n, nil) else { exit(1) }
 CGImageDestinationSetProperties(dest, [kCGImagePropertyPNGDictionary: [kCGImagePropertyAPNGLoopCount: 0]] as CFDictionary)
 var ok = 0

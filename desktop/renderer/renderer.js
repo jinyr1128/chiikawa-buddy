@@ -184,9 +184,10 @@ function applyActivity() {
   clearInterval(studyRotate);
   studyRotate = null;
   // 일하는 동안(집중 자리) 영상이 여러 개면 STUDY_ROTATE_MS 마다 다른 것으로 번갈아(오래 일해도 한 가지만 나오지 않게)
-  if (view === 'studying' && variantsOf(charA, 'study').length > 1) {
+  // 개수는 돌 때마다 본다: 일하는 도중 캐릭터를 바꾸거나 영상을 더해도(처음엔 하나였어도) 번갈아 나오게
+  if (view === 'studying') {
     studyRotate = setInterval(() => {
-      if (shownView !== 'studying') return;
+      if (shownView !== 'studying' || variantsOf(charA, 'study').length < 2) return;
       pickStudy();
       startVideo('studying');
     }, STUDY_ROTATE_MS);

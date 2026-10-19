@@ -13,8 +13,8 @@ test('치이카와·쿠리만쥬: 이름·깜빡임·칸별 영상(파일이 있
   assert.equal(appName('chiikawa'), '치이카와 매니저');
   assert.equal(appName('kuri'), '치이카와 매니저');
   const want = {
-    chiikawa: { dance: ['dance', 'dance2'], cheer: ['cheer'], plan: ['plan', 'plan2'], study: ['study'], lunch: ['lunch'] },
-    kuri: { dance: ['cheer'], cheer: ['cheer'], plan: ['cheer'], study: ['study'], lunch: ['lunch'] },
+    chiikawa: { dance: ['dance', 'dance2'], cheer: ['cheer'], plan: ['plan', 'plan2'], study: ['study', 'plan'], lunch: ['lunch'] },
+    kuri: { dance: ['cheer'], cheer: ['cheer'], plan: ['cheer'], study: ['study', 'cheer'], lunch: ['lunch'] },
   };
   for (const [id, kinds] of Object.entries(want)) {
     const a = characterAssets(id);

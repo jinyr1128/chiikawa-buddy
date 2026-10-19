@@ -36,7 +36,7 @@ test("카니 춤춰 줘·응원해 줘: 정해진 줄 중 하나(바리에이션
   assert.deepEqual(characterClips("cheer").map((x) => x.file), ["cheer"]);
   assert.deepEqual(characterClips("lunch").map((x) => x.file), ["lunch"]);
   assert.deepEqual(characterClips("plan").map((x) => x.file), ["plan"]);
-  assert.deepEqual(characterClips("study").map((x) => x.file), ["study"], "집중 영상(kani-study)");
+  assert.deepEqual(characterClips("study").map((x) => x.file), ["study", "plan"], "작업 중 영상(kani-study + 일정 알림 영상)");
   const bus = new Bus();
   assert.equal(bus.activity.play(1000, "lunch").say, undefined, "점심 인사는 local.lunch");
   bus.activity.stop();
