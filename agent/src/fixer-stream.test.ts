@@ -169,7 +169,7 @@ test("실행 중 메시지 주입 → 다음 사용자 턴으로 들어가고 �
   assert.equal(o.hooks.PreToolUse[0].hooks.length, 2);
   assert.equal(o.forwardSubagentText, true);
   assert.equal(o.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS, "1");
-  assert.ok(o.env.PATH);
+  assert.ok(Object.keys(o.env).some((k) => k.toUpperCase() === "PATH" && o.env[k])); // Windows 는 Path
 });
 
 test("메시지가 턴에 붙었는지 모르면(uuid 미표시) 잠깐 기다렸다 끝낸다", async () => {

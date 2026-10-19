@@ -146,12 +146,12 @@ test("attachments: 모델 입력 — 그림 image 블록, PDF document 블록, �
 
 test("attachments: 지난 말 첨부는 한 줄 참조로만(내용 다시 안 보냄)", () => {
   const a: Attachment = { id: "x", name: "shot.png", kind: "image", mime: "image/png", size: 2048, file: "x-shot.png" };
-  assert.equal(attachmentRef(a, "t1", "/h/attachments"), "[첨부: shot.png (이미지, 2KB) — /h/attachments/t1/x-shot.png]");
+  assert.equal(attachmentRef(a, "t1", "/h/attachments"), `[첨부: shot.png (이미지, 2KB) — ${join("/h/attachments", "t1", "x-shot.png")}]`); // 경로 구분자는 운영체제 것(Windows \\)
   const cfg = loadConfig();
   const store = new Store(":memory:");
   const th = store.createThread({ title: "t" });
   const p = chatPrompt(cfg, store, [{ role: "user", text: "이거 봐", at: "t", attachments: [a] }, { role: "assistant", text: "봤어요", at: "t" }], "", undefined, undefined, undefined, th, "## 이번 말에 붙인 첨부\n- y.pdf");
-  assert.match(p, /사용자: 이거 봐 \[첨부: shot\.png \(이미지, 2KB\) — .*\/attachments\/.+\/x-shot\.png\]/);
+  assert.match(p, /사용자: 이거 봐 \[첨부: shot\.png \(이미지, 2KB\) — .*[\\/]attachments[\\/].+[\\/]x-shot\.png\]/);
   assert.ok(!p.includes(Buffer.from("x").toString("base64") + "=="));
   assert.match(p, /"""\(글 없이 첨부만 보냈다\)"""/);
   assert.match(p, /## 이번 말에 붙인 첨부\n- y\.pdf$/);
@@ -388,7 +388,7 @@ test("bus: 작업 세션 창 — run 말·이어서 하기는 경로를 말 뒤�
   const post = (path: string, body: unknown) => fetch(base + path, { method: "POST", headers: { "x-cy-agent": "1", "content-type": "application/json" }, body: JSON.stringify(body) });
   try {
     assert.equal((await post("/runs/r1/message", { text: "", attachments: [stage("a.txt", Buffer.from("hi"))] })).status, 200);
-    assert.match((sent[0] as string[])[2], /^\[첨부: a\.txt \(글 파일, 2B\) — .*run-r1\/.*-a\.txt\]$/);
+    assert.match((sent[0] as string[])[2], /^\[첨부: a\.txt \(글 파일, 2B\) — .*run-r1[\\/].*-a\.txt\]$/);
     assert.equal((await post("/runs/r1/continue", { text: "이것도", attachments: [stage("b.pdf", PDF)] })).status, 202);
     assert.match((sent[1] as string[])[2], /^이것도\n\n\[첨부: b\.pdf \(PDF/);
     assert.equal((await post("/runs/r1/btw", { text: "뭐야", attachments: [stage("a.png", PNG)] })).status, 200);

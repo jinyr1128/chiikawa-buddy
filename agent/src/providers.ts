@@ -9,7 +9,7 @@ import { createHash } from "node:crypto";
 import { accessSync, constants, readFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
-import { findOnPath, spawnSpec } from "./plat.ts";
+import { findOnPath, killTree, spawnSpec } from "./plat.ts";
 import type { ContentBlock } from "./attachments.ts";
 import { DEFAULT_GENERAL_MODEL, type BrainProvider, type Config } from "./config.ts";
 
@@ -796,11 +796,7 @@ export function parseCodexStdout(stdout: string): unknown {
   return parseModelJson(trimmed, "codex 출력에서 JSON을 읽지 못했어요.");
 }
 
-// Windows: cmd.exe 를 죽여도 그 아래 codex 는 남는다 → taskkill /T 로 나무째
-export function killTree(pid: number | undefined) {
-  if (process.platform !== "win32" || !pid) return;
-  try { spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" }).on("error", () => {}); } catch {}
-}
+export { killTree }; // plat.ts 로 옮김(gh.ts 도 쓴다)
 
 export function defaultExecFile(file: string, args: readonly string[], opts: { input?: string; timeout?: number; cwd?: string } = {}): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {

@@ -80,11 +80,12 @@ test("loadConfig: 예전 설정(onboarded 키 없음)은 지금처럼: claude-co
 });
 
 test("loadConfig: 마법사를 마친 새 설치는 고른 것만", () => {
-  const c = loadConfig({}, { onboarded: true, readSessions: true, repoRoots: ["/r"], brain: { provider: "codex" } });
+  const r = process.platform === "win32" ? "C:\\r" : "/r"; // Windows 는 드라이브 경로만 받는다(/r 은 뺀다)
+  const c = loadConfig({}, { onboarded: true, readSessions: true, repoRoots: [r], brain: { provider: "codex" } });
   assert.equal(c.onboarded, true);
   assert.equal(c.brain.provider, "codex");
   assert.equal(c.readSessions, true);
-  assert.deepEqual(c.repoRoots, ["/r"]);
+  assert.deepEqual(c.repoRoots, [r]);
   assert.equal(readSessionsOf({ onboarded: true }), false); // 고르지 않았으면 끔
   assert.equal(pickBrain({}, { onboarded: true }).provider, "local"); // 뇌를 안 골랐으면 모델 없음
   assert.equal(pickBrain({ CY_AGENT_BRAIN: "claude-code" }, { onboarded: false }).provider, "claude-code"); // env 는 그대로

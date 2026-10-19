@@ -4,6 +4,7 @@ import { Store } from "./store.ts";
 import { loadConfig } from "./config.ts";
 import { buildDashboard, dashboardSummary } from "./dashboard.ts";
 import type { RepoActivity } from "./git.ts";
+import { tmpdir } from "node:os";
 
 const now = new Date("2026-10-08T05:00:00Z");
 const ago = (h: number) => new Date(now.getTime() - h * 3600e3).toISOString();
@@ -20,7 +21,7 @@ test("dashboard: 계약 모양, 세션·커밋 병합, 7일 밖 제외, 최신�
   session(store, "s2", "/code/app/agent", ago(2)); // 레포 하위 폴더 → app으로 묶임
   session(store, "s3", "/code/notes", ago(1));
   session(store, "old", "/code/stale", ago(24 * 9));
-  session(store, "tmp", "/private/tmp", ago(1)); // 임시 폴더는 프로젝트 아님
+  session(store, "tmp", process.platform === "win32" ? tmpdir() : "/private/tmp", ago(1)); // 임시 폴더는 프로젝트 아님(Windows 엔 /private/tmp 가 없다)
   session(store, "root", "/", ago(1));
   store.upsertTodo({ id: "mail:1", title: "답장", source: "mail", priority: 1, link: "https://x" });
   store.upsertTodo({ id: "jira:2", title: "이슈", source: "jira", priority: 2 });

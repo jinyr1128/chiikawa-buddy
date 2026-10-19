@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, statSync, writeFileSync, chmodSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { CONFIG_ERROR, ensureHomeDir, loadConfig, parseConfigText, repoRootsOf } from "./config.ts";
 import { statusOf } from "./status.ts";
 import { Settings } from "./settings.ts";
@@ -67,8 +67,10 @@ test("분 간격·포트·everyHours: 유한한 수이고 최솟값 이상만, �
 
 test("repoRoots: 절대경로 글 목록만(글 하나도 받음), 루트(/)·상대경로·글 아닌 값은 빼고 알림", () => {
   const notes: string[] = [];
-  assert.deepEqual(repoRootsOf("/Users/me/code", notes), ["/Users/me/code"]);
-  assert.deepEqual(repoRootsOf(["/", "//", "rel/x", 3, "/a/b/", "/a/b"], notes), ["/a/b"]);
+  // Windows 는 드라이브 경로(C:\…)만 받고 /Users/… 같은 드라이브 없는 경로·C:\ 도 뺀다(아래 Windows 전용 테스트)
+  const D = process.platform === "win32" ? "C:" : "";
+  assert.deepEqual(repoRootsOf(`${D}/Users/me/code`, notes), [resolve(`${D}/Users/me/code`)]); // Windows 는 C:\Users\me\code 로
+  assert.deepEqual(repoRootsOf(["/", "//", "rel/x", 3, `${D}/a/b/`, `${D}/a/b`], notes), [resolve(`${D}/a/b`)]);
   assert.ok(notes.length >= 4);
   assert.deepEqual(repoRootsOf({ a: 1 }, []), []);
   assert.equal(repoRootsOf(undefined, []), undefined);

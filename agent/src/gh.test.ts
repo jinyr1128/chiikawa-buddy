@@ -15,8 +15,12 @@ import { loadConfig } from "./config.ts";
 function fakeGh() {
   const dir = mkdtempSync(join(tmpdir(), "cy-gh-"));
   const log = join(dir, "calls.log");
-  const bin = join(dir, "gh");
-  writeFileSync(bin, `#!/usr/bin/env node
+  // Windows 는 #! 스크립트를 못 돌린다 → 스크립트는 gh.js, 실행은 gh.cmd 껍데기(runGh 가 cmd.exe 로 돌린다)
+  const WIN = process.platform === "win32";
+  const script = join(dir, WIN ? "gh.js" : "gh");
+  const bin = WIN ? join(dir, "gh.cmd") : script;
+  if (WIN) writeFileSync(bin, `@"${process.execPath}" "%~dp0gh.js" %*\r\n`);
+  writeFileSync(script, `#!/usr/bin/env node
 const fs = require("node:fs");
 const a = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(a) + "\\n");
@@ -33,7 +37,7 @@ else if (k === "repo view") { if (a[2] === "org-b/target") out(JSON.stringify({ 
 else if (k === "search repos") out(JSON.stringify([{ fullName: "zz/other" }, { fullName: "yy/lost" }]));
 else out("[]");
 `);
-  chmodSync(bin, 0o755);
+  chmodSync(script, 0o755);
   const calls = () => { try { return readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l) as string[]); } catch { return []; } };
   return { bin, calls };
 }

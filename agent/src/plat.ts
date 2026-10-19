@@ -1,5 +1,6 @@
 // 운영체제 차이(Windows · macOS · Linux)를 한곳에. POSIX 는 예전 동작 그대로 — Windows 일 때만 다르게 본다.
 // 순수 도우미는 plat 인자를 받아(기본 process.platform) macOS 에서도 Windows 경우를 테스트할 수 있다.
+import { spawn } from "node:child_process";
 import { existsSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -161,6 +162,12 @@ export function spawnSpec(name: string, args: readonly string[], env: NodeJS.Pro
   if (plat !== "win32") return { file: name, args: [...args], verbatim: false };
   const found = /[\\/]/.test(name) ? name : findOnPath(name, env, plat, exists) ?? name;
   return winSpawnSpec(found, args);
+}
+
+// Windows: cmd.exe 를 죽여도 그 아래 프로세스(codex · gh.cmd 가 띄운 것)는 남는다 → taskkill /T 로 나무째
+export function killTree(pid: number | undefined) {
+  if (process.platform !== "win32" || !pid) return;
+  try { spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" }).on("error", () => {}); } catch {}
 }
 
 // Windows 에서 "열기"가 곧 실행인 확장자(실행 파일·스크립트·바로 가기·설치 패키지·레지스트리·제어판 항목 등) + PATHEXT

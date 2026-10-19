@@ -261,7 +261,9 @@ test("수정 run PR: 자동 머지 레포인데 검사 실패면 머지 안 하�
 // ── 채팅의 git commit/push ──
 
 const HOME = "/h";
-const probe = (st: Record<string, GitState>) => (dir: string) => st[dir];
+// Windows(Git Bash): 셸 글의 cd /h/… · git -C /h/… 는 H:\… 로 풀린다 → 같은 상태를 찾게 /h/… 모양으로 되돌려 본다
+const unWin = (dir: string) => dir.replace(/^([A-Za-z]):\\/, (_m, d: string) => `/${d.toLowerCase()}/`).replace(/\\/g, "/");
+const probe = (st: Record<string, GitState>) => (dir: string) => st[dir] ?? (process.platform === "win32" ? st[unWin(dir)] : undefined);
 const WT = "/h/.cy-agent/worktrees/app-cy-x";
 const CLAUDE_WT = "/h/code/app/.claude/worktrees/agent-1";
 const states: Record<string, GitState> = {

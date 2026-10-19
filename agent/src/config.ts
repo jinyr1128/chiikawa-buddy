@@ -251,7 +251,7 @@ export function repoRootsOf(raw: unknown, notes: string[]): string[] | undefined
   for (const x of list) {
     const p = typeof x === "string" ? x.trim() : "";
     // Windows: 드라이브 절대 경로(C:\…)만, 드라이브 맨 위(C:\)·UNC 는 안 됨
-    if (!p || !isAbsolute(p) || resolve(p) === "/" || (IS_WIN && (!isAbsPath(p) || isFsRoot(p)))) { notes.push(`repoRoots 에서 쓸 수 없는 값(${typeof x === "string" ? x.slice(0, 80) : typeof x})을 뺐어요. 「/」로 시작하는 폴더 경로만, 디스크 맨 위(/)는 안 돼요`); continue; }
+    if (!p || !isAbsolute(p) || resolve(p) === "/" || (IS_WIN && (!isAbsPath(p) || isFsRoot(p)))) { notes.push(`repoRoots 에서 쓸 수 없는 값(${typeof x === "string" ? x.slice(0, 80) : typeof x})을 뺐어요. ${IS_WIN ? "「C:\\」처럼 드라이브로 시작하는 폴더 경로만, 드라이브 맨 위(C:\\)는 안 돼요" : "「/」로 시작하는 폴더 경로만, 디스크 맨 위(/)는 안 돼요"}`); continue; }
     const r = resolve(p);
     if (!out.includes(r)) out.push(r);
   }

@@ -610,7 +610,7 @@ export function stepName(name: string, input: unknown): string {
     return `cy.${name.slice(`mcp__${CTX_SERVER}__`.length)}${what ? ` ${String(what).slice(0, 60)}` : ""}`;
   }
   if ((CODE_TOOLS as readonly string[]).includes(name)) {
-    const target = typeof i.file_path === "string" ? i.file_path.split("/").pop() : typeof i.pattern === "string" ? i.pattern : "";
+    const target = typeof i.file_path === "string" ? i.file_path.split(process.platform === "win32" ? /[\\/]/ : "/").pop() : typeof i.pattern === "string" ? i.pattern : "";
     return `code.${name}${target ? ` ${String(target).slice(0, 60)}` : ""}`;
   }
   const m = /^mcp__(.+?)__(.+)$/.exec(name);

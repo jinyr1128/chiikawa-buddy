@@ -127,7 +127,7 @@ function projects(store: Store, repos: RepoActivity[], now: Date, withSessions =
       .map((x) => new Date(x).toISOString()).sort().at(-1);
     if (!lastActive) continue;
     out.push({
-      name: g.repo?.name ?? path.split(sep).filter(Boolean).at(-1) ?? path,
+      name: g.repo?.name ?? path.split(IS_WIN ? /[\\/]/ : sep).filter(Boolean).at(-1) ?? path, // Windows 는 C:\… · C:/… 둘 다
       path,
       lastActive,
       sessions24h: sessions.filter((s) => Date.parse(s.updated) >= now.getTime() - DAY).length,

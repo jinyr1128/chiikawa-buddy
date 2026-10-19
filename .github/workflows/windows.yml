@@ -35,6 +35,8 @@ jobs:
         env:
           SHISA_RELEASE_REPO: ${{ github.repository }}
       - name: 릴리스에 올리기
+        # 브랜치에서 손으로 돌린 시험 실행은 올리지 않는다(main 버전 릴리스를 덮어쓰지 않게)
+        if: github.ref == 'refs/heads/main' || github.event_name == 'release'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

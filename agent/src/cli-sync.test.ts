@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { appendFileSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,17 +16,23 @@ import {
 
 const SID = "11111111-2222-4333-8444-555555555555";
 const FIX = fileURLToPath(new URL("./fixtures/cli-sync/", import.meta.url)); // Windows: .pathname 은 /C:/… 라 못 쓴다
-const REPO = "/Users/tester/code/demo";
-const BRAIN = "/Users/tester/.cy-agent/brain";
-const lines = (f: string) => readFileSync(join(FIX, f), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+// Windows 의 Claude Code 기록은 cwd 를 C:\… 로 적는다 → 픽스처의 /Users/tester/… 도 Windows 에선 C:\Users\tester\… 로 바꿔 쓴다
+const WIN = process.platform === "win32";
+const REPO = WIN ? "C:\\Users\\tester\\code\\demo" : "/Users/tester/code/demo";
+const BRAIN = WIN ? "C:\\Users\\tester\\.cy-agent\\brain" : "/Users/tester/.cy-agent/brain";
+const fixText = (f: string) => {
+  const t = readFileSync(join(FIX, f), "utf8");
+  return WIN ? t.replace(/\/Users\/tester(?:\/[\w.-]+)*/g, (m) => "C:" + m.replace(/\//g, "\\\\")) : t; // JSON 글 안이라 \ 를 두 번
+};
+const lines = (f: string) => fixText(f).split("\n").filter(Boolean).map((l) => JSON.parse(l));
 
 // 임시 ~/.claude: projects/<demo 레포>/<sid>.jsonl + 서브에이전트
 function claudeHome() {
   const dir = mkdtempSync(join(tmpdir(), "cy-cli-sync-"));
   const proj = join(dir, "projects", projectDirName(REPO));
   mkdirSync(join(proj, SID, "subagents"), { recursive: true });
-  copyFileSync(join(FIX, "session.jsonl"), join(proj, `${SID}.jsonl`));
-  for (const f of ["agent-a1.jsonl", "agent-a1.meta.json", "agent-other.jsonl", "agent-other.meta.json"]) copyFileSync(join(FIX, f), join(proj, SID, "subagents", f));
+  writeFileSync(join(proj, `${SID}.jsonl`), fixText("session.jsonl"));
+  for (const f of ["agent-a1.jsonl", "agent-a1.meta.json", "agent-other.jsonl", "agent-other.meta.json"]) writeFileSync(join(proj, SID, "subagents", f), fixText(f));
   return { dir, proj, file: join(proj, `${SID}.jsonl`), done: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
@@ -243,14 +249,14 @@ test("CliSync.importSession: 세션 id 로 채팅 run 하나(기록의 cwd·첫 
 test("run cwd: SDK init 의 cwd 로 고침 · askCwd 는 관련 레포(대화형·코드 보기), 아니면 brain", () => {
   const reg = new RunRegistry(new DatabaseSync(":memory:"));
   const run = reg.startRun({ kind: "chat", title: "x", cwd: BRAIN });
-  const repo = process.platform === "win32" ? "C:\\Users\\tester\\code\\demo" : REPO; // Windows SDK 는 C:\… 로 준다
+  const repo = REPO; // Windows SDK 는 C:\… 로 준다
   logSdkMessage(run, { type: "system", subtype: "init", session_id: SID, cwd: repo, model: "m" });
   assert.equal(reg.summary(run.id)!.cwd, repo);
   assert.equal(reg.summary(run.id)!.sdkSessionId, SID);
   logSdkMessage(run, { type: "system", subtype: "init", session_id: SID, cwd: "relative/x" });
   assert.equal(reg.summary(run.id)!.cwd, repo);
   if (process.platform === "win32") { logSdkMessage(run, { type: "system", subtype: "init", session_id: SID, cwd: "\\\\evil\\share" }); assert.equal(reg.summary(run.id)!.cwd, repo); } // UNC 는 안 받음
-  const cfg = { repoRoots: ["/Users/tester/code"] } as any;
+  const cfg = { repoRoots: [WIN ? "C:\\Users\\tester\\code" : "/Users/tester/code"] } as any;
   assert.equal(askCwd(cfg, { interactive: { origin: { via: "chat" } } as any, code: { roots: cfg.repoRoots, cwd: REPO } }), REPO);
   assert.equal(askCwd(cfg, { code: { roots: cfg.repoRoots, cwd: REPO } }), REPO);
   assert.match(askCwd(cfg, { interactive: { origin: { via: "chat" } } as any, code: { roots: cfg.repoRoots, cwd: "/etc" } }), /brain$/);

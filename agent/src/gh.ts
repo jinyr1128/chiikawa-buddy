@@ -4,6 +4,7 @@ import { execFile } from "node:child_process";
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import type { Config } from "./config.ts";
+import { IS_WIN, killTree, spawnSpec } from "./plat.ts";
 
 export const GH_SERVER = "gh";
 export const GH_TOOL_NAMES = ["pr_view", "pr_diff", "pr_list", "search_prs", "search_issues", "issue_view", "repo_find", "run_list", "run_view"] as const;
@@ -136,21 +137,29 @@ export type GhResult = { ok: boolean; out: string; err?: string };
 
 export function runGh(args: string[], o: GhOpts = {}): Promise<GhResult> {
   if (!isAllowedArgv(args)) return Promise.resolve({ ok: false, out: "", err: `허용되지 않은 gh 명령: ${args.slice(0, 2).join(" ")}` });
+  const ms = o.timeoutMs ?? GH_TIMEOUT_MS;
+  // Windows: PATH 에서 gh.exe 를 찾고, gh.cmd 같은 셸 껍데기면 cmd.exe 로(spawnSpec). 시간 초과는 직접 — cmd.exe 만 죽이면
+  // 그 아래 gh 가 남아 출력 통로를 쥐고 있어서 끝을 못 받는다 → killTree 로 나무째
+  const sp = spawnSpec(o.bin ?? "gh", args);
+  let timedOut = false, timer: NodeJS.Timeout | undefined;
   return new Promise((resolve) => {
-    execFile(o.bin ?? "gh", args, {
-      timeout: o.timeoutMs ?? GH_TIMEOUT_MS,
+    const child = execFile(sp.file, sp.args, {
+      timeout: IS_WIN ? 0 : ms,
       maxBuffer: RAW_MAX_BUFFER,
       encoding: "utf8",
       windowsHide: true,
+      windowsVerbatimArguments: sp.verbatim,
       env: { ...process.env, NO_COLOR: "1", CLICOLOR: "0", CLICOLOR_FORCE: "0", GH_FORCE_TTY: "", GH_PROMPT_DISABLED: "1", GH_NO_UPDATE_NOTIFIER: "1", GH_PAGER: "cat", PAGER: "cat" },
     }, (e, stdout, stderr) => {
+      clearTimeout(timer);
       const out = stripAnsi(String(stdout ?? ""));
       if (!e) return resolve({ ok: true, out });
       const code = (e as any).code;
       if (code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") return resolve({ ok: true, out }); // 너무 길면 앞부분만
-      const why = (e as any).killed || (e as any).signal === "SIGTERM" ? `시간 초과(${Math.round((o.timeoutMs ?? GH_TIMEOUT_MS) / 1000)}초)` : stripAnsi(String(stderr ?? "")).trim() || String(e.message);
+      const why = timedOut || (e as any).killed || (e as any).signal === "SIGTERM" ? `시간 초과(${Math.round(ms / 1000)}초)` : stripAnsi(String(stderr ?? "")).trim() || String(e.message);
       resolve({ ok: false, out, err: why.slice(0, 1000) });
     });
+    if (IS_WIN) timer = setTimeout(() => { timedOut = true; killTree(child.pid); }, ms);
   });
 }
 
