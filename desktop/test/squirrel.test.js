@@ -4,16 +4,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { squirrelPlan, loginItemTarget, updateExe, appUserModelId } from '../src/squirrel.js';
 
-const EXE = 'C:\\Users\\me\\AppData\\Local\\Shisa\\app-0.2.0\\Shisa.exe';
-const UPDATE = 'C:\\Users\\me\\AppData\\Local\\Shisa\\Update.exe';
+const EXE = 'C:\\Users\\me\\AppData\\Local\\ChiikawaManager\\app-0.2.0\\ChiikawaManager.exe';
+const UPDATE = 'C:\\Users\\me\\AppData\\Local\\ChiikawaManager\\Update.exe';
 
 test('squirrelPlan: 설치는 바로 가기 만들기, 업데이트(updated)는 아무것도 안 띄움, 제거는 지우기 + 로그인 항목 끄기, obsolete 는 그냥 끝', () => {
   const at = (arg) => squirrelPlan({ platform: 'win32', argv: [EXE, arg], execPath: EXE });
   assert.equal(updateExe(EXE), UPDATE);
-  assert.deepEqual(at('--squirrel-install'), { event: 'install', run: [UPDATE, ['--createShortcut=Shisa.exe']], removeLoginItem: false });
+  assert.deepEqual(at('--squirrel-install'), { event: 'install', run: [UPDATE, ['--createShortcut=ChiikawaManager.exe']], removeLoginItem: false });
   // 업데이트는 바로 가기를 다시 만들지 않는다(사용자가 지운 바탕화면 바로 가기가 되살아나지 않게)
   assert.deepEqual(at('--squirrel-updated'), { event: 'updated', run: null, removeLoginItem: false });
-  assert.deepEqual(at('--squirrel-uninstall'), { event: 'uninstall', run: [UPDATE, ['--removeShortcut=Shisa.exe']], removeLoginItem: true });
+  assert.deepEqual(at('--squirrel-uninstall'), { event: 'uninstall', run: [UPDATE, ['--removeShortcut=ChiikawaManager.exe']], removeLoginItem: true });
   assert.deepEqual(at('--squirrel-obsolete'), { event: 'obsolete', run: null, removeLoginItem: false });
 });
 
@@ -21,7 +21,7 @@ test('squirrelPlan: 평소 실행·첫 실행(--squirrel-firstrun)·맥은 null'
   for (const arg of [undefined, '', '--squirrel-firstrun', '--squirrel-installx', '.', '--hidden']) {
     assert.equal(squirrelPlan({ platform: 'win32', argv: [EXE, arg], execPath: EXE }), null, String(arg));
   }
-  assert.equal(squirrelPlan({ platform: 'darwin', argv: ['/A/Shisa', '--squirrel-install'], execPath: '/A/Shisa' }), null);
+  assert.equal(squirrelPlan({ platform: 'darwin', argv: ['/A/ChiikawaManager', '--squirrel-install'], execPath: '/A/ChiikawaManager' }), null);
   assert.equal(squirrelPlan({ platform: 'win32', argv: [EXE, '--squirrel-install'], execPath: '' }), null);
   // 개발 실행(electron.exe . --squirrel-install)은 argv[1] 이 앱 폴더라 안 걸린다
   assert.equal(squirrelPlan({ platform: 'win32', argv: ['electron.exe', '.', '--squirrel-install'], execPath: 'electron.exe' }), null);
@@ -29,8 +29,8 @@ test('squirrelPlan: 평소 실행·첫 실행(--squirrel-firstrun)·맥은 null'
 
 test('loginItemTarget: 윈도우 설치본만 Update.exe --processStart, 그 밖엔 기본값', () => {
   // name 을 박아 둬야 앱 ID 를 정하기 전(Squirrel 제거 실행)에도 같은 Run 값을 지운다
-  assert.deepEqual(loginItemTarget({ platform: 'win32', packaged: true, execPath: EXE }), { path: UPDATE, args: ['--processStart', '"Shisa.exe"'], name: 'com.squirrel.Shisa.Shisa' });
-  assert.equal(appUserModelId(EXE), 'com.squirrel.Shisa.Shisa');
+  assert.deepEqual(loginItemTarget({ platform: 'win32', packaged: true, execPath: EXE }), { path: UPDATE, args: ['--processStart', '"ChiikawaManager.exe"'], name: 'com.squirrel.ChiikawaManager.ChiikawaManager' });
+  assert.equal(appUserModelId(EXE), 'com.squirrel.ChiikawaManager.ChiikawaManager');
   assert.deepEqual(loginItemTarget({ platform: 'win32', packaged: true, execPath: EXE, exists: () => false }), {});
   assert.deepEqual(loginItemTarget({ platform: 'win32', packaged: false, execPath: EXE }), {});
   assert.deepEqual(loginItemTarget({ platform: 'darwin', packaged: true, execPath: '/Applications/시사.app/Contents/MacOS/시사' }), {});

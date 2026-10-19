@@ -11,16 +11,32 @@
 
 ## 🤖 설치는 AI에게 맡기세요 (꼭 AI로!)
 
-**애플 실리콘 맥(M1 이후)** 에서, **내 맥의 파일과 터미널을 다룰 수 있는 AI**(Claude Code·Codex 등)에게 이렇게만 말하면 돼요.
+**애플 실리콘 맥(M1 이후)** 이나 **윈도우 10·11** PC에서, **내 컴퓨터의 파일과 터미널을 다룰 수 있는 AI**(Claude Code·Codex 등)에게 이렇게만 말하면 돼요.
 
-> **이 저장소 주소(`https://github.com/…`)를 붙이고 「이거 내 맥에 설치해줘. AGENTS.md 대로 해줘」**
+> **이 저장소 주소(`https://github.com/…`)를 붙이고 「이거 내 컴퓨터에 설치해줘. AGENTS.md 대로 해줘」**
 
 - 웹 채팅창(ChatGPT 웹·Claude 웹)에 주소만 붙여 넣으면 설치할 수 없어요.
 - 공개 저장소라 **GitHub 로그인이 필요 없어요.** AI가 [`AGENTS.md`](AGENTS.md)를 읽고 받기 → 설치 → 확인까지 해요.
 - 사람이 직접 할 일은 두 가지예요. macOS가 「캘린더 접근」을 물으면 **[전체 접근 허용]**을 눌러요. 그리고 앱의 **「연결 관리」**에서 내 계정을 연결해요(열쇠·비밀번호는 AI에게 알려 주지 말고 직접 붙여 넣어요).
 
 <details>
-<summary>직접 설치(터미널)</summary>
+<summary>윈도우에서 직접 설치(PowerShell)</summary>
+
+```powershell
+git clone <이 저장소 주소>.git chiikawa-manager
+cd chiikawa-manager
+powershell -ExecutionPolicy Bypass -File ops\setup-win.ps1
+```
+
+- 최신 윈도우 릴리스(`v<버전>-windows`)에서 설치 파일을 받아 검증하고, 관리자 권한 없이 `%LOCALAPPDATA%\ChiikawaManager`에 설치해요. 바탕 화면·시작 메뉴 바로 가기와 로그인할 때 자동 실행이 생겨요.
+- 처음 실행할 때 파란 「Windows의 PC 보호」 창이 뜨면 「추가 정보」 → 「실행」을 눌러요.
+- 캐릭터 얼굴 아이콘은 작업 표시줄 오른쪽 알림 영역(시계 옆, 안 보이면 `^`)에 있어요. 캘린더는 iCal 비공개 주소로 연결해요(맥 캘린더 기능은 맥 전용). 자세한 건 [windows/README.md](windows/README.md).
+- **업데이트**: 저장소 폴더에서 `git pull` 후 같은 명령을 다시 실행해요.
+
+</details>
+
+<details>
+<summary>맥에서 직접 설치(터미널)</summary>
 
 ```bash
 git clone <이 저장소 주소>.git chiikawa-manager
@@ -31,7 +47,7 @@ cd chiikawa-manager
 - 이 저장소의 최신 릴리스에서 앱(zip)과, 있으면 캐릭터 묶음을 받아 SHA-256으로 검증해요.
 - `/Applications/치이카와 매니저.app`에 넣고, 캐릭터는 `~/.cy-agent`에 넣어요.
 - Claude Code가 있으면 Claude Code 연동을, Hermes가 있으면 Hermes 연동을 켜요. Codex는 설정이 필요 없어요.
-- 옵션: `--build`(소스로 직접 만들기, Node.js 24+ 필요) · `--no-hooks`(AI 연동 안 켜기) · `--tag v0.4.8`(그 버전으로 설치)
+- 옵션: `--build`(소스로 직접 만들기, Node.js 24+ 필요) · `--no-hooks`(AI 연동 안 켜기) · `--tag v0.4.9`(그 버전으로 설치)
 - **업데이트**: 저장소 폴더에서 `git pull && ./ops/setup-mac.sh`. 설정과 캐릭터는 그대로 남아요.
 - **지우기**: 앱을 끄고 `/Applications/치이카와 매니저.app`을 지워요. 데이터는 `~/.cy-agent`에 있고, Claude 연동은 `node ops/claude-hooks.mjs off`로 꺼요.
 
@@ -131,6 +147,7 @@ Dock에는 아이콘이 없어요. 메뉴 막대(화면 위 오른쪽)의 얼굴
 
 ### 최근 변경
 
+- **v0.4.9** 윈도우판(설치 스크립트·자동 빌드), 하치와레 작업 움짤 정리, 자막 GIF 걸러내기.
 - **v0.4.8** 말투 검사·정리(시사 사투리·아노코 소리·괄호), 업데이트 안내와 `./ops/update.sh` 정리, 문서 그림 새로.
 - **v0.4.7** 대사의 조사가 받침에 맞게 자동으로 골라져요(「명령 실행이야」). 공개 저장소에서는 로그인 없이 설치돼요.
 - **v0.4.6** 모든 캐릭터 말풍선에 대표 색. 작업 움짤 3개 이상. 깨진 그림 교체.

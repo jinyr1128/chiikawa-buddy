@@ -1109,6 +1109,8 @@ function rebuildTrayMenu() {
 // 맥: 검정 템플릿(메뉴 막대 색을 따른다). 윈도우: 작업 표시줄 알림 영역엔 템플릿이 없어 캐릭터 그림을 16·32px 로
 function trayImage() {
   if (process.platform === 'win32') {
+    const face = trayFace(); // 윈도우 작업 표시줄에도 지금 캐릭터 얼굴
+    if (face) return face;
     const src = nativeImage.createFromPath(path.join(__dirname, 'assets', 'character.png'));
     if (!src.isEmpty()) {
       const img = nativeImage.createEmpty();
@@ -2313,7 +2315,7 @@ async function loginDefaultFromDaemon() {
 
 // ---- 새 버전 알림(src/update-check.js): 하루 한 번 GitHub Releases 최신판을 본다 ----
 const isCheckout = () => !app.isPackaged || launchdPlist(); // 터미널 설치(레포 체크아웃)는 ./ops/update.sh 로 받는다
-// 윈도우 휴대용 zip: Squirrel 설치본이면 Shisa.exe 한 칸 위(%LOCALAPPDATA%\Shisa)에 Update.exe 가 있다
+// 윈도우 휴대용 zip: Squirrel 설치본이면 ChiikawaManager.exe 한 칸 위(%LOCALAPPDATA%\ChiikawaManager)에 Update.exe 가 있다
 const isPortableWin = () => process.platform === 'win32' && app.isPackaged && !fs.existsSync(path.join(path.dirname(process.execPath), '..', 'Update.exe'));
 
 async function checkForUpdate() {

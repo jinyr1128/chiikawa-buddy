@@ -1,12 +1,12 @@
-// 윈도우 배포본 만들기: 데몬(agent/)까지 든 Shisa.exe 앱 폴더 → 휴대용 zip + Squirrel.Windows 설치 파일(Setup.exe).
+// 윈도우 배포본 만들기: 데몬(agent/)까지 든 ChiikawaManager.exe 앱 폴더 → 휴대용 zip + Squirrel.Windows 설치 파일(Setup.exe).
 // desktop/scripts/dist.mjs(맥 dmg)를 윈도우용으로 옮긴 것. 윈도우에서만 돈다(Squirrel 도구가 윈도우 실행 파일이라).
 // 사용: node windows/dist-win.mjs                  (이 PC 의 아키텍처. 배포 기본은 x64 라 보통 --arch=x64 를 붙인다)
 //       node windows/dist-win.mjs --arch=x64       (arm64 PC 에서도 된다: 데몬 의존성은 npm 이 x64 용으로, Electron x64 는 packager 가 받는다)
 //       node windows/dist-win.mjs --arch=arm64
 //       node windows/dist-win.mjs --no-installer   (앱 폴더 + zip 만)
 //       cd desktop && npm run dist:win -- --arch=x64
-// 결과: desktop/dist/win/Shisa-<버전>-Setup.exe (arm64 는 Shisa-<버전>-arm64-Setup.exe), Shisa-<버전>-win-<arch>.zip,
-//       Shisa.ico, SHA256SUMS-<버전>-win-<arch>.txt (이번에 만든 exe·zip 만. 버전은 desktop/package.json version)
+// 결과: desktop/dist/win/ChiikawaManager-<버전>-Setup.exe (arm64 는 ChiikawaManager-<버전>-arm64-Setup.exe), ChiikawaManager-<버전>-win-<arch>.zip,
+//       ChiikawaManager.ico, SHA256SUMS-<버전>-win-<arch>.txt (이번에 만든 exe·zip 만. 버전은 desktop/package.json version)
 // 인터넷이 필요하다(npm ci, 처음 한 번 Electron 받기). 코드 서명은 하지 않는다(README 의 SmartScreen 「추가 정보 → 실행」 참고).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,10 +18,10 @@ import { makeIco } from './make-ico.mjs';
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DESKTOP = path.join(REPO, 'desktop');
-const APP_NAME = '시사'; // 바로 가기·작업 관리자·「앱」 목록에 보이는 이름(FileDescription·ProductName)
-const EXE_NAME = 'Shisa'; // 실행 파일·Squirrel id 는 영문(설치 폴더 %LOCALAPPDATA%\Shisa, 파일 이름이 한글이면 GitHub 릴리스가 못 받는다)
-const AUTHORS = 'cheo0y';
-const RELEASE_REPO = process.env.SHISA_RELEASE_REPO || 'cheo0y/shisa-agent';
+const APP_NAME = '치이카와 매니저'; // 바로 가기·작업 관리자·「앱」 목록에 보이는 이름(FileDescription·ProductName)
+const EXE_NAME = 'ChiikawaManager'; // 실행 파일·Squirrel id 는 영문(설치 폴더 %LOCALAPPDATA%\ChiikawaManager, 파일 이름이 한글이면 GitHub 릴리스가 못 받는다)
+const AUTHORS = 'jinyr1128';
+const RELEASE_REPO = process.env.SHISA_RELEASE_REPO || 'jinyr1128/chiikawa-buddy';
 const pkg = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'package.json'), 'utf8'));
 const VERSION = pkg.version;
 
@@ -190,7 +190,7 @@ if (fs.existsSync(sysTar)) {
 
 const outputs = [ZIP];
 if (MAKE_INSTALLER) {
-  // 6) Squirrel.Windows 설치 파일. 설치하면 %LOCALAPPDATA%\Shisa 에 깔리고 바로 가기는 앱(main.js)이 --squirrel-install 때 만든다
+  // 6) Squirrel.Windows 설치 파일. 설치하면 %LOCALAPPDATA%\ChiikawaManager 에 깔리고 바로 가기는 앱(main.js)이 --squirrel-install 때 만든다
   //    (새 Setup.exe 를 다시 실행하면 이 Squirrel 은 통째로 다시 깔아서 --squirrel-install 이 또 온다. release.md)
   step('설치 파일(Setup.exe) 만들기');
   const winstaller = await load('electron-winstaller');
@@ -221,7 +221,7 @@ if (MAKE_INSTALLER) {
     version: VERSION,
     authors: AUTHORS,
     owners: AUTHORS,
-    description: '화면 구석에 사는 작은 비서 시사',
+    description: '바탕화면에서 AI 작업을 보여 주는 치이카와 매니저',
     copyright: 'MIT License',
     setupExe,
     setupIcon: ICO,

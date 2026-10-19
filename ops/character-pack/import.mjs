@@ -10,7 +10,10 @@ const HOME = process.env.CY_AGENT_HOME ?? path.join(os.homedir(), '.cy-agent');
 const zip = process.argv[2];
 if (!zip || !fs.existsSync(zip)) { console.error('사용법: node ops/character-pack/import.mjs <chiikawa-characters.zip>'); process.exit(1); }
 const stage = fs.mkdtempSync(path.join(os.tmpdir(), 'cpack-in-'));
-execFileSync('ditto', ['-x', '-k', zip, stage]);
+if (process.platform === 'win32') {
+  // 윈도우: PowerShell 로 푼다(맥의 ditto 대신)
+  execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Expand-Archive -LiteralPath '${zip.replace(/'/g, "''")}' -DestinationPath '${stage.replace(/'/g, "''")}' -Force`], { stdio: 'inherit' });
+} else execFileSync('ditto', ['-x', '-k', zip, stage]);
 const root = fs.existsSync(path.join(stage, 'characters')) ? stage : path.join(stage, fs.readdirSync(stage)[0] ?? '');
 const src = path.join(root, 'characters');
 if (!fs.existsSync(src)) { console.error('묶음 안에 characters 폴더가 없어요.'); process.exit(1); }

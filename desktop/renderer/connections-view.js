@@ -5,6 +5,9 @@ import { SLACK_APP_URL } from '../src/setup.js';
 
 const APP_PW = { gmail: 'https://myaccount.google.com/apppasswords', naver: 'https://nid.naver.com/user2/help/myInfoV2?m=viewSecurity&lang=ko_KR', daum: 'https://accounts.kakao.com/weblogin/account/security' };
 
+// 맥이면 「맥 캘린더에서 고르기」, 윈도우는 iCal 주소만
+const IS_MAC = /Mac/i.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || '');
+
 export function createConnectionsView({ h, cy, el }) {
   let visible = false;
   let d = { ov: null, local: null, cals: [], mac: null, macErr: '' };
@@ -150,6 +153,7 @@ export function createConnectionsView({ h, cy, el }) {
         cals.length ? h('ul.conn-list', {}, cals.map((c) => h('li', {}, h(`span.conn-status.${!c.enabled ? 'off' : c.phase === 'failed' ? 'warn' : 'ok'}`, {}, h('i')), h('span', { text: c.name }), h('small', { text: !c.enabled ? '꺼 둠' : c.phase === 'failed' ? c.reason || '못 가져옴' : c.meetings != null ? `일정 ${c.meetings}개` : c.label || '' }),
           btn(c.enabled ? '끄기' : '켜기', 'ghost small', () => run('cal', async () => { await cy.calendarToggle?.(c.id, !c.enabled); })),
           btn('빼기', 'ghost small', () => run('cal', async () => { await cy.calendarRemove?.(c.id); }))))) : null,
+        ...(IS_MAC ? [
         h('h4', { text: '맥 캘린더에서 고르기 (추천)' }),
         h('p.conn-blurb', { text: '회사 구글·네이버·iCloud 캘린더를 맥 「캘린더」 앱에 계정으로 추가해 두면, 비공개 주소 없이 여기서 바로 고를 수 있어요.' }),
         steps(['맥 캘린더 앱 → 설정 → 계정 → ＋', '회사 구글: Google 로 로그인 · 네이버: 「기타 CalDAV 계정」 → 서버 caldav.calendar.naver.com', '아래 목록에서 [추가]']),
@@ -166,6 +170,19 @@ export function createConnectionsView({ h, cy, el }) {
               const v = r?.data ?? r ?? {};
               if (r?.ok && v.ok !== false) { ui.ical = { name: '', url: '' }; say('cal', true, '추가했어요.'); } else say('cal', false, v.error || '추가하지 못했어요.');
             })))),
+        ] : [
+        // 윈도우: 맥 캘린더가 없으니 iCal 비공개 주소로 바로
+        h('h4', { text: 'iCal 비공개 주소로 연결' }),
+        steps(['구글 캘린더(웹) → 설정 → 내 캘린더 → 「캘린더 통합」 → 「iCal 형식의 비공개 주소」 복사', '네이버 캘린더(웹) → 설정 → 캘린더 관리 → 내보내기·공유의 「iCal 주소」 복사', '아래에 이름과 주소를 붙이고 [추가]']),
+        h('div.conn-form', {},
+            h('label', {}, h('span', { text: '이름' }), input('cal', ui.ical, 'name', { placeholder: '회사' })),
+            h('label', {}, h('span', { text: 'iCal 주소' }), input('cal', ui.ical, 'url', { placeholder: 'https://calendar.google.com/calendar/ical/…/basic.ics' })),
+            btn('추가', 'primary', () => run('cal', async () => {
+              const r = await cy.calendarAdd?.({ name: ui.ical.name.trim(), url: ui.ical.url.trim() }).catch(() => null);
+              const v = r?.data ?? r ?? {};
+              if (r?.ok && v.ok !== false) { ui.ical = { name: '', url: '' }; say('cal', true, '추가했어요.'); } else say('cal', false, v.error || '추가하지 못했어요.');
+            }))),
+        ]),
       ],
       actions: [btn('추가', cals.length ? 'ghost small' : 'primary small', () => { ui.open = 'cal'; render(); })],
     });

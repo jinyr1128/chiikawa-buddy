@@ -31,8 +31,8 @@ export const isNewer = (latest, current) => compareVersions(latest, current) > 0
 const okLink = (u, prefix) => typeof u === 'string' && u.startsWith(prefix) && !/[\s"'<>]/.test(u);
 
 // 이 PC 가 받을 파일 이름 고르기(이름은 windows/dist-win.mjs · desktop/scripts/dist.mjs 와 같다).
-// win32 설치본: Shisa-<v>-Setup.exe(x64) · Shisa-<v>-arm64-Setup.exe. 휴대용 zip: Shisa-<v>-win-<arch>.zip.
-// darwin: Shisa-<v>-<arch>.dmg. arm64 는 자기 것이 없으면 x64 로(윈도우·맥 모두 에뮬레이션으로 돈다). 그 밖의 플랫폼은 없음
+// win32 설치본: ChiikawaManager-<v>-Setup.exe(x64) · ChiikawaManager-<v>-arm64-Setup.exe. 휴대용 zip: ChiikawaManager-<v>-win-<arch>.zip.
+// darwin: ChiikawaManager-<v>-<arch>.dmg. arm64 는 자기 것이 없으면 x64 로(윈도우·맥 모두 에뮬레이션으로 돈다). 그 밖의 플랫폼은 없음
 function assetMatchers({ platform, arch, portable }) {
   const archs = arch === 'arm64' ? ['arm64', 'x64'] : ['x64'];
   if (platform === 'win32') {
@@ -101,7 +101,7 @@ export function updateBubble({ version, url, assetUrl, checkout = false, platfor
     ? `새 버전 v${version} 가 나왔어요. 받은 레포 폴더에서 ./ops/update.sh 를 실행하면 바뀌어요.`
     : platform === 'win32'
       ? portable
-        ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 Shisa.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
+        ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 ChiikawaManager.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
         : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 매니저를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 할 일·기록은 그대로예요.`
       : platform === 'darwin'
         ? `새 버전 v${version} 가 나왔어요. 받은 저장소 폴더에서 ./ops/update.sh 를 실행하거나, AI에게 「치이카와 매니저 업데이트해줘」라고 하면 돼요. 할 일·기록은 그대로예요.`

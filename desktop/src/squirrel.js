@@ -1,4 +1,4 @@
-// 윈도우 Squirrel 설치기(Shisa-<ver>-Setup.exe)가 앱을 --squirrel-* 로 잠깐 띄울 때 할 일. 순수 로직(띄우기·종료는 main.js).
+// 윈도우 Squirrel 설치기(ChiikawaManager-<ver>-Setup.exe)가 앱을 --squirrel-* 로 잠깐 띄울 때 할 일. 순수 로직(띄우기·종료는 main.js).
 // 설치 폴더: %LOCALAPPDATA%\<앱>\Update.exe · %LOCALAPPDATA%\<앱>\app-<ver>\<앱>.exe
 //  - install: 바탕화면·시작 메뉴 바로 가기 만들기 · uninstall: 지우기 + 로그인 자동 실행 끄기 · updated·obsolete: 그냥 끝
 //    (updated 에 다시 만들면 사용자가 지운 바로 가기가 되살아난다. 바로 가기는 Update.exe --processStart 라 업데이트 뒤에도 맞다)
@@ -11,7 +11,8 @@ const W = path.win32;
 export const updateExe = (execPath) => W.resolve(W.dirname(execPath), '..', 'Update.exe');
 
 // 앱 ID: Squirrel 바로 가기와 같은 com.squirrel.<id>.<exe 이름>. 알림·작업 표시줄 묶음 + 로그인 항목(Run 값) 이름
-export const appUserModelId = (execPath) => `com.squirrel.Shisa.${W.basename(execPath, '.exe')}`;
+// Squirrel id 는 실행 파일 이름과 같다(windows/dist-win.mjs EXE_NAME = ChiikawaManager)
+export const appUserModelId = (execPath) => { const exe = W.basename(execPath, '.exe'); return `com.squirrel.${exe}.${exe}`; };
 
 // → null(평소 실행) | { event, run: [file, args] | null, removeLoginItem }
 export function squirrelPlan({ platform, argv = [], execPath }) {

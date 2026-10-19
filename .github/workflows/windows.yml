@@ -1,0 +1,52 @@
+# 윈도우판 만들기: 맥 릴리스(v<버전>)가 올라오면 윈도우 PC(GitHub 빌드 서버)에서 테스트하고
+# 설치 파일(ChiikawaManager-<버전>-Setup.exe)·휴대용 zip 을 만들어 v<버전>-windows 릴리스로 올린다.
+# 손으로 돌리기: 저장소 → Actions → windows → Run workflow
+name: windows
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    if: ${{ github.event_name == 'workflow_dispatch' || !endsWith(github.event.release.tag_name, '-windows') }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 데몬 테스트(윈도우)
+        working-directory: agent
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+        continue-on-error: true
+      - name: 앱 준비
+        working-directory: desktop
+        run: npm ci --no-audit --no-fund
+      - name: 앱 테스트(윈도우)
+        working-directory: desktop
+        run: npm test
+        continue-on-error: true
+      - name: 윈도우 설치 파일 만들기
+        run: node windows/dist-win.mjs --arch=x64
+        env:
+          SHISA_RELEASE_REPO: ${{ github.repository }}
+      - name: 릴리스에 올리기
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(node -p "require('./desktop/package.json').version")
+          T="v$V-windows"
+          cd desktop/dist/win
+          FILES="ChiikawaManager-$V-Setup.exe ChiikawaManager-$V-win-x64.zip ChiikawaManager.ico SHA256SUMS-$V-win-x64.txt"
+          if gh release view "$T" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$T" $FILES --repo "${{ github.repository }}" --clobber
+          else
+            gh release create "$T" $FILES --repo "${{ github.repository }}" --latest=false \
+              --title "치이카와 매니저 v$V (Windows)" \
+              --notes "윈도우 10·11용이에요. 설치는 AI(Claude Code·Codex)에게 「이 저장소 내 PC에 설치해줘. AGENTS.md 대로 해줘」라고 하거나, 저장소 폴더에서 powershell -ExecutionPolicy Bypass -File ops\\setup-win.ps1 을 실행하세요. 처음 실행할 때 「Windows의 PC 보호」 창이 뜨면 「추가 정보」 → 「실행」."
+          fi

@@ -89,22 +89,22 @@ test('updateBubble win32: 설치본은 종료 후 새 Setup.exe, 휴대용은 zi
 const DL = `${RELEASES_PAGE}/download/v0.2.0`;
 const asset = (name) => ({ name, browser_download_url: `${DL}/${name}` });
 const rel = (...names) => ({ tag_name: 'v0.2.0', html_url: `${RELEASES_PAGE}/tag/v0.2.0`, assets: names.map(asset) });
-const FULL = rel('Shisa-0.2.0-arm64.dmg', 'Shisa-0.2.0-x64.dmg', 'Shisa-0.2.0-Setup.exe', 'Shisa-0.2.0-arm64-Setup.exe', 'Shisa-0.2.0-win-x64.zip', 'Shisa.ico', 'SHA256SUMS-0.2.0-win.txt');
+const FULL = rel('ChiikawaManager-0.2.0-arm64.dmg', 'ChiikawaManager-0.2.0-x64.dmg', 'ChiikawaManager-0.2.0-Setup.exe', 'ChiikawaManager-0.2.0-arm64-Setup.exe', 'ChiikawaManager-0.2.0-win-x64.zip', 'Shisa.ico', 'SHA256SUMS-0.2.0-win.txt');
 
 test('pickAsset/latestRelease win32: x64 는 Setup.exe(arm64 것 아님), arm64 는 자기 것 → 없으면 x64', () => {
-  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'x64' }).asset.name, 'Shisa-0.2.0-Setup.exe');
-  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'arm64' }).asset.name, 'Shisa-0.2.0-arm64-Setup.exe');
-  const x64only = rel('Shisa-0.2.0-x64.dmg', 'Shisa-0.2.0-Setup.exe');
-  assert.equal(latestRelease(x64only, { platform: 'win32', arch: 'arm64' }).asset.name, 'Shisa-0.2.0-Setup.exe');
+  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'x64' }).asset.name, 'ChiikawaManager-0.2.0-Setup.exe');
+  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'arm64' }).asset.name, 'ChiikawaManager-0.2.0-arm64-Setup.exe');
+  const x64only = rel('ChiikawaManager-0.2.0-x64.dmg', 'ChiikawaManager-0.2.0-Setup.exe');
+  assert.equal(latestRelease(x64only, { platform: 'win32', arch: 'arm64' }).asset.name, 'ChiikawaManager-0.2.0-Setup.exe');
   // arm64 Setup.exe 만 있으면 x64 PC 는 받을 게 없다
-  assert.equal(latestRelease(rel('Shisa-0.2.0-arm64-Setup.exe'), { platform: 'win32', arch: 'x64' }), null);
+  assert.equal(latestRelease(rel('ChiikawaManager-0.2.0-arm64-Setup.exe'), { platform: 'win32', arch: 'x64' }), null);
   const r = latestRelease(FULL, { platform: 'win32', arch: 'x64' });
-  assert.equal(r.asset.url, `${DL}/Shisa-0.2.0-Setup.exe`);
+  assert.equal(r.asset.url, `${DL}/ChiikawaManager-0.2.0-Setup.exe`);
   assert.equal(r.url, `${RELEASES_PAGE}/tag/v0.2.0`);
 });
 
 test('latestRelease win32: 맥 dmg 만 올라온 릴리스는 알리지 않는다(나중 확인 때 다시)', () => {
-  const macOnly = rel('Shisa-0.2.0-arm64.dmg', 'Shisa-0.2.0-x64.dmg');
+  const macOnly = rel('ChiikawaManager-0.2.0-arm64.dmg', 'ChiikawaManager-0.2.0-x64.dmg');
   assert.equal(latestRelease(macOnly, { platform: 'win32', arch: 'x64' }), null);
   assert.equal(latestRelease({ tag_name: 'v0.2.0' }, { platform: 'win32', arch: 'x64' }), null); // assets 없음
   // 터미널 설치는 파일이 필요 없다
@@ -112,24 +112,24 @@ test('latestRelease win32: 맥 dmg 만 올라온 릴리스는 알리지 않는�
 });
 
 test('latestRelease win32 휴대용: zip 이 있어야, arm64 는 x64 zip 으로', () => {
-  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'x64', portable: true }).asset.name, 'Shisa-0.2.0-win-x64.zip');
-  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'arm64', portable: true }).asset.name, 'Shisa-0.2.0-win-x64.zip');
-  assert.equal(latestRelease(rel('Shisa-0.2.0-Setup.exe'), { platform: 'win32', arch: 'x64', portable: true }), null);
+  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'x64', portable: true }).asset.name, 'ChiikawaManager-0.2.0-win-x64.zip');
+  assert.equal(latestRelease(FULL, { platform: 'win32', arch: 'arm64', portable: true }).asset.name, 'ChiikawaManager-0.2.0-win-x64.zip');
+  assert.equal(latestRelease(rel('ChiikawaManager-0.2.0-Setup.exe'), { platform: 'win32', arch: 'x64', portable: true }), null);
 });
 
 test('latestRelease darwin: 아키텍처에 맞는 dmg, arm64 는 없으면 x64, 윈도우 파일만 있으면 null', () => {
-  assert.equal(latestRelease(FULL, { platform: 'darwin', arch: 'arm64' }).asset.name, 'Shisa-0.2.0-arm64.dmg');
-  assert.equal(latestRelease(FULL, { platform: 'darwin', arch: 'x64' }).asset.name, 'Shisa-0.2.0-x64.dmg');
-  assert.equal(latestRelease(rel('Shisa-0.2.0-x64.dmg'), { platform: 'darwin', arch: 'arm64' }).asset.name, 'Shisa-0.2.0-x64.dmg');
-  assert.equal(latestRelease(rel('Shisa-0.2.0-arm64.dmg'), { platform: 'darwin', arch: 'x64' }), null);
-  assert.equal(latestRelease(rel('Shisa-0.2.0-Setup.exe', 'Shisa-0.2.0-win-x64.zip'), { platform: 'darwin', arch: 'arm64' }), null);
+  assert.equal(latestRelease(FULL, { platform: 'darwin', arch: 'arm64' }).asset.name, 'ChiikawaManager-0.2.0-arm64.dmg');
+  assert.equal(latestRelease(FULL, { platform: 'darwin', arch: 'x64' }).asset.name, 'ChiikawaManager-0.2.0-x64.dmg');
+  assert.equal(latestRelease(rel('ChiikawaManager-0.2.0-x64.dmg'), { platform: 'darwin', arch: 'arm64' }).asset.name, 'ChiikawaManager-0.2.0-x64.dmg');
+  assert.equal(latestRelease(rel('ChiikawaManager-0.2.0-arm64.dmg'), { platform: 'darwin', arch: 'x64' }), null);
+  assert.equal(latestRelease(rel('ChiikawaManager-0.2.0-Setup.exe', 'ChiikawaManager-0.2.0-win-x64.zip'), { platform: 'darwin', arch: 'arm64' }), null);
   assert.equal(latestRelease(FULL, { platform: 'linux', arch: 'x64' }), null);
 });
 
 test('pickAsset: 이 레포 릴리스 파일 주소만(남의 주소·따옴표는 거른다)', () => {
   const bad = { tag_name: 'v0.2.0', assets: [
-    { name: 'Shisa-0.2.0-Setup.exe', browser_download_url: 'https://evil.example/Shisa-0.2.0-Setup.exe' },
-    { name: 'Shisa-0.2.0-x64.dmg', browser_download_url: `${DL}/"x.dmg` },
+    { name: 'ChiikawaManager-0.2.0-Setup.exe', browser_download_url: 'https://evil.example/ChiikawaManager-0.2.0-Setup.exe' },
+    { name: 'ChiikawaManager-0.2.0-x64.dmg', browser_download_url: `${DL}/"x.dmg` },
   ] };
   assert.equal(latestRelease(bad, { platform: 'win32', arch: 'x64' }), null);
   assert.equal(latestRelease(bad, { platform: 'darwin', arch: 'x64' }), null);
@@ -139,7 +139,7 @@ test('pickAsset: 이 레포 릴리스 파일 주소만(남의 주소·따옴표�
 test('updateBubble: 받을 파일 주소가 있으면 그 파일로 바로, 터미널 설치는 릴리스 페이지', () => {
   const r = latestRelease(FULL, { platform: 'win32', arch: 'x64' });
   const b = normalizeBubble(updateBubble({ version: r.version, url: r.url, assetUrl: r.asset.url, platform: 'win32' }));
-  assert.equal(b.link, `${DL}/Shisa-0.2.0-Setup.exe`);
+  assert.equal(b.link, `${DL}/ChiikawaManager-0.2.0-Setup.exe`);
   assert.ok(isSafeLink(b.link));
   assert.equal(updateBubble({ version: '0.2.0', url: r.url, assetUrl: r.asset.url, checkout: true }).link, r.url);
   assert.equal(updateBubble({ version: '0.2.0' }).link, RELEASES_PAGE);
@@ -158,15 +158,15 @@ test('newestRelease: 맥(v<버전>)·윈도우(v<버전>-windows) 릴리스가 �
   assert.match(RELEASES_API, /\/releases\?per_page=100$/); // /releases/latest 는 맥 릴리스만 준다(윈도우는 --latest=false)
   const rel = (tag, names, extra = {}) => ({ tag_name: tag, html_url: `${RELEASES_PAGE}/tag/${tag}`, assets: names.map((name) => ({ name, browser_download_url: `${RELEASES_PAGE}/download/${tag}/${name}` })), ...extra });
   const list = [
-    rel('v0.5.0', ['Shisa-0.5.0-arm64.dmg', 'Shisa-0.5.0-x64.dmg']),
-    rel('v0.6.0-windows', ['Shisa-0.6.0-Setup.exe'], { prerelease: true }),
-    rel('v0.4.0-windows', ['Shisa-0.4.0-Setup.exe', 'Shisa-0.4.0-win-x64.zip']),
-    rel('v0.3.0-windows', ['Shisa-0.3.0-Setup.exe']),
-    rel('v0.9.0', ['Shisa-0.9.0-Setup.exe'], { draft: true }),
+    rel('v0.5.0', ['ChiikawaManager-0.5.0-arm64.dmg', 'ChiikawaManager-0.5.0-x64.dmg']),
+    rel('v0.6.0-windows', ['ChiikawaManager-0.6.0-Setup.exe'], { prerelease: true }),
+    rel('v0.4.0-windows', ['ChiikawaManager-0.4.0-Setup.exe', 'ChiikawaManager-0.4.0-win-x64.zip']),
+    rel('v0.3.0-windows', ['ChiikawaManager-0.3.0-Setup.exe']),
+    rel('v0.9.0', ['ChiikawaManager-0.9.0-Setup.exe'], { draft: true }),
   ];
   const win = newestRelease(list, { platform: 'win32', arch: 'x64' });
-  assert.deepEqual([win.version, win.tag, win.asset.name], ['0.4.0', 'v0.4.0-windows', 'Shisa-0.4.0-Setup.exe']);
-  assert.equal(newestRelease(list, { platform: 'win32', arch: 'x64', portable: true }).asset.name, 'Shisa-0.4.0-win-x64.zip');
+  assert.deepEqual([win.version, win.tag, win.asset.name], ['0.4.0', 'v0.4.0-windows', 'ChiikawaManager-0.4.0-Setup.exe']);
+  assert.equal(newestRelease(list, { platform: 'win32', arch: 'x64', portable: true }).asset.name, 'ChiikawaManager-0.4.0-win-x64.zip');
   assert.equal(newestRelease(list, { platform: 'darwin', arch: 'arm64' }).version, '0.5.0');
   assert.equal(newestRelease(list, { platform: 'darwin', checkout: true }).tag, 'v0.5.0'); // 맥 터미널 설치는 윈도우 릴리스를 안 본다
   assert.equal(shouldNotify({ latest: win.version, current: '0.3.0' }), true);
