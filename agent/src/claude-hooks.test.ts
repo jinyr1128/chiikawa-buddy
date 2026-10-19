@@ -81,7 +81,7 @@ test("토큰(사용량 한도)을 다 써서 멈추면 「다 했어」 대신 �
   assert.equal(limitFromLines([err, ok]).hit, false); // 마지막 답이 보통 답이면 아님(대화에 limit 이 나와도)
   assert.equal(resetText("resets 10:30am"), " (오전 10시 30분에 다시 할 수 있어)");
   const bubbles: { text: string }[] = [];
-  const hooks = new ClaudeHooks({ begin: () => () => {}, play: () => ({}) }, (b) => { bubbles.push(b); return "id"; }, () => 1000, { readTail: () => [err] });
+  const hooks = new ClaudeHooks({ begin: () => () => {}, play: () => ({}) }, (b) => { bubbles.push(b); return "id"; }, () => 1000, { readTail: () => [err], rand: () => 0 });
   hooks.handle({ hook_event_name: "UserPromptSubmit", session_id: "s" });
   hooks.handle({ hook_event_name: "Stop", session_id: "s", transcript_path: "/x.jsonl" });
   assert.match(bubbles.at(-1)!.text, /한도|토큰/);

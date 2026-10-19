@@ -657,3 +657,7 @@ body.char-hidden #stage { visibility: hidden; }
 .toast-more { grid-template-columns: 34px 1fr; padding: 9px 14px 9px 11px; }
 .toast-more .toast-title { font-weight: 700; }
 .toast-close { opacity: 0.55; }
+
+/* 집중 중에는 원본 공부 장면만 유지한다. 덧붙이는 장식은 없다. */
+#char-wrap.focus-calm #char-body { animation: none !important; }
+#char-wrap.focus-calm #zzz, #char-wrap.focus-calm #dots { display: none; }

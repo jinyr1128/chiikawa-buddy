@@ -27,6 +27,58 @@ async function call(token: string, path: string, init: { method?: string; body?:
   return j;
 }
 
+export type NotionTask = { id: string; title: string; url: string; due: string | null; page: string };
+// Search와 블록 목록 모두 끝까지 페이지를 넘긴다. 큰 워크스페이스는 제한을 명시한다.
+export async function collectNotionTasks(token: string, f: Fetch = fetch): Promise<{ pages: any[]; tasks: NotionTask[]; warning?: string }> {
+  const pages: any[] = [], tasks: NotionTask[] = [];
+  let cursor: string | undefined;
+  let requests = 0;
+  let warning: string | undefined;
+  const read = async (path: string, init: { method?: string; body?: unknown } = {}) => {
+    if (++requests > 1000) throw new Error("조회량이 커서 일부만 가져왔어요. 페이지 접근 범위를 줄여 주세요.");
+    if (f === fetch) await new Promise((r) => setTimeout(r, 350));
+    return call(token, path, init, f);
+  };
+  try {
+    do {
+      const r = await read("/search", { method: "POST", body: { filter: { property: "object", value: "page" }, page_size: 100, ...(cursor ? { start_cursor: cursor } : {}) } });
+      pages.push(...(r.results ?? []).filter((p: any) => !p.archived && !p.in_trash));
+      cursor = r.has_more ? r.next_cursor : undefined;
+    } while (cursor);
+    const seen = new Set<string>();
+    for (const p of pages) {
+      const title = pageTitle(p), url = String(p.url ?? "");
+      const props = Object.values(p.properties ?? {}) as any[];
+      if (props.some((v) => v?.type === "status" || v?.type === "checkbox") && !pageDone(p)) {
+        tasks.push({ id: p.id, title, url, due: pageDue(p), page: title });
+      }
+      const queue = [p.id];
+      while (queue.length) {
+        const id = queue.shift();
+        if (seen.has(id)) continue;
+        seen.add(id);
+        let blockCursor: string | undefined;
+        do {
+          const r = await read(`/blocks/${id}/children?page_size=100${blockCursor ? `&start_cursor=${encodeURIComponent(blockCursor)}` : ""}`);
+          for (const b of r.results ?? []) {
+            if (b.archived || b.in_trash) continue;
+            if (b.type === "to_do" && !b.to_do?.checked) {
+              const text = (b.to_do?.rich_text ?? []).map((t: any) => t.plain_text ?? t.text?.content ?? "").join("").trim();
+              if (text) tasks.push({ id: b.id, title: text, url: `${url.split("#")[0]}#${String(b.id).replaceAll("-", "")}`, due: null, page: title });
+            }
+            if (b.has_children && !["child_page", "child_database"].includes(b.type)) queue.push(b.id);
+          }
+          blockCursor = r.has_more ? r.next_cursor : undefined;
+        } while (blockCursor);
+      }
+    }
+  } catch (e: any) {
+    if (!pages.length) throw e;
+    warning = String(e?.message ?? e);
+  }
+  return { pages, tasks: [...new Map(tasks.map((t) => [t.id, t])).values()], ...(warning ? { warning } : {}) };
+}
+
 // 연결 확인: 이 열쇠의 통합 이름·워크스페이스
 export async function probeNotion(token: string, f: Fetch = fetch): Promise<{ ok: true; bot: string; workspace: string } | { ok: false; error: string }> {
   if (!okNotionToken(token)) return { ok: false, error: "노션 열쇠 모양이 아니에요(ntn_ 로 시작하는 「내부 통합 시크릿」을 붙여 주세요)." };
@@ -66,7 +118,7 @@ export function dueLabel(due: string, now: Date): string | null {
 }
 
 type State = { lastCheck?: string; meId?: string; workspace?: string };
-export type NotionSnapshot = { phase: "off" | "ok" | "failed"; at?: string; error?: string; workspace?: string; mine: { title: string; due: string; label: string; url: string }[]; recent: { title: string; at: string; url: string }[] };
+export type NotionSnapshot = { tasks?: NotionTask[]; warning?: string; phase: "off" | "ok" | "failed"; at?: string; error?: string; workspace?: string; mine: { title: string; due: string; label: string; url: string }[]; recent: { title: string; at: string; url: string }[] };
 
 let snapshot: NotionSnapshot = { phase: "off", mine: [], recent: [] };
 export const notionSnapshot = () => snapshot;
@@ -122,8 +174,7 @@ export class NotionSync {
           meId = (users.results ?? []).find((u: any) => u?.person?.email?.toLowerCase() === c.email!.toLowerCase())?.id;
         } catch { /* 권한 없음 */ }
       }
-      const res = await call(c.token, "/search", { method: "POST", body: { filter: { property: "object", value: "page" }, sort: { direction: "descending", timestamp: "last_edited_time" }, page_size: 100 } }, this.f);
-      const pages: any[] = (res.results ?? []).filter((p: any) => !p.archived && !p.in_trash);
+      const { pages, tasks, warning } = await collectNotionTasks(c.token, this.f);
       const mine: NotionSnapshot["mine"] = [];
       const recent: NotionSnapshot["recent"] = [];
       for (const p of pages) {
@@ -158,7 +209,7 @@ export class NotionSync {
         } catch { /* 댓글 읽기 권한이 없으면 건너뛴다 */ }
       }
       this.writeState({ ...st, lastCheck: now.toISOString(), ...(meId ? { meId } : {}) });
-      snapshot = { phase: "ok", at: now.toISOString(), mine, recent, workspace: st.workspace };
+      snapshot = { phase: "ok", at: now.toISOString(), mine, recent, tasks, warning, workspace: st.workspace };
     } catch (e: any) {
       snapshot = { ...snapshot, phase: "failed", at: now.toISOString(), error: String(e?.message ?? e) };
     } finally {
@@ -189,7 +240,7 @@ export function notionApi(configPath: string, sync: NotionSync, f: Fetch = fetch
     status: () => {
       const c = notionConnOf(configPath);
       const s = notionSnapshot();
-      return { connected: !!c, email: c?.email ?? "", phase: c ? s.phase : "off", at: s.at, error: s.error, mine: s.mine.length, recent: s.recent.length };
+      return { connected: !!c, email: c?.email ?? "", phase: c ? s.phase : "off", at: s.at, error: s.error, mine: s.mine.length, recent: s.recent.length, tasks: c ? s.tasks ?? [] : [], warning: c ? s.warning : undefined };
     },
     connect: async (b: unknown) => {
       const body = (b && typeof b === "object" ? b : {}) as { token?: unknown; email?: unknown };
@@ -198,7 +249,8 @@ export function notionApi(configPath: string, sync: NotionSync, f: Fetch = fetch
       const p = await probeNotion(token, f);
       if (!p.ok) return p;
       saveConn(configPath, { token, ...(email ? { email } : {}) });
-      const s = await sync.tick();
+      void sync.tick();
+      const s = notionSnapshot();
       return { ok: true, bot: p.bot, workspace: p.workspace, phase: s.phase, mine: s.mine.length, recent: s.recent.length, error: s.error };
     },
     disconnect: () => { saveConn(configPath, null); void sync.tick(); return { ok: true }; },

@@ -13,6 +13,7 @@ import { createFocusView } from './focus-view.js';
 import { createProjectsView } from './projects-view.js';
 import { createCalendarView } from './calendar-view.js';
 import { createInboxView } from './inbox-view.js';
+import { createTodaySources } from './today-sources.js';
 import { createHomeView } from './home-view.js';
 import { createConnectionsView } from './connections-view.js';
 import { CALTAB_TEXT, cardRowOn, cardFolded } from '../src/calendar-tab.js';
@@ -310,6 +311,8 @@ function goto(s) {
   if (section === 'models') loadSisa();
   if (section === 'connect') connectView.show();
   else if (prevSection === 'connect') connectView.hide();
+  if (section === 'today') todaySources.show();
+  else if (prevSection === 'today') todaySources.hide();
   if (section === 'home') homeView.show();
   else if (prevSection === 'home') homeView.hide();
   if (section === 'inbox') inboxView.show();
@@ -1478,6 +1481,7 @@ document.addEventListener('mousedown', (e) => {
 // 추가 입력칸은 값을 addDraft 에 들고 있으니 다시 그린 뒤 포커스만 되돌린다.
 const todosSec = $('sec-todos');
 const todaySec = $('sec-today');
+const todaySources = createTodaySources({ h, cy, goto });
 // 할 일 탭과 오늘 할 일 탭은 같은 줄·같은 묶음·같은 조작. 지금 보이는 쪽이 끌기·포커스·고치기의 기준
 const isListSection = () => section === 'todos' || section === 'today';
 const listSec = () => (section === 'today' ? todaySec : todosSec);
@@ -1543,6 +1547,7 @@ function todayListKids() {
       h('span.muted', { text: total ? `남은 ${open} · 전체 ${total}` : '아직 없어요. 일정을 보고 적어 보세요.' }),
       focusView.bar('today')),
   ];
+  kids.push(todaySources.el);
   if (t.carry?.n) kids.push(carryBox(t));
   kids.push(addForm('today'));
   if (todoMsg) kids.push(h(`div.result.${todoMsg.ok ? 'ok' : 'err'}`, { role: 'status', text: todoMsg.text }));

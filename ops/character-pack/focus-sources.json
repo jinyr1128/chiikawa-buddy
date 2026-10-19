@@ -1,0 +1,50 @@
+{
+  "note": "원본 바이트 그대로 사용. 합성·배경 제거·재생성 없음. 장면이 없는 쿠리만쥬·아노코·세이렌은 기존 대기 그림으로 표시.",
+  "sources": [
+    {
+      "character": "짭몽가·찐몽가",
+      "sourcePage": "https://chiikawawallpaper.com/ko/png/momonga",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/20260925/f3da8628d6738a7750942517eb7aec1b.png",
+      "sha256": "56ed7f4f8136938a0a4136c7d5142a7ed56eade7f31e53815062d1cacd1fa987"
+    },
+    {
+      "character": "우사기",
+      "sourcePage": "https://chiikawawallpaper.com/ko/pfp/usagi",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/20260912/561661444aad85a9305d6afafac5e969.jpeg",
+      "sha256": "4fff8c8444ce3dbd6bfdd728c8318afe74bc1fafed69da135118510ac841cb4e"
+    },
+    {
+      "character": "랏코",
+      "sourcePage": "https://chiikawawallpaper.com/ko/png/rakko",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/20260924/ccaaa9d5d3cad2cbce756ce0724d2d69.png",
+      "sha256": "e12f1fa9798b70776b9d5e42220dabda0a0638cc9cdd7d5efef9608e325c8a77"
+    },
+    {
+      "character": "카니",
+      "sourcePage": "https://chiikawawallpaper.com/ko/png/furuhonya",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/20261006/00605b2c233cf5e2cac0799786584758.png",
+      "sha256": "10a380c5e6659a07b00afcc5e5a1ed2a09d9fc74cb1ca5b762e91f3d19503703"
+    },
+    {
+      "character": "치이카와",
+      "sourcePage": "https://chiikawawallpaper.com/ko/gif/chiikawa",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/gif/20250902145331_f6b7e98a34480f9bb38099f6f8b60e2a.gif",
+      "description": "헤어밴드를 쓰고 핑크색 책상에서 열심히 공책에 글씨 쓰는 치이카와 GIF",
+      "sha256": "a83786c6018b4dcc04589d2cbbf653ac5568bad056f250716c2f3114d73241f5"
+    },
+    {
+      "character": "하치와레",
+      "sourcePage": "https://chiikawawallpaper.com/ko/gif/hachiware",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/gif/20250902145132_5b930b75f557d9debb2693f6047d2803.gif",
+      "description": "후드를 쓰고 열심히 책을 읽으며 공부하는 귀여운 하치와레 GIF",
+      "sha256": "a4f159f511f7f91713f11eefd52698c140dea846a990f4ef846e05c1483c968a"
+    },
+    {
+      "character": "시사",
+      "sourcePage": "https://chiikawawallpaper.com/ko/gif/shisa",
+      "url": "https://r2.chiikawawallpaper.com/wallpaper/20260923/92503096deeebc6da515d3c9ac86d63f.gif",
+      "description": "시사가 기분 좋게 술 자격증 책을 들고 미소 짓는 리액션 GIF",
+      "sha256": "87d7f4e26009b2294323d2c6289946eb74abf01cbd9fe66143cbb7402de39b87"
+    }
+  ]
+}

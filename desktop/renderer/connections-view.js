@@ -153,6 +153,8 @@ export function createConnectionsView({ h, cy, el }) {
         h('h4', { text: '맥 캘린더에서 고르기 (추천)' }),
         h('p.conn-blurb', { text: '회사 구글·네이버·iCloud 캘린더를 맥 「캘린더」 앱에 계정으로 추가해 두면, 비공개 주소 없이 여기서 바로 고를 수 있어요.' }),
         steps(['맥 캘린더 앱 → 설정 → 계정 → ＋', '회사 구글: Google 로 로그인 · 네이버: 「기타 CalDAV 계정」 → 서버 caldav.calendar.naver.com', '아래 목록에서 [추가]']),
+        h('p.conn-blurb', { text: '네이버는 별도 계정 로그인이 필요해요. 이 앱에서 네이버 로그인을 대신하지 않아요. 아래에서 캘린더 앱을 열고 기타 CalDAV 계정에 네이버 아이디와 비밀번호(2단계 인증이면 앱 비밀번호)를 직접 입력한 뒤 목록을 다시 불러오세요. 맥에서는 읽기 전용입니다.' }),
+        h('div.conn-btns', {}, link('네이버 공식 연결 안내', 'https://help.naver.com/service/5620/contents/2426?lang=ko&osType=COMMONOS')),
         h('div.conn-btns', {}, btn('맥 캘린더 앱 열기', 'ghost', () => cy.openMacApp?.('Calendar'))),
         macList,
         h('details.conn-more', {}, h('summary', { text: '또는 iCal 비공개 주소로' }),
@@ -180,10 +182,11 @@ export function createConnectionsView({ h, cy, el }) {
         btn('연결 해제', 'ghost danger', () => run('notion', async () => { await cy.notionDisconnect?.(); say('notion', true, '노션 연결을 끊었어요.'); })),
       ] : [
         steps(['「노션 통합 만들기」 → 새 통합 → 이름 「치이카와 매니저」, 종류 내부', '기능: 콘텐츠 읽기 · 댓글 읽기 · 사용자 정보(이메일 포함) 읽기', '「내부 통합 시크릿」(ntn_…)을 아래에 붙이고 이메일 확인 → [연결]', '알림받을 페이지·DB 에서 ··· → 연결 → 「치이카와 매니저」']),
+        h('p.conn-blurb', { text: '조회 범위는 이 통합에 접근을 허용한 모든 페이지입니다. 노션 로그인만으로 계정 전체를 읽을 수는 없어요. 사용할 상위 페이지마다 연결 메뉴에서 이 통합을 추가하세요. 데이터베이스 할 일과 페이지 안 체크리스트를 오늘 할 일 화면에서 확인할 수 있어요.' }),
         h('div.conn-btns', {}, link('노션 통합 만들기', 'https://www.notion.so/profile/integrations')),
         h('div.conn-form', {},
           h('label', {}, h('span', { text: '내부 통합 시크릿' }), input('notion', ui.notion, 'token', { type: 'password', placeholder: 'ntn_…' })),
-          h('label', {}, h('span', { text: '노션 로그인 이메일' }), input('notion', ui.notion, 'email', { placeholder: 'me@company.com' })),
+          h('label', {}, h('span', { text: '노션 로그인 이메일 (선택)' }), input('notion', ui.notion, 'email', { placeholder: 'me@company.com' })),
           btn(ui.busy === 'notion' ? '확인하는 중…' : '연결', 'primary', () => run('notion', async () => {
             const r = await cy.notionConnect?.({ token: ui.notion.token.trim(), email: ui.notion.email.trim() }).catch(() => null);
             const v = r?.data ?? {};

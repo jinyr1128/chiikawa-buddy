@@ -4,7 +4,7 @@
 
 1. 확인: macOS + 애플 실리콘(`uname -m` = `arm64`). 아니면 멈추고 알린다.
 2. GitHub 로그인 확인: `gh auth status`. `gh` 가 없으면 `brew install gh`. 로그인이 안 돼 있으면 **사용자가 직접** 해야 한다 — 터미널에서 `gh auth login --hostname github.com --git-protocol https --web` 을 띄우고, 브라우저에서 코드를 넣고 Authorize 하라고 안내한 뒤 끝날 때까지 기다린다(비밀번호·코드를 대신 입력하지 않는다). 비공개 저장소라 저장소 주인이 초대한 계정이어야 한다.
-3. 저장소 폴더에서 `./ops/setup-mac.sh` 를 실행한다(5분 안팎). 실패하면 오류 문구를 그대로 읽고 고친 뒤 다시 실행한다.
+3. 저장소가 아직 없으면 `gh repo clone jinyr1128/chiikawa-buddy`로 받는다. 저장소 폴더에서 `./ops/setup-mac.sh` 를 실행한다(5분 안팎). 실패하면 오류 문구를 그대로 읽고 고친 뒤 다시 실행한다.
    - 릴리스를 못 받으면 저장소 초대 여부를 사용자에게 확인한다.
    - 소스로 만들어야 하면 `./ops/setup-mac.sh --build` (Node.js 24+, `xcode-select --install` 필요).
 4. 끝나면 확인: `curl -s http://127.0.0.1:47823/health` 가 `{"ok":true…}` 이면 앱이 켜진 것. 메뉴 막대 아이콘 → 「홈」을 열어 보라고 안내한다.
@@ -18,3 +18,9 @@
 업데이트: 저장소 폴더에서 `git pull && ./ops/setup-mac.sh` (앱을 끄고 새 버전으로 바꾼 뒤 다시 켠다. 설정·캐릭터는 그대로).
 
 지우기: `osascript -e 'tell application "치이카와 매니저" to quit'; rm -rf "/Applications/치이카와 매니저.app"` (데이터는 `~/.cy-agent`, Claude 연동 끄기는 `node ops/claude-hooks.mjs off`, Hermes 는 `node ops/hermes-hooks.mjs off`).
+
+## 배포·검증 범위
+
+최신 릴리스는 서명된 arm64 앱 zip, 캐릭터 11명 zip, SHA256SUMS.txt를 제공합니다. 설치 스크립트가 체크섬을 확인합니다. 사용자 개인 설정·인증·메일·할 일·대화는 배포하지 않습니다.
+노션은 통합에 공유한 페이지까지만 읽을 수 있습니다. 네이버는 맥 캘린더에 CalDAV 로그인 후 앱에서 캘린더를 추가해야 합니다. 실제 연결 결과가 없으면 완료라고 보고하지 마세요.
+설치 뒤 앱 버전, `/health`, 캐릭터 목록을 확인하고 로그인/권한 대기 항목을 구분해 보고하세요. GitHub 로그인 전에는 비공개 URL만으로 설치할 수 없습니다.

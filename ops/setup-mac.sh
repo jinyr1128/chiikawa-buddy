@@ -1,6 +1,6 @@
 #!/bin/bash
 # 치이카와 매니저 한 번에 설치(애플 실리콘 맥). 레포 폴더에서: ./ops/setup-mac.sh
-#  1) GitHub 릴리스에서 앱(dmg)과 캐릭터 묶음을 받는다(비공개 저장소 → gh 로그인 필요). --build 면 소스로 직접 만든다
+#  1) GitHub 릴리스에서 앱(zip 또는 dmg)과 캐릭터 묶음을 받는다(비공개 저장소 → gh 로그인 필요). --build 면 소스로 직접 만든다
 #  2) 앱을 응용 프로그램 폴더에 넣고(격리 표시 지움) 캐릭터 묶음을 ~/.cy-agent 에 넣는다
 #  3) Claude Code 를 쓰면 Claude Code 연동(hook)을, Hermes 가 있으면 Hermes 연동을 켠다
 #  4) 앱을 켠다. Slack·메일·캘린더·노션은 앱의 「연결 관리」에서 각자 계정으로 연결한다(열쇠·비밀번호는 각자 것)
@@ -31,7 +31,7 @@ APP_NAME="치이카와 매니저"
 APP="$PREFIX/$APP_NAME.app"
 say() { printf '\n\033[1m▶ %s\033[0m\n' "$*"; }
 die() { printf '\n\033[31m✖ %s\033[0m\n' "$*"; exit 1; }
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 say "맥 확인"
 [ "$(uname -s)" = "Darwin" ] || die "맥에서만 돼요."
@@ -55,19 +55,41 @@ else
   say "GitHub 릴리스에서 앱·캐릭터 받기"
   command -v gh >/dev/null || { command -v brew >/dev/null && brew install gh || die "gh 가 필요해요: brew install gh"; }
   gh auth status --hostname github.com >/dev/null 2>&1 || die "GitHub 로그인이 필요해요. 터미널에서 'gh auth login --web' 을 한 번 하고 다시 실행해 주세요(비공개 저장소라 초대받은 계정이어야 해요)."
-  gh release download ${TAG:+"$TAG"} -R "$REPO" --pattern '*.dmg' --pattern 'chiikawa-characters.zip' -D "$WORK" \
-    || die "릴리스를 못 받았어요. 저장소에 초대받았는지 확인해 주세요: https://github.com/$REPO"
-  DMG="$(ls "$WORK"/*.dmg | head -1)"
+  # 최신 태그를 한 번만 정해 앱과 캐릭터가 같은 릴리스에서 내려오게 한다.
+  if [ -z "$TAG" ]; then TAG="$(gh release view -R "$REPO" --json tagName --jq .tagName)"; fi
+  ASSETS="$(gh release view "$TAG" -R "$REPO" --json assets --jq '.assets[].name')"
   PACK="$WORK/chiikawa-characters.zip"
-  hdiutil attach -nobrowse -readonly -mountpoint "$WORK/mnt" "$DMG" >/dev/null
-  SRC_APP="$WORK/mnt/$APP_NAME.app"
+  if printf '%s\n' "$ASSETS" | grep -qx 'chiikawa-manager-arm64.zip'; then
+    gh release download "$TAG" -R "$REPO" --pattern 'chiikawa-manager-arm64.zip' --pattern 'chiikawa-characters.zip' --pattern 'SHA256SUMS.txt' -D "$WORK" \
+      || die "릴리스를 못 받았어요. 초대받은 GitHub 계정인지 확인해 주세요."
+    (cd "$WORK" && shasum -a 256 -c SHA256SUMS.txt) || die "다운로드 파일 검증에 실패했어요."
+    ditto -x -k "$WORK/chiikawa-manager-arm64.zip" "$WORK/unpacked"
+    SRC_APP="$WORK/unpacked/$APP_NAME.app"
+  else
+    gh release download "$TAG" -R "$REPO" --pattern '*.dmg' --pattern 'chiikawa-characters.zip' -D "$WORK" \
+      || die "릴리스를 못 받았어요. 저장소 초대 여부를 확인해 주세요."
+    DMG="$(find "$WORK" -name '*.dmg' -maxdepth 1 -print -quit)"
+    hdiutil attach -nobrowse -readonly -mountpoint "$WORK/mnt" "$DMG" >/dev/null
+    SRC_APP="$WORK/mnt/$APP_NAME.app"
+  fi
+  [ -d "$SRC_APP" ] || die "배포 파일 안에서 앱을 찾지 못했어요."
+  codesign --verify --deep --strict "$SRC_APP" || die "앱 서명 검증에 실패했어요."
+
 fi
 
 say "앱 넣기: $APP"
 if pgrep -f "$APP/Contents/MacOS" >/dev/null 2>&1; then osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true; sleep 3; pkill -f "$APP/Contents/MacOS" || true; sleep 1; fi
 mkdir -p "$PREFIX"
-rm -rf "$APP"
-ditto "$SRC_APP" "$APP"
+if [ -d "$APP" ]; then
+  BACKUP_APP="$PREFIX/$APP_NAME.previous.app"
+  rm -rf "$BACKUP_APP"
+  mv "$APP" "$BACKUP_APP"
+fi
+if ! ditto "$SRC_APP" "$APP"; then
+  rm -rf "$APP"
+  [ -d "${BACKUP_APP:-}" ] && mv "$BACKUP_APP" "$APP"
+  die "앱 복사 실패 — 이전 앱을 복원했어요."
+fi
 xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 [ -d "$WORK/mnt" ] && hdiutil detach "$WORK/mnt" >/dev/null 2>&1 || true
 

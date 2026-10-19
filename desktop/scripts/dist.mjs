@@ -90,7 +90,13 @@ fs.cpSync(path.join(REPO, 'assets'), ASSETS, { recursive: true, filter: (src) =>
 step('아이콘 만들기');
 const ICON_DIR = path.join(STAGE, 'icon');
 fs.mkdirSync(ICON_DIR, { recursive: true });
-run(process.execPath, [path.join(ROOT, 'scripts', 'make-icon.mjs')], { env: { ...process.env, CY_ICON_OUT: ICON_DIR } });
+if (process.env.CY_ICON_SOURCE) {
+  const icon = fs.readFileSync(process.env.CY_ICON_SOURCE);
+  if (icon.toString('ascii', 0, 4) !== 'icns') throw new Error('CY_ICON_SOURCE must be an ICNS file');
+  fs.copyFileSync(process.env.CY_ICON_SOURCE, path.join(ICON_DIR, 'icon.icns'));
+} else {
+  run(process.execPath, [path.join(ROOT, 'scripts', 'make-icon.mjs')], { env: { ...process.env, CY_ICON_OUT: ICON_DIR } });
+}
 
 // 4) 앱 번들. 앱 코드(asar)에는 실행에 필요한 것만 넣는다(허용 목록) — 생성 아이콘·개발용 파일이 섞이지 않게
 step('앱 번들 만들기');

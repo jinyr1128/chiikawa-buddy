@@ -3,7 +3,7 @@
 // 읽기만 한다. 앱을 켜기 전 기록은 다시 읽지 않는다(지켜보기 시작한 뒤 새로 붙은 줄만).
 import { closeSync, existsSync, openSync, readSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { ClaudeHookEvent } from "./claude-hooks.ts";
 
 type HooksLike = { handle(ev: ClaudeHookEvent & { limit_when?: string }, source?: "claude" | "codex" | "hermes"): void };
@@ -84,7 +84,7 @@ export class CodexWatch {
       if (!st) {
         // 지켜보기 전부터 있던 기록은 끝에서 시작(예전 일을 다시 알리지 않게). 새로 생긴 기록은 처음부터
         const born = statSync(p).birthtimeMs;
-        st = { offset: born >= this.started ? 0 : size, rest: "", thread: "" };
+        st = { offset: born >= this.started ? 0 : size, rest: "", thread: basename(p).match(/([0-9a-f]{8}-[0-9a-f-]{27})\.jsonl$/i)?.[1] ?? basename(p, ".jsonl") };
         this.files.set(p, st);
       }
       if (size <= st.offset) { if (size < st.offset) st.offset = size; continue; }

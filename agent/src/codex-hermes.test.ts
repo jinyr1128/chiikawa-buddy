@@ -48,3 +48,20 @@ test("Hermes 신호 → Claude hook 모양", () => {
   assert.equal(hermesToClaude({ hook_event_name: "api_request_error", extra: { status_code: 500 } }), null);
   assert.equal(hermesToClaude({ hook_event_name: "unknown" }), null);
 });
+
+test('기존 Codex 대화를 둘 이상 이어도 세션 식별자가 충돌하지 않는다', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'codex-resume-'));
+  const now = Date.now() + 10000;
+  const d = new Date(now);
+  const day = join(dir, String(d.getFullYear()), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0'));
+  mkdirSync(day, { recursive: true });
+  const files = ['rollout-a.jsonl', 'rollout-b.jsonl'].map((n) => join(day, n));
+  for (const file of files) writeFileSync(file, JSON.stringify({ type: 'session_meta', payload: { id: file } }) + '\n');
+  const seen: any[] = [];
+  const w = new CodexWatch({ handle: (ev) => seen.push(ev) }, { dir, now: () => now });
+  w.tick();
+  for (const file of files) appendFileSync(file, JSON.stringify({ type: 'event_msg', payload: { type: 'task_started' } }) + '\n');
+  w.tick();
+  assert.equal(seen.length, 2);
+  assert.notEqual(seen[0].session_id, seen[1].session_id);
+});
