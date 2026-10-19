@@ -135,7 +135,8 @@ function fakeEnv() {
   }) as typeof spawn;
   const exited = async () => { for (const c of children) if (c.exitCode === null && c.signalCode === null) await new Promise((r) => c.once('exit', r)); };
   const sent = () => (existsSync(logFile) ? readFileSync(logFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l)) : []);
-  return { root, auth, work, spawnFake, exited, sent, homesSeen, children, done: () => { for (const c of children) c.kill(); rmSync(root, { recursive: true, force: true }); } };
+  return { root, auth, work, spawnFake, exited, sent, homesSeen, children, // Windows: 아직 꺼지는 중인 가짜 서버가 작업 폴더(cwd)를 쥐고 있으면 지우기가 EPERM → 꺼질 때까지 기다리고, 그래도 잠깐 다시 해 본다
+    done: async () => { for (const c of children) c.kill(); await exited(); rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); } };
 }
 const drain = async (q: AsyncIterable<any>) => { const out: any[] = []; for await (const m of q) out.push(m); return out; };
 
@@ -159,7 +160,7 @@ test('Codex 프로토콜: 결과 전달·샌드박스 요청값·프로세스 �
     for await (const m of waiting) if (m.type === 'system') controller.abort();
     await f.exited();
     assert.equal(existsSync(f.homesSeen[1]), false);
-  } finally { f.done(); }
+  } finally { await f.done(); }
 });
 
 test('Codex 프로토콜: 권한 상승 요청에는 decline 으로 답한다', async () => {
@@ -169,7 +170,7 @@ test('Codex 프로토콜: 권한 상승 요청에는 decline 으로 답한다', 
     const messages = await drain(q);
     assert.deepEqual(messages.find((m) => m.type === 'result')?.structured_output, { summary: 'decline' });
     assert.deepEqual(f.sent().find((m) => m.id === 900)?.result, { decision: 'decline' });
-  } finally { f.done(); }
+  } finally { await f.done(); }
 });
 
 test('Codex 프로토콜: 돌려받은 샌드박스가 넓거나 없으면 작업을 시작하지 않는다', async () => {
@@ -180,7 +181,7 @@ test('Codex 프로토콜: 돌려받은 샌드박스가 넓거나 없으면 작�
       await assert.rejects(drain(q), (e: Error) => e.message === CODEX_SANDBOX_UNSURE, mode);
       assert.equal(f.sent().some((m) => m.method === 'turn/start'), false, `${mode}: 턴을 보내지 않는다`);
       await f.exited();
-    } finally { f.done(); }
+    } finally { await f.done(); }
   }
 });
 
@@ -228,7 +229,7 @@ test('동시에 도는 Codex 작업은 임시 홈 하나를 같이 쓰고, 마�
     await f.exited();
     assert.equal(existsSync(f.homesSeen[0]), false);
     assert.match(readFileSync(join(f.auth, 'auth.json'), 'utf8'), /refreshed/);
-  } finally { f.done(); }
+  } finally { await f.done(); }
 });
 
 test('데몬 시작 정리: 이름 규칙에 맞는 예전 임시 CODEX_HOME 폴더만 지운다', () => {
