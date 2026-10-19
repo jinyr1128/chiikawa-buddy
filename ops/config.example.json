@@ -1,0 +1,26 @@
+{
+  "slackBotToken": "xoxb-...",
+  "slackAppToken": "xapp-...",
+  "slackUserId": "U...",
+  "connectors": {
+    "slack": { "mode": "api", "userToken": "xoxp-..." },
+    "calendar": {
+      "mode": "api",
+      "calendars": [
+        { "name": "회사", "url": "https://calendar.google.com/calendar/ical/.../basic.ics", "enabled": true }
+      ],
+      "timeZone": "Asia/Seoul",
+      "email": "gildong@example.com"
+    },
+    "mail": { "mode": "off" },
+    "issues": { "mode": "mcp", "preset": "github", "server": "github" }
+  },
+  "repoRoots": ["/Users/YOUR_NAME/code"],
+  "gitAuthor": { "name": "your-github-handle", "email": "you@users.noreply.github.com" },
+  "user": { "name": "홍길동", "aliases": ["Gildong Hong", "gildong"] },
+  "models": { "code": "claude-opus-5-5", "general": "claude-sonnet-5-5", "light": "claude-haiku-5-5" },
+  "brain": { "provider": "claude-code" },
+  "briefingIntervalMin": 60,
+  "ingestIntervalMin": 10,
+  "slackIngestIntervalMin": 5
+}

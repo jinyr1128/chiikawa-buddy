@@ -1,0 +1,76 @@
+{
+  "_help": {
+    "설명": "기본 캐릭터마다 어느 영상을 어느 칸에 쓰는지. 한 칸에 영상을 여러 개 넣으면 그때마다 그중 하나가 랜덤으로 나옵니다(두 개 이상이면 같은 것이 연달아 나오지 않습니다).",
+    "칸": "plan 일정 알림(퇴근 10분 전 인사도 이 영상) · dance 춤(채팅 「춤」·「춤춰 줘」) · cheer 응원해 줘 · study 집중·작업 중 · lunch 점심시간",
+    "file": "영상 이름(확장자 없이). 시사는 assets/character/, 나머지는 assets/characters/<id>/ 의 <file>.webm 과 첫 장면 <file>.png 입니다. 새 파일은 desktop/src/assets.js 허용 목록에도 넣어야 앱이 읽습니다.",
+    "scene": "true 면 배경이 있는 장면이라 둥근 네모 카드(테두리)로 보입니다.",
+    "say": "이 영상이 나올 때 할 한마디. 없으면 그 칸 기본 대사(춤은 문구 dance, 응원은 cheer, 점심은 local.lunch, 일정 알림은 문구 meeting_alert)를 씁니다. 일정 알림 한마디는 일정 말풍선 글을 대신하고 {mins} {title} {time} {where} 를 쓸 수 있습니다. 다른 칸은 자리표시를 쓰지 않습니다.",
+    "다른 칸 이름": "\"plan\" 처럼 글 하나만 적으면 그 칸 목록을 그대로 씁니다. 이때 say 는 빼고 이 칸 기본 대사를 씁니다.",
+    "빈 칸": "칸이 없으면 응원 → 춤, 춤 → 응원, 일정 알림 → 춤 → 응원, 점심시간 → 일정 알림 → 춤 → 응원 순서로 대신 씁니다(집중은 정지 그림)."
+  },
+  "shisa": {
+    "dance": [
+      { "file": "dance" },
+      { "file": "dance2", "scene": true, "say": "스잇~ 스잇~ 스이 시~사 ~ 🎵" }
+    ],
+    "plan": "dance",
+    "cheer": "dance",
+    "study": [{ "file": "studying" }],
+    "lunch": [{ "file": "lunch", "scene": true }]
+  },
+  "hachi": {
+    "plan": [{ "file": "plan" }],
+    "dance": "plan",
+    "cheer": [{ "file": "cheer", "scene": true }],
+    "study": [{ "file": "study" }],
+    "lunch": [{ "file": "lunch", "scene": true }]
+  },
+  "rakko": {
+    "plan": [{ "file": "plan", "scene": true }],
+    "dance": [{ "file": "dance", "scene": true }],
+    "cheer": "plan",
+    "study": [{ "file": "study", "scene": true }],
+    "lunch": [{ "file": "lunch", "scene": true }]
+  },
+  "momonga": {
+    "plan": [{ "file": "plan", "scene": true }],
+    "dance": [{ "file": "dance", "scene": true }],
+    "cheer": "plan",
+    "study": [{ "file": "study", "scene": true }],
+    "lunch": "plan"
+  },
+  "usagi": {
+    "plan": [{ "file": "plan" }],
+    "dance": [{ "file": "dance" }],
+    "cheer": [{ "file": "cheer" }],
+    "study": [{ "file": "study" }],
+    "lunch": [{ "file": "lunch" }]
+  },
+  "kani": {
+    "plan": [{ "file": "plan", "scene": true }],
+    "dance": [{ "file": "dance", "scene": true }],
+    "cheer": [{ "file": "cheer", "scene": true }],
+    "lunch": [{ "file": "lunch", "scene": true }],
+    "study": [{ "file": "study", "scene": true }]
+  },
+  "chiikawa": {
+    "dance": [
+      { "file": "dance", "scene": true },
+      { "file": "dance2", "scene": true }
+    ],
+    "cheer": [{ "file": "cheer", "scene": true }],
+    "plan": [
+      { "file": "plan", "scene": true },
+      { "file": "plan2", "scene": true, "say": "으아앙... (〈{title}〉 {mins}분 전이야! {time}{where})" }
+    ],
+    "study": [{ "file": "study" }],
+    "lunch": [{ "file": "lunch", "scene": true }]
+  },
+  "kuri": {
+    "cheer": [{ "file": "cheer", "scene": true }],
+    "dance": "cheer",
+    "plan": "cheer",
+    "study": [{ "file": "study", "scene": true }],
+    "lunch": [{ "file": "lunch", "scene": true }]
+  }
+}

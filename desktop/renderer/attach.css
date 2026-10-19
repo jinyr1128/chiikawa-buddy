@@ -1,0 +1,36 @@
+/* 채팅 첨부 — 입력창 위 칩(attach-tray.js)·보낸 말의 그림/파일(패널·세션 창·캐릭터 공용). 색은 그 창의 변수, 없으면 기본 */
+.att-tray { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 0; }
+.att-tray[hidden], .att-err[hidden] { display: none; }
+.att-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 240px; height: 34px; padding: 0 4px 0 4px;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1)); border-radius: 9px; background: var(--card, rgba(127, 127, 127, 0.08));
+  color: var(--fg, inherit); font-size: 12px; user-select: none;
+}
+.att-chip.busy { opacity: 0.7; }
+.att-chip.error { border-color: var(--err, #ff453a); }
+.att-chip.error .att-size { color: var(--err, #ff453a); }
+.att-thumb { width: 26px; height: 26px; object-fit: cover; border-radius: 5px; flex: none; }
+.att-icon { width: 26px; text-align: center; font-size: 15px; flex: none; }
+.att-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-size { color: var(--muted, #888); white-space: nowrap; flex: none; }
+.att-x {
+  flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent;
+  color: var(--muted, #888); font-size: 11px; line-height: 20px; cursor: pointer;
+}
+.att-x:hover { background: var(--code, rgba(127, 127, 127, 0.15)); color: var(--fg, inherit); }
+.att-pick { flex: none; height: 38px; min-width: 34px; padding: 0 6px; font-size: 16px; }
+.att-err { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--del-bg, rgba(255, 69, 58, 0.12)); color: var(--del-fg, #b3261e); font-size: 12px; }
+/* 끌어다 놓는 중 */
+.att-drop { outline: 2px dashed var(--accent, #6b5cff); outline-offset: -6px; border-radius: 12px; background: var(--accent-soft, rgba(107, 92, 255, 0.08)); }
+
+/* 보낸 말의 첨부: 그림은 미리보기, 그 밖은 파일 칩(누르면 기본 앱으로 연다) */
+.msg-atts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 100%; }
+.msg-att-img { padding: 0; border: 1px solid var(--line, rgba(0, 0, 0, 0.1)); border-radius: 10px; overflow: hidden; background: var(--card, transparent); cursor: zoom-in; line-height: 0; }
+.msg-att-img img { display: block; max-width: 220px; max-height: 180px; object-fit: contain; }
+.msg-att-file {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 260px; padding: 6px 10px; border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  border-radius: 10px; background: var(--card, transparent); color: var(--fg, inherit); font: inherit; font-size: 12.5px; cursor: pointer; text-align: left;
+}
+.msg-att-file .att-name { max-width: 180px; }
+.msg-att-img:disabled, .msg-att-file:disabled { cursor: default; }
+.msg-atts.queued { opacity: 0.75; }

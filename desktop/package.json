@@ -1,0 +1,33 @@
+{
+  "name": "cy-agent-desktop",
+  "version": "0.3.2",
+  "private": true,
+  "license": "MIT",
+  "description": "cy-agent 데스크톱 마스코트 오버레이",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "node scripts/dev-launch.mjs",
+    "dev": "CY_DEBUG=1 node scripts/dev-launch.mjs",
+    "fake-daemon": "node scripts/fake-daemon.mjs",
+    "assets": "node scripts/make-assets.mjs",
+    "vendor": "node scripts/vendor.mjs",
+    "test": "node --test test/",
+    "icon": "node scripts/make-icon.mjs",
+    "package": "node scripts/package.mjs",
+    "dist": "node scripts/dist.mjs",
+    "dist:x64": "node scripts/dist.mjs --arch=x64",
+    "dist:win": "node ../windows/dist-win.mjs",
+    "demo": "node scripts/demo.mjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.2.1",
+    "dompurify": "3.4.16",
+    "electron": "44.7.0",
+    "electron-winstaller": "5.4.4",
+    "marked": "18.0.14"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

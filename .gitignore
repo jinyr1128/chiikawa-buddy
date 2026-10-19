@@ -1,0 +1,25 @@
+# dependencies / build
+node_modules
+dist/
+out/
+coverage/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+
+# local data & secrets — 실제 데이터는 전부 ~/.cy-agent 에만 둔다
+.env
+.env*.local
+*.pem
+.secret
+config.json
+!ops/config.example.json
+*.db
+*.db-wal
+*.db-shm
+*.log
+logs/
+
+# desktop: 생성되는 아이콘
+desktop/assets/icon.*

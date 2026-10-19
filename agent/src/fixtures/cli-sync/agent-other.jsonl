@@ -1,0 +1,1 @@
+{"parentUuid":null,"isSidechain":true,"agentId":"a1","uuid":"00000000-0000-4000-8000-000000000106","timestamp":"2026-10-12T09:00:20.000Z","sessionId":"11111111-2222-4333-8444-555555555555","entrypoint":"cli","cwd":"/Users/tester/.cy-agent/brain","type":"assistant","message":{"role":"assistant","model":"claude-x","content":[{"type":"text","text":"데몬 서브에이전트"}]}}

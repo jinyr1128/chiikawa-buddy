@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>작업 세션</title>
+  <link rel="stylesheet" href="session.css">
+  <link rel="stylesheet" href="attach.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="side">
+      <div id="side-head">
+        <strong>작업 세션</strong>
+        <span id="conn" class="conn off">연결 안 됨</span>
+      </div>
+      <button id="btn-new" type="button" class="newtask-btn">＋ 새 작업</button>
+      <nav id="runs" aria-label="세션 목록"></nav>
+    </aside>
+    <main id="main">
+      <header id="head">
+        <div id="head-title">
+          <span id="run-icon"></span>
+          <h1 id="run-title">세션을 고르세요</h1>
+        </div>
+        <div id="run-meta"></div>
+        <div id="lineage" hidden></div>
+        <div id="run-actions">
+          <button id="btn-origin" type="button" class="ghost" hidden title="이 세션이 시작된 화면(대화·할 일·제안)을 패널에서 열어요 (⌘O)">↩︎ 원래 화면 열기</button>
+          <button id="btn-claude" type="button" class="ghost" hidden>Claude Code에서 열기</button>
+          <button id="btn-sync" type="button" class="ghost" hidden aria-label="새로고침 — 터미널에서 이어 간 대화 불러오기">↻ 새로고침</button>
+          <button id="btn-interrupt" type="button" class="ghost" hidden title="지금 하던 걸 멈추고 다음 메시지를 기다려요">중단</button>
+          <button id="btn-stop" type="button" class="danger" hidden title="세션을 끝내요 — 커밋 안 함">정지</button>
+        </div>
+      </header>
+      <section id="newtask" hidden aria-label="새 작업">
+        <h2>새 작업</h2>
+        <p class="hint">레포와 할 일을 적으면 제안을 만들어요. 승인해야 시작해요(커밋·푸시는 테스트 통과 후, 머지는 다시 승인).</p>
+        <label for="nt-repo">레포</label>
+        <select id="nt-repo"></select>
+        <label for="nt-text">할 일</label>
+        <textarea id="nt-text" rows="5" placeholder="예: README 에 설치 방법을 추가해 줘"></textarea>
+        <div class="row">
+          <button id="nt-cancel" type="button" class="ghost">취소</button>
+          <button id="nt-submit" type="button" class="primary">제안 만들기</button>
+        </div>
+        <div id="nt-err" role="status"></div>
+        <div id="nt-card" hidden></div>
+        <h2 class="nt-sub">Claude Code 세션 불러오기</h2>
+        <p class="hint">이어 갈 Claude Code 세션 id(<code>claude --resume</code> 뒤의 UUID)를 넣으면 그 대화를 채팅 세션으로 여기에 넣어요. 그 세션에서 이어 말하거나 "Claude Code에서 열기"로 이어 갈 수 있어요.</p>
+        <label for="im-sid">세션 id</label>
+        <input id="im-sid" type="text" spellcheck="false" autocomplete="off" placeholder="예: 11111111-2222-4333-8444-555555555555">
+        <div class="row">
+          <button id="im-submit" type="button" class="primary">불러오기</button>
+        </div>
+        <div id="im-err" role="status"></div>
+      </section>
+      <div id="log-wrap">
+        <div id="log" aria-live="polite"></div>
+        <button id="pill" type="button" hidden>새 내용 ↓</button>
+      </div>
+      <footer id="composer">
+        <div id="readonly" hidden></div>
+        <div id="compose-hint"></div>
+        <div id="compose-tray" class="att-tray" aria-label="붙인 파일" hidden></div>
+        <div id="compose-row">
+          <button id="attach" type="button" class="ghost att-pick" title="파일 붙이기 — 이미지·PDF·문서·아무 파일(끌어다 놓거나 ⌘V 로 붙여도 돼요)" aria-label="파일 붙이기">📎</button>
+          <textarea id="input" rows="1" placeholder="이 세션에 메시지 보내기 (Enter 보내기 · Shift+Enter 줄바꿈)" aria-label="메시지"></textarea>
+          <select id="model" aria-label="모델" title="이번에 보낼 때 쓸 모델" hidden></select>
+          <button id="send" type="button" class="primary">보내기</button>
+          <button id="btn-stop-run" type="button" class="danger" hidden title="이 작업 세션 전체를 멈춰요(두 번 누르기) — 수정 작업은 커밋 안 함">■ 멈추기</button>
+        </div>
+        <div id="compose-err" role="status"></div>
+      </footer>
+    </main>
+  </div>
+  <div id="ctxmenu" role="menu" hidden></div>
+  <script type="module" src="session.js"></script>
+</body>
+</html>

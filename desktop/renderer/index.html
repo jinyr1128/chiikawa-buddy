@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: cy-asset:; media-src cy-asset:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>시사 비서</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="attach.css">
+</head>
+<body>
+  <main id="stage">
+    <section id="stack" aria-live="polite"></section>
+    <!-- 집중하기: 경과 시간 · 일시정지/다시 시작 · 그만하기(renderer.js, src/focus.js) -->
+    <div id="focus" class="hit" role="timer" aria-label="집중 시간" hidden>
+      <div class="focus-line"><span id="focus-label">집중 중</span><b id="focus-time">00:00</b></div>
+      <div class="focus-btns">
+        <button id="focus-toggle" type="button">일시정지</button>
+        <button id="focus-stop" type="button" class="primary">그만하기</button>
+      </div>
+    </div>
+    <div id="doing" class="hit" role="status" aria-label="진행 중인 할 일" title="할 일 보기" hidden>
+      <span id="doing-label">진행 중</span><b id="doing-text"></b>
+    </div>
+    <div id="ask" class="hit" hidden>
+      <div id="ask-tray" class="att-tray" aria-label="붙인 파일" hidden></div>
+      <div id="ask-row">
+        <button id="ask-attach" type="button" class="att-pick" title="파일 붙이기 — 이미지·PDF·문서(끌어다 놓거나 ⌘V 도 돼요)" aria-label="파일 붙이기">📎</button>
+        <button id="ask-more" type="button" class="att-pick" title="정해진 답 고르기 — 오늘 할 일·응원·춤(AI 없이 바로)" aria-label="정해진 답 고르기">＋</button>
+        <input id="ask-input" type="text" autocomplete="off" placeholder="물어보세요 · Enter" aria-label="시사에게 물어보기">
+      </div>
+    </div>
+    <div id="caption" hidden><span id="caption-text" aria-live="polite"></span><button id="caption-stop" class="hit" type="button" title="답하던 걸 멈춰요" aria-label="멈추기">■</button></div>
+    <div id="char-wrap" class="hit mood-idle sleepy" title="">
+      <div id="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div id="zzz" aria-hidden="true">z</div>
+      <div id="char-body">
+        <img id="char" alt="" draggable="false">
+        <img id="char-closed" alt="" draggable="false">
+        <video id="vid-studying" class="char-video" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+        <video id="vid-dancing" class="char-video" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+        <!-- 사용자 캐릭터의 gif·png 같은 그림 클립(응원·춤 등): <video> 가 못 트는 것 -->
+        <img id="clip-img" class="char-video" alt="" draggable="false" aria-hidden="true">
+      </div>
+    </div>
+  </main>
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+/* 오버레이 — 배경 투명, 캐릭터는 아래, 말풍선은 위로 쌓임 */
+:root {
+  --bubble-bg: #ffffff;
+  --bubble-fg: #1d1d1f;
+  --bubble-muted: #6e6e73;
+  --bubble-border: rgba(0, 0, 0, 0.08);
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --btn-bg: #f2f2f5;
+  --btn-fg: #1d1d1f;
+  --accent: #6b5cff;
+  --accent-btn: #6b5cff; /* 흰 글자를 얹는 바탕(다크 모드에서도 진하게: 밝은 보라는 흰 글자 대비가 3:1 남짓) */
+  --k-info: #8e8e93;
+  --k-todo: #ff9f0a;
+  --k-proposal: #6b5cff;
+  --k-done: #30b158;
+  --k-error: #ff453a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bubble-bg: #2c2c2e;
+    --bubble-fg: #f5f5f7;
+    --bubble-muted: #a1a1a6;
+    --bubble-border: rgba(255, 255, 255, 0.1);
+    --shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --btn-bg: #3a3a3c;
+    --btn-fg: #f5f5f7;
+    --accent: #8e83ff;
+    --k-proposal: #8e83ff;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", "Malgun Gothic", sans-serif;
+  color: var(--bubble-fg);
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 8px 4px;
+}
+
+/* ---- 말풍선 ---- */
+#stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+#stack.hidden { display: none; }
+/* 윈도우 캐릭터 숨기기: 창은 둔 채 다 감춘다(감춘 건 마우스에 안 맞아 클릭이 투과된다) */
+body.char-hidden #stage { visibility: hidden; }
+
+.bubble {
+  position: relative;
+  max-width: 260px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: var(--bubble-bg);
+  border: 1px solid var(--bubble-border);
+  box-shadow: var(--shadow);
+  cursor: default;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  animation: pop-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.bubble::before { /* 종류 표시 점 */
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin: 0 6px 1px 0;
+  vertical-align: middle;
+  background: var(--k-info);
+}
+.bubble.kind-todo::before { background: var(--k-todo); }
+.bubble.kind-proposal::before { background: var(--k-proposal); }
+.bubble.kind-done::before { background: var(--k-done); }
+.bubble.kind-error::before { background: var(--k-error); }
+.bubble.kind-proposal { border-color: color-mix(in srgb, var(--k-proposal) 35%, transparent); }
+
+/* 한 항목 = (그림 말풍선) + 글 말풍선 */
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.item.text-pending .bubble, .bubble.no-text { display: none; }
+
+/* 그림 말풍선(스티커): 둥근 그림 + 부드러운 그림자, 톡 튀어나옴 */
+.sticker {
+  display: block;
+  width: 200px;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 18px;
+  background: var(--bubble-bg);
+  border: 3px solid var(--bubble-bg);
+  box-shadow: var(--shadow);
+  cursor: default;
+  animation: sticker-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.sticker.pop { animation: sticker-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+.item.sticker-gone .sticker, .item:not(.newest) .sticker { display: none; }
+@keyframes sticker-pop {
+  0% { opacity: 0; transform: translateY(10px) scale(0.6) rotate(-4deg); }
+  70% { opacity: 1; transform: translateY(-2px) scale(1.04) rotate(1deg); }
+  100% { transform: none; }
+}
+
+/* 긴 말풍선: 4–6줄 보이고, 누르면 패널 */
+.bubble .detail {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--bubble-muted);
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+}
+.bubble:not(.has-detail) .detail { display: none; }
+.bubble.has-detail { max-width: 300px; }
+/* 마크다운 말풍선(목록·표·굵게·코드·색·형광펜) */
+.bubble .md { white-space: normal; }
+.bubble .text.md { display: block; }
+.bubble .md p { margin: 0; }
+.bubble .md p + p, .bubble .md p + ul, .bubble .md ul + p, .bubble .md table + p { margin-top: 4px; }
+.bubble .md ul, .bubble .md ol { margin: 2px 0; padding-left: 17px; }
+.bubble .md li { margin: 2px 0; }
+.bubble .md li::marker { color: var(--bubble-muted); }
+.bubble .md strong { font-weight: 650; color: var(--bubble-fg); }
+.bubble .md code { font: 11.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 0 3px; border-radius: 4px; background: color-mix(in srgb, var(--bubble-fg) 8%, transparent); }
+.bubble .md mark { background: rgba(255, 214, 10, 0.38); color: inherit; padding: 0 2px; border-radius: 3px; }
+.bubble .md table { border-collapse: collapse; margin: 3px 0; font-size: 12px; }
+.bubble .md th, .bubble .md td { padding: 3px 7px 3px 0; text-align: left; border-bottom: 1px solid var(--bubble-border); vertical-align: top; }
+.bubble .md th { color: var(--bubble-muted); font-weight: 600; }
+/* 말풍선에 표가 오면 깨지지 않게 줄여 보인다: 말풍선 폭을 넘지 않고, 칸은 한 줄로 자르고 … */
+.bubble .md table { display: block; max-width: 100%; overflow: hidden; }
+.bubble .md th, .bubble .md td { max-width: 9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bubble .md a { color: var(--accent); }
+.bubble .md .c-red { color: #c62828; } .bubble .md .c-green { color: #1b7a3a; } .bubble .md .c-blue { color: #1f5fbf; }
+.bubble .md .c-orange { color: #b35400; } .bubble .md .c-purple { color: #6b3fc4; } .bubble .md .c-gray { color: var(--bubble-muted); }
+@media (prefers-color-scheme: dark) {
+  .bubble .md .c-red { color: #ff8a80; } .bubble .md .c-green { color: #7ee29b; } .bubble .md .c-blue { color: #8ab4ff; }
+  .bubble .md .c-orange { color: #ffb35c; } .bubble .md .c-purple { color: #c3a6ff; }
+  .bubble .md mark { background: rgba(255, 214, 10, 0.28); }
+}
+/* 넓은 목록 말풍선: 한 줄에 하나, 최대 10줄 남짓 — 넘치면 아래를 흐리게 */
+.bubble.wide { max-width: 380px; }
+.bubble.wide .detail { display: block; -webkit-line-clamp: unset; font-size: 12.5px; line-height: 1.55; color: var(--bubble-fg); max-height: 18em; }
+.bubble.wide.overflow .detail { -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent); mask-image: linear-gradient(to bottom, #000 78%, transparent); }
+.bubble.clickable { cursor: pointer; }
+.bubble.clickable:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--bubble-border)); }
+
+/* 머지 추가질문 입력줄 */
+.bubble .merge-ask { margin-top: 7px; }
+.bubble .merge-ask[hidden] { display: none; }
+.bubble .merge-ask input {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--bubble-border));
+  border-radius: 999px;
+  outline: none;
+  background: transparent;
+  color: var(--bubble-fg);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.bubble .note.muted { color: var(--bubble-muted); }
+
+/* 꼬리는 머리에 제일 가까운 최신 말풍선에만 */
+.item.newest .bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--bubble-bg);
+  border-right: 1px solid var(--bubble-border);
+  border-bottom: 1px solid var(--bubble-border);
+  transform: translateX(-50%) rotate(45deg);
+  border-bottom-right-radius: 3px;
+}
+.item.age-1 { opacity: 0.78; transform: scale(0.97); }
+.item.age-2 { opacity: 0.5; transform: scale(0.94); }
+.item.leaving { opacity: 0; transform: translateY(-6px) scale(0.95); pointer-events: none; }
+
+.bubble .text { display: inline; }
+/* ✕ 닫기(새 버전 알림 등): 오른쪽 위 모서리, 글과 겹치지 않게 안쪽 여백 */
+.bubble:has(> button.close) { padding-right: 26px; }
+.bubble > button.close {
+  position: absolute; top: 5px; right: 6px; width: 18px; height: 18px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: var(--muted, #888);
+  font-size: 11px; line-height: 18px; cursor: pointer; pointer-events: auto;
+}
+.bubble > button.close:hover { background: var(--bubble-border); color: inherit; }
+.bubble .meta {
+  display: flex;
+  flex-wrap: wrap; /* 머지 승인: ✓ 머지 · ✗ 안 함 · 추가질문 · PR 보기 · 패널에서 보기 */
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+}
+.bubble .meta:empty { display: none; }
+/* 둘러보기 말풍선: 그만은 왼쪽, 다음·끝은 오른쪽(맨 아래 버튼 줄) */
+.bubble .meta.tour-bar { justify-content: space-between; border-top: 1px solid rgba(127, 127, 127, 0.18); padding-top: 7px; }
+.bubble .meta.tour-bar button.primary:only-child { margin-left: auto; }
+.bubble button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  cursor: pointer;
+}
+.bubble button.primary { background: var(--accent-btn); color: #fff; }
+/* AI 없이 고르는 질문 칩(quick-ask.js): 둥근 칩, 마지막 「AI 연결하기」만 강조 */
+.bubble .meta.quick-bar { gap: 5px; }
+.bubble button.chip { border-radius: 999px; padding: 4px 11px; }
+.bubble button.chip.connect { background: var(--accent-btn); color: #fff; }
+.bubble button:disabled { opacity: 0.5; cursor: default; }
+.bubble button:hover:not(:disabled) { filter: brightness(0.95); }
+.bubble .link {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--bubble-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  padding: 0;
+}
+.bubble .note { font-size: 11.5px; color: var(--k-error); }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+}
+
+/* ---- 집중하기 말풍선: 경과 시간 + 일시정지/다시 시작 · 그만하기 (꼬리는 캐릭터 쪽) ---- */
+#focus {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  padding: 9px 14px 10px;
+  border-radius: 14px;
+  background: var(--bubble-bg);
+  border: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  box-shadow: var(--shadow);
+  animation: pop-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+#focus[hidden] { display: none; }
+#focus::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--bubble-bg);
+  border-right: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  border-bottom: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  transform: translateX(-50%) rotate(45deg);
+  border-bottom-right-radius: 3px;
+}
+#focus .focus-line { display: flex; align-items: baseline; gap: 8px; }
+#focus-label { font-size: 12px; color: var(--bubble-muted); }
+#focus-label::before { /* 집중 중: 초록 점이 숨 쉬듯 */
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 6px 1px 0;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--k-done);
+  animation: focus-dot 2s ease-in-out infinite;
+}
+#focus.paused #focus-label::before { background: var(--k-todo); animation: none; }
+#focus-time { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+#focus.paused #focus-time { color: var(--bubble-muted); }
+#focus .focus-btns { display: flex; gap: 6px; }
+#focus button {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 11px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  cursor: pointer;
+}
+#focus button.primary { background: var(--accent-btn); color: #fff; }
+#focus button:disabled { opacity: 0.5; cursor: default; }
+#focus button:hover:not(:disabled) { filter: brightness(0.95); }
+@keyframes focus-dot { 50% { opacity: 0.35; } }
+
+/* ---- 진행 중 말풍선: 할 일에서 ▶ 로 켠 일(집중하기 말풍선과 같은 모양, 누르면 할 일 탭) ---- */
+#doing {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--bubble-bg);
+  border: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: pop-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+#doing[hidden] { display: none; }
+#doing::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--bubble-bg);
+  border-right: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  border-bottom: 1px solid color-mix(in srgb, var(--k-done) 40%, var(--bubble-border));
+  transform: translateX(-50%) rotate(45deg);
+  border-bottom-right-radius: 3px;
+}
+#doing-label { flex: none; font-size: 12px; color: var(--bubble-muted); }
+#doing-label::before { /* 집중하기처럼 초록 점이 숨 쉬듯 */
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 6px 1px 0;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--k-done);
+  animation: focus-dot 2s ease-in-out infinite;
+}
+#doing-text { font-size: 14px; font-weight: 650; color: var(--bubble-fg); overflow-wrap: anywhere; }
+
+/* ---- 호버 입력창 / 진행 캡션 ---- */
+#ask {
+  width: 240px;
+  margin-bottom: 8px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--bubble-bg);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--bubble-border));
+  box-shadow: var(--shadow);
+  animation: pop-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+#ask[hidden], #caption[hidden] { display: none; }
+#ask input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--bubble-fg);
+  font: inherit;
+  padding: 5px 12px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#ask input::placeholder { color: var(--bubble-muted); }
+/* 첨부(attach.css): 📎 + 입력창 한 줄, 칩이 있으면 위에 쌓이고 모서리를 덜 둥글게 */
+#ask-row { display: flex; align-items: center; }
+#ask.has-att { border-radius: 14px; }
+#ask .att-tray { padding: 4px 4px 2px; --line: var(--bubble-border); --card: var(--btn-bg); --fg: var(--bubble-fg); --muted: var(--bubble-muted); --code: var(--bubble-border); }
+#ask .att-chip { max-width: 226px; height: 30px; }
+#ask .att-thumb { width: 22px; height: 22px; }
+#ask .att-pick { height: 26px; min-width: 26px; padding: 0 2px 0 6px; border: 0; background: transparent; font-size: 14px; cursor: pointer; opacity: 0.75; }
+#ask .att-pick:hover { opacity: 1; }
+/* 칩을 눌러 캐릭터가 행동·정해진 말 하는 동안 입력창을 잠깐 숨긴다(renderer.js pauseAsk) */
+#ask.paused { display: none; } /* 자리째 빼서 말풍선이 캐릭터 바로 위로 내려온다 — 그동안 포커스가 빠져도 닫지 않는다(renderer.js askPauseTimer) */
+#char-wrap.att-drop, #ask.att-drop { outline-offset: 2px; }
+#caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  margin-bottom: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bubble-bg) 85%, transparent);
+  color: var(--bubble-muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+#caption-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 답하는 중 멈추기(캐릭터 대화) */
+#caption-stop {
+  flex: none;
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  color: var(--bubble-muted);
+  font-size: 9px;
+  line-height: 14px;
+  cursor: pointer;
+}
+#caption-stop:hover { color: var(--bubble-fg); }
+
+/* ---- 캐릭터 ---- */
+#char-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  flex: none;
+  cursor: grab;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+#char-wrap:active { cursor: grabbing; }
+/* 정지 그림(눈 뜬·감은)과 영상(공부 중·춤)은 같은 상자·같은 기준점에 겹쳐 둔다 */
+#char-body {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+#char, #char-closed, .char-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  pointer-events: none;
+  background: transparent;
+}
+/* 우사기: 귀가 길어 같은 상자에 넣으면 몸이 작아 보인다 — 정지 그림만 바닥 기준으로 키워 귀는 상자 위로 나가게 */
+#char-wrap[data-character="usagi"] #char, #char-wrap[data-character="usagi"] #char-closed { transform: scale(1.2); transform-origin: 50% 100%; }
+/* 키운 만큼(상자 140px × 0.2 = 28px) 귀가 위로 나가니, 위의 말풍선·입력창·집중 말풍선도 그만큼 올린다 */
+#char-wrap[data-character="usagi"] { margin-top: 30px; }
+/* 깜빡임: 감은 그림은 늘 디코드된 채 숨어 있다가 잠깐 위로 — src 를 바꾸지 않아 깜빡임 없음 */
+#char-closed { visibility: hidden; }
+#char-wrap.blink-ready.blink #char-closed { visibility: visible; }
+#char-wrap.blink-ready.blink #char { visibility: hidden; }
+/* 연결 끊김(졸림): 눈 감은 그림 그대로 */
+#char-wrap.blink-ready.sleepy #char-closed { visibility: visible; }
+#char-wrap.blink-ready.sleepy #char { visibility: hidden; }
+/* 영상: 첫 장면이 실제로 나올 때(.on)만 보이고, 그동안은 정지 그림 */
+.char-video { visibility: hidden; }
+.char-video.on { visibility: visible; }
+#char-wrap.video-on #char, #char-wrap.video-on #char-closed { visibility: hidden; }
+/* 배경이 있는 장면 영상(랏코·모몽가): 둥근 네모 카드로 */
+.char-video.scene { border-radius: 24px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
+/* 사용자 캐릭터: 그림 비율대로 상자 안에 맞춘 크기(renderer.js fitEl) — 둥근 테두리가 그림에 딱 맞게 */
+#char.fit, #char-closed.fit, .char-video.fit { inset: auto; object-fit: fill; }
+#char.scene, #char-closed.scene { border-radius: 24px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
+
+.mood-idle #char-body { animation: bob 3.2s ease-in-out infinite; }
+.mood-working #char-body { animation: bob-fast 0.9s ease-in-out infinite; }
+.mood-thinking #char-body { animation: sway 2.6s ease-in-out infinite; }
+.mood-alert #char-body { animation: bounce 0.7s cubic-bezier(0.3, 0, 0.3, 1) 3, bob 3.2s ease-in-out 2.1s infinite; }
+/* 영상이 돌 땐 영상 자체가 움직이므로 흔들지 않는다 */
+#char-wrap.video-on #char-body { animation: none; }
+#dots, #zzz { z-index: 2; }
+
+@keyframes bob { 50% { transform: translateY(-4px); } }
+@keyframes bob-fast { 50% { transform: translateY(-6px) scaleY(1.02); } }
+@keyframes sway {
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-14px) scale(0.97, 1.04); }
+  60% { transform: translateY(0) scale(1.05, 0.95); }
+}
+
+/* 생각 중 … */
+#dots {
+  position: absolute;
+  top: -4px;
+  right: 6px;
+  display: none;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  background: var(--bubble-bg);
+  box-shadow: var(--shadow);
+}
+.mood-thinking #dots { display: flex; }
+#dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bubble-muted);
+  animation: dot 1.2s ease-in-out infinite;
+}
+#dots i:nth-child(2) { animation-delay: 0.15s; }
+#dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dot { 30% { transform: translateY(-3px); opacity: 1; } 0%, 60%, 100% { opacity: 0.4; } }
+
+/* 연결 끊김 — 흐리고 졸린 상태 */
+#zzz {
+  position: absolute;
+  top: 6px;
+  right: 14px;
+  display: none;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--bubble-muted);
+  animation: zzz 2.4s ease-in-out infinite;
+}
+#char-wrap.sleepy { opacity: 0.55; filter: grayscale(0.7); }
+#char-wrap.sleepy #char-body { animation: bob 5s ease-in-out infinite; }
+#char-wrap.sleepy #zzz { display: block; }
+#char-wrap.sleepy #dots { display: none; }
+@keyframes zzz {
+  0% { opacity: 0; transform: translate(0, 4px) scale(0.8); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translate(8px, -14px) scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #char, #char-body, #char-wrap.sleepy #char-body, #dots i, #zzz, .sticker, .bubble, #focus, #focus-label::before, #doing, #doing-label::before { animation: none !important; }
+}
+

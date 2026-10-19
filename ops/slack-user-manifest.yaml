@@ -1,0 +1,48 @@
+# Slack 앱 매니페스트(봇 + 내 사용자 토큰) — connectors.slack.mode = "api" 용. docs/connect/slack.md 참고
+# https://api.slack.com/apps → Create New App → From a manifest 에 붙여넣기 → Install to Workspace
+#  - 봇 부분은 ops/slack-manifest.yaml 과 같다(봇 DM·버튼·캔버스, Socket Mode라 공개 URL 불필요)
+#  - 사용자 스코프는 읽기만: 설치하면 "User OAuth Token"(xoxp-…)이 생긴다 → connectors.slack.userToken
+#    agent/src/ingest/slack-api.ts 가 이 토큰으로 auth.test · users.conversations · conversations.history/replies/info
+#    · search.messages · users.info 만 부른다(쓰기 메서드는 코드에서 막힘)
+display_information:
+  name: cy
+  description: 내 PC에 상주하는 개인 비서 (브리핑 · 승인 · 자동 수정)
+  background_color: "#3b2a5c"
+features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: cy
+    always_online: false
+oauth_config:
+  scopes:
+    bot:
+      - chat:write        # DM으로 브리핑·제안·결과 보내기, 메시지 갱신
+      - im:history        # 내가 봇 DM에 쓴 요청 읽기
+      - im:read
+      - im:write
+      - reactions:write   # 요청 받으면 👀
+      - canvases:write    # 봇 DM 캔버스에 할 일 목록 만들기·덮어쓰기·공유 (conversations.canvases.create, canvases.edit/create/access.set)
+      - canvases:read     # 캔버스 섹션 조회 (canvases.sections.lookup)
+    user:                 # 내 권한으로 읽기만 — Slack 수집(api 모드)
+      - channels:history  # 공개 채널 메시지
+      - groups:history    # 비공개 채널 메시지
+      - im:history        # DM 메시지
+      - mpim:history      # 그룹 DM 메시지
+      - channels:read     # 공개 채널 목록·정보
+      - groups:read       # 비공개 채널 목록·정보
+      - im:read           # DM 목록
+      - mpim:read         # 그룹 DM 목록
+      - users:read        # 사람 이름
+      - search:read       # 멘션·참여 스레드 검색 (search.messages)
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.im
+  interactivity:
+    is_enabled: true      # 승인/보류/머지 버튼 (Socket Mode로 수신)
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

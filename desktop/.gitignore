@@ -1,0 +1,6 @@
+node_modules
+out/
+.dev-app/
+.DS_Store
+dist/
+assets/icon.*
