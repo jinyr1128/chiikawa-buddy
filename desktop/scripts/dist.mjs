@@ -144,7 +144,7 @@ if (MAKE_DMG) {
   try {
     run('ditto', [APP, path.join(root, `${APP_NAME}.app`)]);
     fs.symlinkSync('/Applications', path.join(root, '응용 프로그램'));
-    const dmg = path.join(DIST, `ChiikawaBuddy-${VERSION}-${ARCH}.dmg`); // 파일 이름은 영문(GitHub 릴리스가 한글 파일 이름을 못 받는다). 앱 이름은 그대로 「시사」
+    const dmg = path.join(DIST, `ChiikawaManager-${VERSION}-${ARCH}.dmg`); // 파일 이름은 영문(GitHub 릴리스가 한글 파일 이름을 못 받는다). 앱 이름은 그대로 「시사」
     fs.rmSync(dmg, { force: true });
     run('hdiutil', ['create', '-volname', `${APP_NAME} ${VERSION}`, '-srcfolder', root, '-fs', 'HFS+', '-format', 'UDZO', '-imagekey', 'zlib-level=9', '-ov', dmg]);
     const mb = (fs.statSync(dmg).size / 1024 / 1024).toFixed(1);
