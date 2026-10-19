@@ -78,7 +78,7 @@ test('updateBubble win32: 설치본은 종료 후 새 Setup.exe, 휴대용은 zi
   const zip = updateBubble({ version: '0.2.0', platform: 'win32', portable: true }).text;
   assert.match(zip, /zip/);
   assert.ok(!/Setup\.exe/.test(zip));
-  assert.match(updateBubble({ version: '0.2.0', platform: 'darwin' }).text, /dmg/);
+  assert.match(updateBubble({ version: '0.2.0', platform: 'darwin' }).text, /\.\/ops\/update\.sh.*AI에게/); // 맥 앱은 저장소 폴더에서 update.sh 또는 AI 로
   assert.match(updateBubble({ version: '0.2.0', platform: 'win32', checkout: true }).text, /update\.sh/);
   const other = updateBubble({ version: '0.2.0', platform: 'linux' }).text;
   assert.ok(!/dmg|Setup\.exe|zip/.test(other));

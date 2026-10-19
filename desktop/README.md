@@ -1,6 +1,6 @@
-# cy-agent desktop
+# 치이카와 매니저 — 데스크톱 앱
 
-시사 비서의 데스크톱 앱(Electron)입니다. 늘 화면 위에 떠 있는 캐릭터와 머리 위 말풍선, 캐릭터를 누르면 열리는 대시보드 패널, 두 번 누르면 뜨는 채팅 입력창으로 이뤄져 있습니다. macOS와 윈도우를 지원합니다. 윈도우 설치·실행은 [windows/README.md](../windows/README.md)를 참고하세요.
+치이카와 매니저의 데스크톱 앱(Electron)입니다. 늘 화면 위에 떠 있는 캐릭터와 머리 위 말풍선, 캐릭터를 누르면 열리는 대시보드 패널, 두 번 누르면 뜨는 채팅 입력창으로 이뤄져 있습니다. macOS와 윈도우를 지원합니다. 윈도우 설치·실행은 [windows/README.md](../windows/README.md)를 참고하세요.
 
 설정의 캐릭터 목록에서 **우사기**도 고를 수 있습니다. [우사기 조사·대사·이미지 설명](../docs/usagi-character.md), [이미지 원본과 준비 방법](../artwork/usagi/README.md)을 참고하세요. 가짜 데몬은 `FAKE_CHARACTER=usagi npm run fake-daemon`으로 시작할 수 있습니다.
 

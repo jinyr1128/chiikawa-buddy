@@ -63,7 +63,7 @@
       "다 했수다! {total}개 전부 끝 🎉 오늘 폭삭 속았수다"
     ],
     "daily_half": [
-      "벌써 반 했수다! ({done}/{total}) 이대로 갑서 💪 (기쁜 시사)",
+      "벌써 반 했수다! {done}/{total} 이대로 갑서 💪 (기쁜 시사)",
       "반 넘었수다 {done}/{total}! 조끔만 더 힘냅서"
     ],
     "today_ask": [
@@ -248,7 +248,13 @@
     "weatherLeave": "퇴근길 {place} {summary}, 지금 {now}마씸. 조심히 들어갑서.",
     "weatherRain": " {when}쯤 {what} {prob}, 우산 챙깁서.",
     "weatherNoPlace": "설정에서 지역 골라 주믄 알려 드리쿠다.",
-    "weatherFail": "날씨를 지금 못 가져왔수다. 이따 다시 물어봅서."
+    "weatherFail": "날씨를 지금 못 가져왔수다. 이따 다시 물어봅서.",
+    "empty": "우선순위 1·3 열린 할 일은 비어 있수다.",
+    "weatherMorning": "오늘 {place} {summary}마씸, 지금 {now} · 최고 {max}/최저 {min}.{rain}",
+    "weatherNow": "지금 {place} {summary}마씸, {now} · 오늘 최고 {max}/최저 {min}.{rain}",
+    "weatherLeaveRain": "퇴근길 {what} 왐수다, 우산 챙깁서! {when}쯤 {what} {prob}, {place} 지금 {now}마씸.",
+    "todayPick": "오늘 꼭 할 일은 아직 엇수다. 할 일 {n}개가 기다렴수다.",
+    "calLoading": "캘린더는 연결됐수다. 지금 일정 가져오는 중이난 조금 이시당 다시 물어봅서."
   },
   "cheer": [
     "오늘도 잘햄수다. 옆에서 응원허쿠다!",

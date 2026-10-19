@@ -21,7 +21,7 @@ let indices;
 try { indices = selectBeats(opts); } catch (e) { console.error(`✗ ${e.message}`); process.exit(2); }
 
 const rows = plan(BEATS, { pace: opts.pace, indices });
-console.log(`시사 비서 데모 — 장면 ${rows.length}개, 예상 ${fmtClock(totalOf(rows))} (속도 ×${(1 / opts.pace).toFixed(2)})`);
+console.log(`치이카와 매니저 데모 — 장면 ${rows.length}개, 예상 ${fmtClock(totalOf(rows))} (속도 ×${(1 / opts.pace).toFixed(2)})`);
 for (const r of rows) console.log(`  [${fmtClock(r.at)}] ${String(r.n).padStart(2)}. ${r.id.padEnd(10)} ${r.title}`);
 if (opts.list) process.exit(0);
 

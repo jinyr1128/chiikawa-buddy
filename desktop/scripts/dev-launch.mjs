@@ -1,4 +1,4 @@
-// 개발 실행을 Electron 기본 앱이 아니라 '시사 비서' 아이콘·이름으로 Dock 에 띄운다.
+// 개발 실행을 Electron 기본 앱이 아니라 '치이카와 매니저' 아이콘·이름으로 Dock 에 띄운다.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

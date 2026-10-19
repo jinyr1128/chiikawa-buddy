@@ -93,7 +93,7 @@ export function shouldNotify({ latest, current, notified }) {
   return !!latest && isNewer(latest, current) && latest !== notified;
 }
 
-// 캐릭터 말풍선. checkout: 터미널 설치(레포 체크아웃) — dmg 대신 ./ops/update.sh 로 받는다
+// 캐릭터 말풍선. checkout: 터미널 설치(레포 체크아웃) · 맥 앱(setup-mac.sh 로 설치)도 저장소 폴더의 ./ops/update.sh 로 받는다
 // platform 'win32': 설치본은 새 Setup.exe 를 실행(Squirrel 이 다시 깐다 — 켜져 있는 시사는 바로 꺼지니 먼저 종료).
 // portable(Update.exe 없는 휴대용 zip): 새 zip 을 풀어 쓴다. assetUrl 이 있으면 그 파일을 바로 받는다
 export function updateBubble({ version, url, assetUrl, checkout = false, platform, portable = false }) {
@@ -104,7 +104,7 @@ export function updateBubble({ version, url, assetUrl, checkout = false, platfor
         ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 Shisa.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
         : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 매니저를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 할 일·기록은 그대로예요.`
       : platform === 'darwin'
-        ? `새 버전 v${version} 가 나왔어요. 새 dmg 를 받아 응용 프로그램에 덮어 넣으면 돼요. 할 일·기록은 그대로예요.`
+        ? `새 버전 v${version} 가 나왔어요. 받은 저장소 폴더에서 ./ops/update.sh 를 실행하거나, AI에게 「치이카와 매니저 업데이트해줘」라고 하면 돼요. 할 일·기록은 그대로예요.`
         : `새 버전 v${version} 가 나왔어요. 새 버전을 받아 바꿔 주세요. 할 일·기록은 그대로예요.`;
   const link = (!checkout && assetUrl) || url || RELEASES_PAGE;
   return { id: BUBBLE_ID, kind: 'info', text, link, linkLabel: checkout ? '바뀐 점 보기' : '받으러 가기', ttlMs: 120000, closable: true };

@@ -34,8 +34,8 @@ const paths = await packager({
   // 번들엔 실행에 필요한 것만 (main.js, preload, renderer, src, assets, package.json)
   ignore: [/^\/(test|scripts|dist|out|node_modules)(\/|$)/, /^\/README\.md$/, /^\/\.gitignore$/],
   extendInfo: {
-    CFBundleDisplayName: '시사 비서', // Cmd+Tab·Dock 에 보이는 이름 (번들 파일명은 cy.app 유지)
-    CFBundleName: '시사 비서',
+    CFBundleDisplayName: '치이카와 매니저', // Cmd+Tab·Dock 에 보이는 이름 (번들 파일명은 cy.app 유지)
+    CFBundleName: '치이카와 매니저',
     LSUIElement: false,
   },
   quiet: true,

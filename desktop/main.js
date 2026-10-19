@@ -2322,7 +2322,7 @@ async function checkForUpdate() {
   state.updateCheckedAt = now;
   saveState();
   try {
-    const r = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'shisa-agent-desktop' }, signal: AbortSignal.timeout(15000) });
+    const r = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'chiikawa-manager-desktop' }, signal: AbortSignal.timeout(15000) });
     if (!r.ok) return; // 아직 릴리스가 없으면 404
     const target = { platform: process.platform, arch: process.arch, portable: isPortableWin(), checkout: isCheckout() };
     // 이 PC 용 파일(Setup.exe·zip·dmg)이 아직 안 올라왔으면 null: 알림 기록을 안 남기니 다음 확인 때 다시 본다

@@ -88,7 +88,7 @@ export const CHARACTER_LINES = {
         "우와, 진짜 대단하다! {total}개 전부 끝 🎉"
       ],
       "daily_half": [
-        "벌써 절반이야! ({done}/{total}) 이대로 가 보자 💪",
+        "벌써 절반이야! {done}/{total} 이대로 가 보자 💪",
         "우와, 반 넘었어 {done}/{total}! 조금만 더 파이팅!"
       ],
       "today_ask": [
@@ -498,7 +498,7 @@ export const CHARACTER_LINES = {
         "{total}개 전부 끝. 역시 믿음직하구나."
       ],
       "daily_half": [
-        "벌써 반이나 했구나. ({done}/{total}) 잘하고 있어.",
+        "벌써 반이나 했구나. {done}/{total} 잘하고 있어.",
         "{done}/{total}. 이대로 천천히 가 보자."
       ],
       "today_ask": [
@@ -919,7 +919,7 @@ export const CHARACTER_LINES = {
         "{total}개 전부 끝! 으쌰! 호샤! 그러니까 그거 이리 줘봐!(간식)"
       ],
       "daily_half": [
-        "벌써 반이야? ({done}/{total}) 나머지도 하란 말이야아아!!!",
+        "벌써 반이야? {done}/{total} 나머지도 하란 말이야아아!!!",
         "{done}/{total}. 여기서 멈추면 싫어 싫어!"
       ],
       "today_ask": [
@@ -1314,7 +1314,7 @@ export const CHARACTER_LINES = {
       ],
       "daily_half": [
         "우나 야하(벌써 {done}/{total}! 하나씩 잘 가고 있어.)",
-        "야하!(절반 넘었어! ({done}/{total}) 잠깐 숨 돌려도 돼.)"
+        "야하!(절반 넘었어! {done}/{total} 잠깐 숨 돌려도 돼.)"
       ],
       "today_ask": [
         "하아~~?(오늘 챙길 일, 오늘 할 일 탭에 적어 줄래?)"
@@ -1338,10 +1338,10 @@ export const CHARACTER_LINES = {
         "하아~~?({mins}분 뒤 〈{title}〉야 {time}{where})",
         "우나(〈{title}〉 잊지 마! {mins}분 전 {time}{where})",
         "하아~~?(회의 〈{title}〉 {mins}분 전! {time}{where})",
-        "우나(〈{title}〉 갈 시간 다가와 ({mins}분) {time}{where})",
+        "우나(〈{title}〉 갈 시간 다가와 {mins}분 남았어 {time}{where})",
         "하아~~?(〈{title}〉 {mins}분 전, 물 한 잔 마시고 가자 {time}{where})",
         "우나(벌써 〈{title}〉 {mins}분 전! {time}{where})",
-        "하아~~?(〈{title}〉 곧 시작해 ({mins}분 전) {time}{where})"
+        "하아~~?(〈{title}〉 곧 시작해 {mins}분 전 {time}{where})"
       ],
       "proposal_ask": [
         "하아~~?(이 작업을 진행할까? {title})"
@@ -1708,7 +1708,7 @@ export const CHARACTER_LINES = {
       ],
       "daily_half": [
         "헤헤헤... (벌써 {done}/{total}! 잘 가고 있어.)",
-        "으아아~ (절반 넘었어! ({done}/{total}) 잠깐 숨 돌려도 돼.)"
+        "으아아~ (절반 넘었어! {done}/{total} 잠깐 숨 돌려도 돼.)"
       ],
       "today_ask": [
         "으응? (오늘 챙길 일, 오늘 할 일 탭에 적어 줄래?)"
@@ -1732,10 +1732,10 @@ export const CHARACTER_LINES = {
         "으아아!! ({mins}분 뒤 〈{title}〉야 {time}{where})",
         "으응? (〈{title}〉 잊지 마! {mins}분 전 {time}{where})",
         "으아아!! (회의 〈{title}〉 {mins}분 전! {time}{where})",
-        "으응? (〈{title}〉 갈 시간 다가와 ({mins}분) {time}{where})",
+        "으응? (〈{title}〉 갈 시간 다가와 {mins}분 남았어 {time}{where})",
         "으아아!! (〈{title}〉 {mins}분 전, 물 한 잔 마시고 가자 {time}{where})",
         "으응? (벌써 〈{title}〉 {mins}분 전! {time}{where})",
-        "으아아!! (〈{title}〉 곧 시작해 ({mins}분 전) {time}{where})"
+        "으아아!! (〈{title}〉 곧 시작해 {mins}분 전 {time}{where})"
       ],
       "proposal_ask": [
         "으응? (이 작업 진행할까? {title})"
@@ -2098,7 +2098,7 @@ export const CHARACTER_LINES = {
       ],
       "daily_half": [
         "에? (벌써 {done}/{total}! 잘 가고 있어.)",
-        "에헤헤 (절반 넘었어! ({done}/{total}) 잠깐 숨 돌려도 돼.)"
+        "에헤헤 (절반 넘었어! {done}/{total} 잠깐 숨 돌려도 돼.)"
       ],
       "today_ask": [
         "에? (오늘 챙길 일, 오늘 할 일 탭에 적어 줄래?)"
@@ -2123,10 +2123,10 @@ export const CHARACTER_LINES = {
         "에? ({mins}분 뒤 〈{title}〉야 {time}{where})",
         "와…!! (〈{title}〉 잊지 마! {mins}분 전 {time}{where})",
         "에에에… (회의 〈{title}〉 {mins}분 전! {time}{where})",
-        "에? (〈{title}〉 갈 시간 다가와 ({mins}분) {time}{where})",
+        "에? (〈{title}〉 갈 시간 다가와 {mins}분 남았어 {time}{where})",
         "와…!! (〈{title}〉 {mins}분 전, 물 한 잔 마시고 가자 {time}{where})",
         "에에에… (벌써 〈{title}〉 {mins}분 전! {time}{where})",
-        "에? (〈{title}〉 곧 시작해 ({mins}분 전) {time}{where})"
+        "에? (〈{title}〉 곧 시작해 {mins}분 전 {time}{where})"
       ],
       "proposal_ask": [
         "에? (이 작업 진행할까? {title})"
@@ -2495,7 +2495,7 @@ export const CHARACTER_LINES = {
       ],
       "daily_half": [
         "캬아 (벌써 {done}/{total}! 잘 가고 있어.)",
-        "캬아아~ (절반 넘었어! ({done}/{total}) 잠깐 숨 돌려도 돼.)"
+        "캬아아~ (절반 넘었어! {done}/{total} 잠깐 숨 돌려도 돼.)"
       ],
       "today_ask": [
         "캬… (오늘 챙길 일, 오늘 할 일 탭에 적어 줄래?)"
@@ -2519,10 +2519,10 @@ export const CHARACTER_LINES = {
         "캬… ({mins}분 뒤 〈{title}〉야 {time}{where})",
         "캬 (〈{title}〉 잊지 마! {mins}분 전 {time}{where})",
         "캬아 (회의 〈{title}〉 {mins}분 전! {time}{where})",
-        "캬아아~ (〈{title}〉 갈 시간 다가와 ({mins}분) {time}{where})",
+        "캬아아~ (〈{title}〉 갈 시간 다가와 {mins}분 남았어 {time}{where})",
         "캬… (〈{title}〉 {mins}분 전, 물 한 잔 마시고 가자 {time}{where})",
         "캬 (벌써 〈{title}〉 {mins}분 전! {time}{where})",
-        "캬아 (〈{title}〉 곧 시작해 ({mins}분 전) {time}{where})"
+        "캬아 (〈{title}〉 곧 시작해 {mins}분 전 {time}{where})"
       ],
       "proposal_ask": [
         "캬아 (이 작업 진행할까? {title})"
