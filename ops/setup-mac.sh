@@ -82,7 +82,14 @@ else
 fi
 
 say "앱 넣기: $APP"
-if pgrep -f "$APP/Contents/MacOS" >/dev/null 2>&1; then osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true; sleep 3; pkill -f "$APP/Contents/MacOS" || true; sleep 1; fi
+# 이 자리의 앱이 켜져 있으면 끈다. 한글 경로는 조합형·완성형이 달라 글자로 비교하면 놓치니 같은 파일인지(-ef)로 본다
+app_pids() { for pid in $(pgrep -f "Contents/MacOS/chiikawa-buddy" 2>/dev/null); do exe="$(ps -o comm= -p "$pid" 2>/dev/null)"; [ -e "$exe" ] && [ "$exe" -ef "$APP/Contents/MacOS/chiikawa-buddy" ] && echo "$pid"; done; }
+if [ -n "$(app_pids)" ]; then
+  osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 || true
+  for _ in $(seq 1 20); do [ -z "$(app_pids)" ] && break; sleep 0.5; done
+  for pid in $(app_pids); do kill -9 "$pid" 2>/dev/null || true; done
+  sleep 1
+fi
 mkdir -p "$PREFIX"
 if [ -d "$APP" ]; then
   BACKUP_APP="$PREFIX/$APP_NAME.previous.app"
@@ -94,6 +101,7 @@ if ! ditto "$SRC_APP" "$APP"; then
   [ -d "${BACKUP_APP:-}" ] && mv "$BACKUP_APP" "$APP"
   die "앱 복사 실패 — 이전 앱을 복원했어요."
 fi
+rm -rf "${BACKUP_APP:-}" # 같은 앱이 두 개 남지 않게(로그인 자동 실행·Spotlight 가 헷갈린다)
 xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 [ -d "$WORK/mnt" ] && hdiutil detach "$WORK/mnt" >/dev/null 2>&1 || true
 
@@ -130,6 +138,9 @@ fi
 if [ "$OPEN" = 1 ]; then
   say "앱 켜기"
   open "$APP"
+  PORT="${CY_AGENT_PORT:-47823}"
+  for i in $(seq 1 40); do curl -s -m 1 "http://127.0.0.1:$PORT/health" >/dev/null 2>&1 && break; [ "$i" = 15 ] && open "$APP"; sleep 1; done
+  curl -s -m 1 "http://127.0.0.1:$PORT/health" >/dev/null 2>&1 || echo "앱이 아직 안 켜졌어요 — 응용 프로그램 폴더에서 「$APP_NAME」을 직접 열어 주세요."
 fi
 
 cat <<EOF
