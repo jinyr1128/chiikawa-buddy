@@ -981,8 +981,14 @@ function menuTemplate() {
     {
       // 캐릭터 바로 바꾸기: 기본 캐릭터 + 직접 만든 캐릭터(GET /characters)
       label: '캐릭터 바꾸기',
-      submenu: (charactersData?.characters?.length ? charactersData.characters : []).map((c) => ({
-        label: c.name || c.id,
+      // 직접 만든(움짤) 캐릭터가 위, 기본 영상 캐릭터는 아래에 「(기본)」으로 — 이름이 같아도 헷갈리지 않게
+      submenu: (() => {
+        const all = charactersData?.characters?.length ? charactersData.characters : [];
+        const users = all.filter((c) => !c.builtin);
+        const builtins = all.filter((c) => c.builtin);
+        const names = new Set(users.map((c) => c.name));
+        const item = (c) => ({
+        label: c.builtin && names.has(c.name) ? `${c.name} (기본)` : c.name || c.id,
         type: 'radio',
         checked: (wantChar ?? charId) === c.id,
         click: async () => {
@@ -990,7 +996,9 @@ function menuTemplate() {
           if (!r.ok) dialog.showErrorBox('캐릭터 바꾸기', r.data?.error ?? '바꾸지 못했어요');
           rebuildTrayMenu();
         },
-      })),
+        });
+        return [...users.map(item), ...(users.length && builtins.length ? [{ type: 'separator' }] : []), ...builtins.map(item)];
+      })(),
     },
     { label: '지금 브리핑', click: triggerBriefing },
     { label: '설정…', click: () => settingsUi?.show() },
