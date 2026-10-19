@@ -1,0 +1,34 @@
+/* 홈(renderer/home-view.js): 지금 상황 한눈에 */
+.home { display: flex; flex-direction: column; gap: 14px; }
+.home-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.home-head h2 { margin: 0; font-size: 20px; }
+.home-date { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
+.home-actions { display: flex; gap: 8px; }
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.home-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.home-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.home-card-head h3 { margin: 0; font-size: 13.5px; }
+.home-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.home-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 8px; font-size: 12.5px; min-width: 0; }
+.home-row.clickable { cursor: pointer; }
+.home-row.clickable:hover { background: var(--code); }
+.home-row.live .home-time { color: var(--p1); font-weight: 700; }
+.home-row-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-row-side { flex: none; color: var(--muted); font-size: 11px; }
+.home-time { flex: none; width: 64px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.home-tag { flex: none; font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.home-tag.muted { background: var(--code); color: var(--muted); }
+.home-icon { flex: none; width: 18px; text-align: center; }
+.home-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--p1); }
+.home-empty { margin: 4px 0; color: var(--muted); font-size: 12.5px; }
+.home-note { margin: 6px 0 0; color: var(--muted); font-size: 11.5px; }
+.home-brief { font-size: 12.5px; max-height: 240px; overflow: auto; }
+.home-conn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 2px; border-top: 1px solid var(--line); }
+.home-conn-title { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.home-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--fg); font-size: 11.5px; cursor: pointer; }
+.home-chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.home-chip.ok i { background: var(--ok); }
+.home-chip.warn { border-color: var(--p2); }
+.home-chip.warn i { background: var(--p2); }
+.home-chip.off { color: var(--muted); }
+.nav-sep { height: 1px; margin: 8px 10px; background: var(--line); }

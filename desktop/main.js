@@ -761,6 +761,37 @@ function onCharacterClick() {
   else togglePanel();
 }
 
+// ---- 방해 금지: 정한 시간 동안(또는 회의 중) 캐릭터 위 알림 카드·말풍선을 띄우지 않는다(알림함엔 그대로 쌓임). 머지 승인·오류는 예외 ----
+let dndUntil = 0;
+let inMeeting = false;
+const quietNow = () => Date.now() < dndUntil || inMeeting;
+function dndView() { return { until: Date.now() < dndUntil ? new Date(dndUntil).toISOString() : null, meeting: inMeeting, quiet: quietNow(), meetingQuiet: state.meetingQuiet !== false }; }
+let lastQuiet = false;
+function sendDnd() { const v = dndView(); lastQuiet = v.quiet; send('dnd', v); sendPanel('dnd', v); rebuildTrayMenu(); }
+function setDnd(mins) {
+  if (mins === 'eod') { const d = new Date(); d.setHours(23, 59, 0, 0); dndUntil = d.getTime(); }
+  else dndUntil = Number(mins) > 0 ? Date.now() + Number(mins) * 60e3 : 0;
+  state.dndUntil = dndUntil || null;
+  saveState();
+  sendDnd();
+}
+// 지금 회의 중인가(캘린더 일정 — 종일 일정 빼고). 1분마다
+async function checkMeeting() {
+  if (Number(state.dndUntil) > 0 && !dndUntil) dndUntil = Number(state.dndUntil);
+  let now = false;
+  if (state.meetingQuiet !== false) {
+    const t = Date.now();
+    const r = await request('GET', `/calendar/events?from=${encodeURIComponent(new Date(t - 12 * 3600e3).toISOString())}&to=${encodeURIComponent(new Date(t + 60e3).toISOString())}`, undefined, 20_000).catch(() => null);
+    const evs = r?.ok && Array.isArray(r.data?.events) ? r.data.events : [];
+    now = evs.some((e) => e && e.allDay !== true && Date.parse(e.start) <= t && t < Date.parse(e.end));
+  }
+  const changed = now !== inMeeting;
+  inMeeting = now;
+  if (changed || lastQuiet !== quietNow()) sendDnd(); // 회의가 시작·끝났거나 방해 금지 시간이 지났으면
+}
+setInterval(() => { checkMeeting().catch(() => {}); }, 60e3).unref?.();
+setTimeout(() => { checkMeeting().catch(() => {}); }, 20e3);
+
 // ---- 돌아왔을 때 브리핑: 30분 넘게 비웠고 그사이 안 읽은 알림이 있으면 한 번(마지막 자동 브리핑 30분 안이면 건너뛴다) ----
 const AWAY_MS = 30 * 60e3;
 let awaySince = null;
@@ -868,9 +899,10 @@ function onSSE({ event, data }) {
     if (typeof payload?.character === 'string') onCharacter(payload.character);
   }
   if (event === 'inbox') onInbox(payload);
-  if (event === 'inbox_item' && !state.bubblesHidden) send('inbox_item', payload); // 캐릭터 위 알림 팝업
+  if (event === 'inbox_item' && !state.bubblesHidden && !quietNow()) send('inbox_item', payload); // 캐릭터 위 알림 팝업
   if (event === 'characters') loadCharacters(); // 만들거나 고치거나 지움 → 다시 읽어 창마다
-  if (event === 'bubble' || event === 'state' || event === 'clear') send(event, payload);
+  if (event === 'bubble' && quietNow() && !['proposal', 'error'].includes(payload?.kind)) { /* 방해 금지·회의 중: 말풍선은 건너뛴다 */ }
+  else if (event === 'bubble' || event === 'state' || event === 'clear') send(event, payload);
   else if (event === 'run') sendSession('run', payload);
   else if (event === 'runs') {
     if (Array.isArray(payload?.active)) activeRuns = payload.active;
@@ -993,7 +1025,19 @@ function menuTemplate() {
   return [
     { label: '패널 열기', click: () => showPanel(null) },
     ...(coder() ? [{ label: '작업 세션 열기', click: openSessionMenu }] : []),
+    { label: '홈', click: () => showPanel('home') },
     { label: inboxUnread ? `알림함 (안 읽음 ${inboxUnread})` : '알림함', click: () => showPanel('inbox') },
+    {
+      label: quietNow() ? `방해 금지 중${inMeeting ? '(회의)' : dndUntil > Date.now() ? ` · ${new Date(dndUntil).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}까지` : ''}` : '방해 금지',
+      submenu: [
+        { label: '끄기', type: 'radio', checked: !(dndUntil > Date.now()), click: () => setDnd(0) },
+        { label: '30분', type: 'radio', checked: false, click: () => setDnd(30) },
+        { label: '1시간', type: 'radio', checked: false, click: () => setDnd(60) },
+        { label: '오늘 끝까지', type: 'radio', checked: false, click: () => setDnd('eod') },
+        { type: 'separator' },
+        { label: '회의 중엔 조용히', type: 'checkbox', checked: state.meetingQuiet !== false, click: (i) => { state.meetingQuiet = i.checked; saveState(); checkMeeting().catch(() => {}); } },
+      ],
+    },
     {
       // 캐릭터 바로 바꾸기: 기본 캐릭터 + 직접 만든 캐릭터(GET /characters)
       label: '캐릭터 바꾸기',
@@ -1536,6 +1580,10 @@ function setupIPC() {
   ipcMain.handle('notion-status', (e) => (fromOurs(e) ? request('GET', '/connectors/notion') : denied()));
   ipcMain.handle('notion-connect', (e, b) => (fromOurs(e) && b && typeof b.token === 'string' && b.token.length < 300 && typeof b.email === 'string' && b.email.length < 200 ? post('/connectors/notion', { token: b.token, email: b.email }, 60_000) : denied()));
   ipcMain.handle('notion-disconnect', (e) => (fromOurs(e) ? post('/connectors/notion/disconnect', {}) : denied()));
+  // 홈: 지금 상태·방해 금지
+  ipcMain.handle('activity', (e) => (fromOurs(e) ? request('GET', '/activity') : denied()));
+  ipcMain.handle('dnd-get', (e) => (fromOurs(e) ? dndView() : denied()));
+  ipcMain.handle('dnd-set', (e, mins) => { if (!fromOurs(e)) return denied(); setDnd(mins === 'eod' ? 'eod' : Math.max(0, Math.min(24 * 60, Number(mins) || 0))); return dndView(); });
   // 맥 캘린더 목록(GET /calendars/mac) — 처음엔 macOS 허락 창을 기다리느라 오래 걸릴 수 있다
   ipcMain.handle('maccal-list', (e) => (fromOurs(e) ? request('GET', '/calendars/mac', undefined, 130_000) : denied()));
   ipcMain.handle('calendar-add', (e, body) => {

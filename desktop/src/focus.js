@@ -111,7 +111,7 @@ export function doingBubble(list, focus) {
 // 할 일 진행 중 말풍선이 먼저. 여러 창에서 돌면 가장 최근 것 + 「외 n개」
 export function claudeBubble(runs, focus) {
   if (focus?.active) return null;
-  const xs = (Array.isArray(runs) ? runs : []).filter((r) => r && r.kind === 'claude' && typeof r.title === 'string')
+  const xs = (Array.isArray(runs) ? runs : []).filter((r) => r && ['claude', 'codex', 'hermes'].includes(r.kind) && typeof r.title === 'string')
     .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
   if (!xs.length) return null;
   const title = xs[0].title;

@@ -198,6 +198,8 @@ function workTick() {
     bus.activity.play(8000, "plan");
     const mins = minsToLeave(wh, new Date()) ?? LEAVE_BEFORE_MIN;
     bus.bubble({ id: `leave:${leaveDay}`, text: fillVars(localLine("leave"), { mins: String(mins) }), kind: "info", ttlMs: 60e3 });
+    // 퇴근 브리핑: 오늘 쌓인 것으로 남은 일·내일 할 일을 정리(AI 가 있을 때만)
+    if (modelWorkAllowed(cfg)) setTimeout(() => { agent.runBriefing().catch(() => {}); }, 15e3);
   }
 }
 const safeWork = () => { try { workTick(); } catch (e: any) { console.warn("[work-hours] 알림:", e?.message ?? e); } safeWeather(); };

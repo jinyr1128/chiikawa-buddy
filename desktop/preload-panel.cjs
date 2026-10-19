@@ -134,6 +134,10 @@ contextBridge.exposeInMainWorld('cy', {
   // · 더하기({ name?, url }) → 데몬이 시험으로 읽고 저장 { ok, name, events, items } | { ok: false, error, duplicate? }
   // · 별칭 고치기(id, name) · 켜기/끄기(id, on) · 하나 빼기(id) → { ok, items, note?, error? }
   calendarList: () => ipcRenderer.invoke('calendar-list'),
+  activity: () => ipcRenderer.invoke('activity'),
+  dndGet: () => ipcRenderer.invoke('dnd-get'),
+  dndSet: (mins) => ipcRenderer.invoke('dnd-set', mins),
+  onDnd: on('dnd'),
   notionStatus: () => ipcRenderer.invoke('notion-status'),
   notionConnect: (b) => ipcRenderer.invoke('notion-connect', { token: String(b?.token ?? ''), email: String(b?.email ?? '') }),
   notionDisconnect: () => ipcRenderer.invoke('notion-disconnect'),

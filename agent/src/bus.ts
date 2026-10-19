@@ -404,6 +404,8 @@ export class Bus {
     if (!hostOk(req.headers.host, (this.server?.address() as AddressInfo | null)?.port)) return json(res, 403, { error: "forbidden host" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
+    // 홈 화면: 지금 캐릭터 상태(돌고 있는 일 — Claude·Codex·Hermes 작업 포함)
+    if (req.method === "GET" && url.pathname === "/activity") return json(res, 200, this.state());
     if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
       try { return json(res, 200, { calendars: await listMacCalendars() }); } catch (e: any) { return json(res, 503, { error: String(e?.message ?? e) }); }

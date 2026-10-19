@@ -1366,5 +1366,9 @@ let toastTimer = null;
 const loadToastsSoon = () => { clearTimeout(toastTimer); toastTimer = setTimeout(loadToasts, 250); };
 cy.onInboxItem?.(loadToastsSoon);
 cy.onInbox?.(loadToastsSoon);
-cy.onVisibility(({ hidden }) => toastsEl.classList.toggle('hidden', !!hidden));
+let toastsHidden = false;
+let quiet = false;
+const applyToastVis = () => toastsEl.classList.toggle('hidden', toastsHidden || quiet);
+cy.onVisibility(({ hidden }) => { toastsHidden = !!hidden; applyToastVis(); });
+cy.onDnd?.((v) => { const was = quiet; quiet = !!v?.quiet; applyToastVis(); if (was && !quiet) loadToasts(); }); // 방해 금지·회의 중엔 카드를 숨기고, 끝나면 다시
 loadToasts();

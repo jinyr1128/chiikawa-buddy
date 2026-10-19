@@ -3,7 +3,7 @@ import { hasCoder as canCodeWith } from '../src/caps.js';
 import DOMPurify from './vendor/purify.js';
 import { Marked } from './vendor/marked.js';
 import { createMarkdown } from '../src/markdown.js';
-import { shapeDashboard, overlayHidden, priorityLabel, SECTIONS, SECTION_LABELS, normalizeSection, relativeTime, clockTime, visibleSections, connectorChipView } from '../src/dashboard.js';
+import { shapeDashboard, overlayHidden, priorityLabel, SECTIONS, SECTION_LABELS, NAV_MAIN, NAV_SUB, normalizeSection, relativeTime, clockTime, visibleSections, connectorChipView } from '../src/dashboard.js';
 import { needsSetup, stepForCap } from '../src/setup.js';
 import { isFeature, isAgent, buildWalk, agentSteps } from '../src/setup-flow.js';
 import { renderSetup, clearApiDraft, readSlot, clearMailDraft, resetCalendarEditor, clearNotionDraft } from './setup-view.js';
@@ -13,6 +13,7 @@ import { createFocusView } from './focus-view.js';
 import { createProjectsView } from './projects-view.js';
 import { createCalendarView } from './calendar-view.js';
 import { createInboxView } from './inbox-view.js';
+import { createHomeView } from './home-view.js';
 import { CALTAB_TEXT, cardRowOn, cardFolded } from '../src/calendar-tab.js';
 import { calendarRowState } from '../src/calendars.js';
 import { connectorAction, connectorDisconnectCopy, disconnectControl } from '../src/disconnect.js';
@@ -117,8 +118,10 @@ const calendarView = createCalendarView({ h, cy, fill: (el, ...k) => fill(el, ..
 
 // 알림함 탭: 출처별 알림, 안 읽은 수는 탭 배지로
 let inboxUnread = 0;
+const homeView = createHomeView({ h, cy, el: $('sec-home'), goto: (x) => goto(x), renderMd: (el, src) => md(el, src), who: () => SECTION_LABELS && document.getElementById('brand-name')?.textContent?.replace(/ 매니저$/, '') });
 const inboxView = createInboxView({ h, cy, el: $('sec-inbox'), onUnread: (n) => { inboxUnread = n; renderBadges(); } });
-cy.onInbox?.((p) => { inboxUnread = Math.max(0, Number(p?.unread) || 0); renderBadges(); inboxView.changed(); });
+cy.onDnd?.(() => homeView.changed());
+cy.onInbox?.((p) => { inboxUnread = Math.max(0, Number(p?.unread) || 0); renderBadges(); inboxView.changed(); homeView.changed(); });
 
 // replaceChildren 에 null 을 넣으면 화면에 "null" 글자가 찍힌다
 function fill(el, ...kids) {
@@ -135,8 +138,8 @@ let connected = false;
 let caps = { claude: null, codex: null };
 // 코드 작업을 맡길 수 있나: 데몬이 본 코드 작업 AI(Claude Code·Codex)가 준비됐나(brain.coder). 아직 모르면 이 컴퓨터의 CLI 로 짐작
 const hasCoder = () => (typeof brain.coder === 'boolean' ? brain.coder : canCodeWith(caps));
-let section = 'overview';
-try { section = normalizeSection(localStorage.getItem('section')) ?? 'overview'; } catch { /* 저장소 없음 */ }
+let section = 'home';
+try { section = normalizeSection(localStorage.getItem('section')) ?? 'home'; } catch { /* 저장소 없음 */ }
 let setupPhase = 'name'; // name·brain·ai-key·extras·connect·done (setup-plan.js — 키·토큰은 저장하지 않는다)
 let setupName = ''; // 데몬 설정 user.name
 let setupRepos = []; // 데몬 설정 repoRoots
@@ -277,15 +280,17 @@ let chat = initialChat();
 // ---- 탭 ----
 const nav = $('nav');
 const badges = {};
-for (const s of SECTIONS) {
-  badges[s] = h('span.badge');
+for (const s of SECTIONS) badges[s] = h('span.badge');
+// 위: 자주 쓰는 탭 · 구분선 · 아래: 연결 관리·AI 설정(개요는 홈으로 합쳐 탭이 없다)
+for (const s of [...NAV_MAIN, '|', ...NAV_SUB]) {
+  if (s === '|') { nav.append(h('div.nav-sep', { 'aria-hidden': 'true' })); continue; }
   nav.append(h('button', { type: 'button', role: 'tab', dataset: { section: s }, onclick: () => goto(s) }, h('span', { text: SECTION_LABELS[s] }), badges[s]));
 }
 
 function goto(s) {
   const prevSection = section;
   section = normalizeSection(s) ?? section;
-  if (!visibleSections(vm).includes(section)) section = 'overview';
+  if (!visibleSections(vm).includes(section)) section = 'home';
   try { localStorage.setItem('section', section); } catch { /* 무시 */ }
   for (const b of nav.children) b.setAttribute('aria-selected', String(b.dataset.section === section));
   for (const x of SECTIONS) $(`sec-${x}`).hidden = x !== section;
@@ -294,11 +299,15 @@ function goto(s) {
   $('content').classList.toggle('setup-on', section === 'setup'); // 설치: 버튼 줄은 맨 아래 고정, 내용만 스크롤
   $('title').textContent = SECTION_LABELS[section];
   if (section === 'setup') {
+    // 연결 관리: 처음 설치 마법사(이름·AI 고르기)는 건너뛰고 바로 연결 목록으로(AI 바꾸기는 「AI 설정」 탭)
+    if (setupPhase === 'name' || setupPhase === 'done') setupPhase = 'extras';
     renderSetupView(true);
     loadSetupSettings();
     if (setupPhase === 'brain') detectAgents();
   }
   if (section === 'models') loadSisa();
+  if (section === 'home') homeView.show();
+  else if (prevSection === 'home') homeView.hide();
   if (section === 'inbox') inboxView.show();
   else if (prevSection === 'inbox') inboxView.hide();
   if (section === 'calendar') calendarView.show();
@@ -317,8 +326,8 @@ function goto(s) {
 // 연결 안 된 기능의 탭은 숨긴다. 보고 있던 탭이 사라지면 개요로
 function renderNav() {
   const shown = visibleSections(vm);
-  for (const b of nav.children) b.hidden = !shown.includes(b.dataset.section);
-  if (!shown.includes(section)) goto('overview');
+  for (const b of nav.children) if (b.dataset.section) b.hidden = !shown.includes(b.dataset.section);
+  if (!shown.includes(section)) goto('home');
 }
 
 function renderBadges() {
@@ -328,7 +337,7 @@ function renderBadges() {
   badges.todos.classList.toggle('hot', stats.p1Todos > 0);
   badges.overview.textContent = stats.pendingProposals || '';
   const broken = vm.connectors.filter((c) => c.mode !== 'off' && !c.ready).length;
-  badges.setup.className = !broken && needsSetup(vm.connectors) ? 'badge dot' : 'badge';
+  badges.setup.className = 'badge'; // 아직 안 한 연결로 재촉하지 않는다(고장만 숫자로)
   badges.setup.classList.toggle('hot', broken > 0);
   badges.setup.textContent = broken || '';
   badges.today.textContent = vm.stats.todayOpen || '';
@@ -366,6 +375,7 @@ const loadSoon = () => { clearTimeout(loadTimer); loadTimer = setTimeout(load, 2
 function renderAll() {
   const todos = raw ? overlayTodos(raw.todos, pendingOps) : null;
   vm = shapeDashboard(raw ? { ...raw, todos, projects: overlayHidden(raw.projects, hidePending) } : null, Date.now());
+  homeView.setVm(vm);
   if (openId && todos && !todos.some((t) => t.id === openId)) openId = null; // 끝났거나 지워진 할 일은 접는다
   $('banner').hidden = !error || section === 'setup';
   $('banner').textContent = error ?? '';

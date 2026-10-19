@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('cy', {
   togglePanel: () => ipcRenderer.send('toggle-panel'),
   onInbox: on('inbox'),
   onInboxItem: on('inbox_item'),
+  onDnd: on('dnd'),
   inboxList: (q) => ipcRenderer.invoke('inbox-list', { source: String(q?.source ?? ''), unread: !!q?.unread }),
   githubMerge: (repo, number) => ipcRenderer.invoke('github-merge', { repo: String(repo), number: Number(number) }),
   githubReply: (repo, number, text) => ipcRenderer.invoke('github-reply', { repo: String(repo), number: Number(number), text: String(text ?? '') }),

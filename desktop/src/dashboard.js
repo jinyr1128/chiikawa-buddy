@@ -5,12 +5,16 @@ import { PRIORITIES } from './todos.js';
 import { shapeManualProjects } from './manual-projects.js';
 import { okCalendarColor, CAL_COLORS } from './calendar-tab.js';
 
-export const SECTIONS = ['setup', 'inbox', 'overview', 'projects', 'calendar', 'todos', 'today', 'chat', 'models'];
-export const SECTION_LABELS = { setup: '설치', inbox: '알림', overview: '개요', projects: '프로젝트', calendar: '캘린더', todos: '할 일', today: '오늘 할 일', chat: '채팅', models: '모델' };
+export const SECTIONS = ['home', 'setup', 'inbox', 'overview', 'projects', 'calendar', 'todos', 'today', 'chat', 'models'];
+export const SECTION_LABELS = { home: '홈', setup: '연결 관리', inbox: '알림', overview: '개요', projects: '프로젝트', calendar: '캘린더', todos: '할 일', today: '오늘 할 일', chat: '채팅', models: 'AI 설정' };
 
 // 모르는 섹션은 null. 예전 말풍선 open.section=scrum 은 오늘 표로
+// 왼쪽 탭: 자주 쓰는 것(위) · 설정 성격(아래, 구분선 뒤). 개요는 홈으로 합쳤다
+export const NAV_MAIN = ['home', 'inbox', 'today', 'todos', 'calendar', 'chat', 'projects'];
+export const NAV_SUB = ['setup', 'models'];
 export function normalizeSection(s) {
   if (s === 'scrum') return 'today';
+  if (s === 'overview') return 'home';
   return SECTIONS.includes(s) ? s : null;
 }
 

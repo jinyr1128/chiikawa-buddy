@@ -112,7 +112,7 @@ export function toolDetail(tool: string | undefined, input: Record<string, unkno
   return d.length > 30 ? d.slice(0, 29) + "…" : d;
 }
 
-type Session = { end: () => void; title: string; cwd?: string; at: number };
+type Session = { end: () => void; title: string; cwd?: string; at: number; source?: string };
 
 export class ClaudeHooks {
   private sessions = new Map<string, Session>();
@@ -143,10 +143,10 @@ export class ClaudeHooks {
     const where = project ? `(${project})` : "";
     switch (name) {
       case "UserPromptSubmit":
-        this.set(id, "생각", ev.cwd);
+        this.set(id, "생각", ev.cwd, source);
         return;
       case "PreToolUse":
-        this.set(id, taskText(ev.tool_name, ev.tool_input), ev.cwd);
+        this.set(id, taskText(ev.tool_name, ev.tool_input), ev.cwd, source);
         return;
       case "PostToolUse":
         this.touch(id);
@@ -187,16 +187,16 @@ export class ClaudeHooks {
     }
   }
 
-  private set(id: string, title: string, cwd?: string) { // title = 일 이름({task})
+  private set(id: string, title: string, cwd?: string, source = "claude") { // title = 일 이름({task}) · source = claude·codex·hermes(run 종류)
     const prev = this.sessions.get(id);
     // 캐릭터 말투로(「main.js 고치기 중이라고오!!!」). 아침·늦은 밤엔 반쯤은 그 시간대 말로
     const part = dayPart(this.now());
     const key = part !== "day" && this.rand() < 0.5 ? (part === "morning" ? "claude_morning" : "claude_night") : "claude_work";
     const full = this.say(key, { task: title });
     if (prev && prev.title === full) { prev.at = this.now(); return; }
-    const end = this.activity.begin(CLAUDE_KIND, full);
+    const end = this.activity.begin(source === "claude" ? CLAUDE_KIND : source, full);
     prev?.end(); // 새 것을 먼저 잡고 옛 것을 놓는다(잠깐 idle 로 깜빡이지 않게)
-    this.sessions.set(id, { end, title: full, cwd: cwd ?? prev?.cwd, at: this.now() });
+    this.sessions.set(id, { end, title: full, cwd: cwd ?? prev?.cwd, at: this.now(), source });
   }
   // 문구 하나 고르기: 지난번과 같은 말이면 몇 번 다시 고른다
   private say(key: "claude_work" | "claude_done" | "claude_wait" | "claude_limit" | "claude_morning" | "claude_night", vars: Record<string, string>): string {
