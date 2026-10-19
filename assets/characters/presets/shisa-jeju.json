@@ -140,6 +140,15 @@
     ],
     "claude_wait": [
       "잠깐 봐 줍서! 확인이 필요허우다 {project}"
+    ],
+    "claude_limit": [
+      "토큰이 다 됐수다… 조끔 쉬었다 허게마씸.{when}"
+    ],
+    "claude_morning": [
+      "좋은 아침이우다! {task} 햄수다"
+    ],
+    "claude_night": [
+      "밤늦게 {task} 햄수다… 졸리우다…"
     ]
   },
   "local": {

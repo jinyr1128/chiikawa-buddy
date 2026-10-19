@@ -1461,3 +1461,8 @@ button.focus-tab.on { background: var(--surface); color: var(--fg); box-shadow: 
 .setup-mail-acct { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
 .setup-mail-acct.fail { color: var(--warn-fg, #b45309); }
 .setup-mail-add-title { display: block; margin-top: 10px; font-size: 13px; }
+
+/* 맥 캘린더에서 고르기 */
+.cal-mac { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
+.cal-mac-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; align-self: center; }
+.cal-mac-list .cal-top { align-items: center; }

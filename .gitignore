@@ -23,3 +23,6 @@ logs/
 
 # desktop: 생성되는 아이콘
 desktop/assets/icon.*
+
+# 맥 캘린더 도우미(빌드 결과)
+agent/bin/

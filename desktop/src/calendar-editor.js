@@ -10,11 +10,11 @@ const safe = async (fn) => { try { return await fn(); } catch { return null; } }
 const plain = (doc, text) => [doc.createTextNode(String(text ?? '').replace(/\*\*/g, ''))];
 
 export function createCalendarEditor() {
-  const st = { addOpen: false, name: '', url: '', busy: false, result: null, editing: '', editName: '', removing: '', toggling: '' };
+  const st = { addOpen: false, name: '', url: '', busy: false, result: null, editing: '', editName: '', removing: '', toggling: '', mac: null, macBusy: false, macErr: '' };
 
   // items: 화면 줄(calendarRows + 결과). kind: 'gcal' | 'outlook' | 'ics'(주소 칸 예시). redraw: 다시 그리기(스크롤은 그대로)
   // onAdd({ name, url }) · onRename(id, name) · onToggle(id, on) · onRemove(id) 는 { ok, items?, error?, note?, name?, events? } 를 돌려준다
-  function view(doc, { items = [], kind = 'ics', redraw, rich, onAdd, onRename, onToggle, onRemove } = {}) {
+  function view(doc, { items = [], kind = 'ics', redraw, rich, onAdd, onRename, onToggle, onRemove, onMacList } = {}) {
     const R = rich ?? ((t) => plain(doc, t));
     const h = (tag, cls, text) => {
       const n = doc.createElement(tag);
@@ -129,6 +129,48 @@ export function createCalendarEditor() {
         if (hint) l.append(h('small', 'muted', hint));
         return l;
       };
+      // 맥 캘린더에서 고르기: 맥 「캘린더」 앱에 넣은 계정(회사 구글 워크스페이스·네이버·iCloud)을 주소 없이 바로
+      if (onMacList) {
+        const mac = h('div', 'cal-mac');
+        mac.append(h('span', 'setup-pick-title', '맥 캘린더에서 고르기'), h('small', 'muted', '회사 구글 캘린더처럼 비공개 주소를 못 쓰는 계정도 돼요. 맥 「캘린더」 앱 → 설정 → 계정에서 구글(회사)·네이버(CalDAV: caldav.calendar.naver.com)를 먼저 추가하세요.'));
+        if (!st.mac) {
+          const load = btn('ghost cal-mac-load', st.macBusy ? '불러오는 중…' : '맥 캘린더 목록 불러오기', async () => {
+            if (st.macBusy) return;
+            st.macBusy = true; st.macErr = ''; again();
+            const r = await safe(() => onMacList());
+            st.macBusy = false;
+            if (r?.ok && Array.isArray(r.data?.calendars)) st.mac = r.data.calendars;
+            else st.macErr = r?.data?.error || '맥 캘린더를 불러오지 못했어요.';
+            again();
+          });
+          load.disabled = st.macBusy;
+          mac.append(load);
+          if (st.macErr) mac.append(h('p', 'setup-gate', st.macErr));
+        } else if (!st.mac.length) {
+          mac.append(h('p', 'setup-gate', '맥 캘린더에 일정 캘린더가 없어요. 캘린더 앱에서 계정을 먼저 추가하세요.'));
+        } else {
+          const ul = h('ul', 'setup-repos cal-list cal-mac-list');
+          for (const c of st.mac) {
+            const li = h('li', 'cal-row');
+            const top = h('div', 'cal-top');
+            const dot = h('span', 'cal-mac-dot');
+            if (c.color) dot.style.background = c.color;
+            top.append(dot, h('strong', 'cal-name', c.title), h('code', 'cal-label', c.account || '맥 캘린더'),
+              btn('primary small cal-mac-add', '추가', async () => {
+                if (st.busy) return;
+                st.busy = true; st.result = null; again();
+                const r = await safe(() => onAdd?.({ name: c.title, url: c.url }));
+                st.busy = false;
+                st.result = r?.ok ? { ok: true, text: CAL_TEXT.added(r.name || c.title, r.events ?? 0) } : { ok: false, text: r?.error || CAL_TEXT.failed };
+                again();
+              }));
+            li.append(top);
+            ul.append(li);
+          }
+          mac.append(ul);
+        }
+        form.append(mac, h('span', 'setup-pick-title cal-add-title', '또는 iCal 주소 붙여 넣기'));
+      }
       const fields = h('div', 'setup-fields');
       fields.append(lab(CAL_TEXT.nameLabel, name, CAL_TEXT.nameHint), lab(CAL_TEXT.urlLabel, url));
       form.append(fields, h('small', 'setup-mail-note', CAL_TEXT.note));

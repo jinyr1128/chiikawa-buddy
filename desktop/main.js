@@ -1505,6 +1505,8 @@ function setupIPC() {
   // 연결된 캘린더 목록(가린 이름만) · 하나 빼기(id)
   // 캘린더: 목록(별칭·가린 주소·결과) · 더하기(별칭 + 주소, 데몬이 시험으로 읽고 저장) · 별칭 고치기 · 켜기/끄기 · 하나 빼기(id)
   ipcMain.handle('calendar-list', async (e) => (fromOurs(e) ? { ok: true, items: await calendarList() } : denied()));
+  // 맥 캘린더 목록(GET /calendars/mac) — 처음엔 macOS 허락 창을 기다리느라 오래 걸릴 수 있다
+  ipcMain.handle('maccal-list', (e) => (fromOurs(e) ? request('GET', '/calendars/mac', undefined, 130_000) : denied()));
   ipcMain.handle('calendar-add', (e, body) => {
     const b = body && typeof body === 'object' ? body : null;
     if (!fromOurs(e) || !b || !okCalendarUrl(b.url) || (b.name !== undefined && !okCalendarName(b.name))) return denied();

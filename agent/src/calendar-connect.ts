@@ -4,6 +4,7 @@
 // (예전 icsUrl · icsUrls 는 이번에 calendars 로 옮긴다. 다른 키는 그대로, 원자적 쓰기, 권한 600). 개수 상한 없음. 같은 주소는 막는다.
 // 별칭을 비우면 ICS 의 X-WR-CALNAME, 그것도 없으면 「캘린더 N」을 별칭으로 저장한다. 주소는 응답·로그에 넣지 않는다.
 // GET /connectors/calendar: 저장된 캘린더(id·별칭·켜짐, 주소 없음)와 캘린더마다 마지막 결과.
+import { isMacCalUrl } from "./maccal.ts";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { calendarEntries, calendarId, rawCalendars, type CalendarEntry, type Conn } from "./connectors.ts";
@@ -26,6 +27,7 @@ export const sameCalendarUrl = (a: string, b: string) => a.trim().replace(/^webc
 
 // 받을 주소 모양: https:// 또는 webcal://(이 컴퓨터 안 주소만 http:// 도), 2000자까지
 export function okCalendarUrl(v: unknown): v is string {
+  if (isMacCalUrl(v)) return true; // 맥 캘린더(maccal://<id>)
   if (typeof v !== "string" || !v.trim() || v.length > 2000 || /\s/.test(v.trim())) return false;
   let u: URL;
   try { u = new URL(v.trim()); } catch { return false; }

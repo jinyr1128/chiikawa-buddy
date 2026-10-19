@@ -5,6 +5,7 @@
 //  RRULE 기본(FREQ DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT, UNTIL, BYDAY(서수 포함), BYMONTHDAY, BYMONTH), EXDATE,
 //  RECURRENCE-ID 로 바뀐/취소된 회차, STATUS:CANCELLED, TRANSP:TRANSPARENT(=한가함), 참석자 응답(PARTSTAT), 회의 링크(Meet·Zoom·Teams).
 // 안 다루는 것: RDATE, BYSETPOS, BYWEEKNO·BYYEARDAY, VTIMEZONE 의 서머타임 규칙(이름을 IANA 로 못 바꿀 때는 표준시 오프셋 하나로 본다).
+import { isMacCalUrl, macCalIcs } from "./maccal.ts";
 import type { CalEvent } from "./calendar-sync.ts";
 
 export type IcsTime = { y: number; mo: number; d: number; h: number; mi: number; s: number; date: boolean; utc: boolean; tzid?: string };
@@ -361,6 +362,7 @@ export function calendarName(text: string): string {
 
 export type FetchText = (url: string) => Promise<string>;
 export const fetchIcsText: FetchText = async (url) => {
+  if (isMacCalUrl(url)) return macCalIcs(url); // 맥 캘린더(회사 구글·네이버 등) — maccal.ts
   const u = url.replace(/^webcal:\/\//i, "https://");
   const r = await fetch(u, { signal: AbortSignal.timeout(20e3), headers: { accept: "text/calendar, text/plain, */*" } });
   if (!r.ok) throw new Error(`ICS HTTP ${r.status}`); // 주소(비밀)는 오류에 넣지 않는다

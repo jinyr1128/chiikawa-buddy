@@ -55,6 +55,9 @@ fs.cpSync(path.join(REPO, 'agent', 'src'), path.join(AGENT, 'src'), {
   },
 });
 for (const f of ['package.json', 'package-lock.json']) fs.copyFileSync(path.join(REPO, 'agent', f), path.join(AGENT, f));
+// 맥 캘린더 도우미(EventKit) — 회사 구글·네이버 등 맥 캘린더 계정을 읽는다(agent/src/maccal.ts)
+fs.mkdirSync(path.join(AGENT, 'bin'), { recursive: true });
+run('swiftc', ['-O', '-target', `${ARCH === 'x64' ? 'x86_64' : 'arm64'}-apple-macos12.0`, path.join(REPO, 'agent', 'maccal', 'maccal.swift'), '-o', path.join(AGENT, 'bin', 'maccal')]);
 run('npm', ['ci', '--omit=dev', '--no-audit', '--no-fund', '--os=darwin', `--cpu=${ARCH}`], { cwd: AGENT });
 const sdkBin = path.join(AGENT, 'node_modules', '@anthropic-ai', `claude-agent-sdk-darwin-${ARCH}`);
 if (!fs.existsSync(sdkBin)) throw new Error(`Claude Agent SDK 의 ${ARCH} 실행 파일 패키지가 없어요: ${sdkBin}`);
@@ -118,6 +121,8 @@ const paths = await packager({
     CFBundleName: APP_NAME,
     LSUIElement: false,
     LSMinimumSystemVersion: '12.0',
+    NSCalendarsFullAccessUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',
+    NSCalendarsUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',
   },
   quiet: true,
 });

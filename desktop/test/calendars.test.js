@@ -350,3 +350,10 @@ test('캘린더 카드 안: 별칭·가린 주소·결과·켜기/끄기·별칭
   assert.equal(ed().all((n) => n.dataset.id === hash(G2)).length, 0);
   delete globalThis.document;
 });
+
+import { okCalendarUrl as okCalUrl2 } from '../src/calendars.js';
+test('맥 캘린더 주소(maccal://<id>)도 받는다, 이상한 모양은 거절', () => {
+  assert.equal(okCalUrl2('maccal://ABCD-1234:x.y'), true);
+  assert.equal(okCalUrl2('maccal://a b'), false);
+  assert.equal(okCalUrl2('maccal://'), false);
+});

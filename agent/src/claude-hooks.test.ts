@@ -1,6 +1,6 @@
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { ClaudeHooks, STALE_MS, taskText, toolDetail } from "./claude-hooks.ts";
+import { ClaudeHooks, STALE_MS, taskText, toolDetail, limitFromLines, resetText, dayPart, readTranscriptTail } from "./claude-hooks.ts";
 import { setCharacter } from "./characters.ts";
 import { phrase } from "./phrases.ts";
 
@@ -71,4 +71,41 @@ test("일 이름({task})과 캐릭터마다 Claude 연동 대사", () => {
     setCharacter(id);
     for (const key of ["claude_work", "claude_done", "claude_wait"] as const) assert.doesNotMatch(phrase(key, { task: "x", project: "" }), /\{|Claude/, `${id}.${key}`);
   }
+});
+
+test("토큰(사용량 한도)을 다 써서 멈추면 「다 했어」 대신 캐릭터의 한도 대사 + 풀리는 시각", () => {
+  setCharacter("momonga");
+  const err = JSON.stringify({ type: "assistant", isApiErrorMessage: true, error: "rate_limit", message: { content: [{ type: "text", text: "You've hit your session limit · resets 7pm (Asia/Seoul)" }] } });
+  const ok = JSON.stringify({ type: "assistant", message: { content: [{ type: "text", text: "다 했어요. rate limit 얘기는 그냥 대화" }] } });
+  assert.deepEqual(limitFromLines([ok, err]), { hit: true, when: " (오후 7시에 다시 할 수 있어)" });
+  assert.equal(limitFromLines([err, ok]).hit, false); // 마지막 답이 보통 답이면 아님(대화에 limit 이 나와도)
+  assert.equal(resetText("resets 10:30am"), " (오전 10시 30분에 다시 할 수 있어)");
+  const bubbles: { text: string }[] = [];
+  const hooks = new ClaudeHooks({ begin: () => () => {}, play: () => ({}) }, (b) => { bubbles.push(b); return "id"; }, () => 1000, { readTail: () => [err] });
+  hooks.handle({ hook_event_name: "UserPromptSubmit", session_id: "s" });
+  hooks.handle({ hook_event_name: "Stop", session_id: "s", transcript_path: "/x.jsonl" });
+  assert.match(bubbles.at(-1)!.text, /한도|토큰/);
+  assert.match(bubbles.at(-1)!.text, /오후 7시/);
+  hooks.stop();
+  assert.deepEqual(readTranscriptTail("/etc/passwd"), []); // ~/.claude/projects 밖은 읽지 않는다
+});
+
+test("시간대: 아침·늦은 밤엔 그 시간대 말, 같은 말은 연달아 안 나온다", () => {
+  setCharacter("hachi");
+  const at = (h: number) => new Date(2026, 9, 19, h, 0).getTime();
+  assert.equal(dayPart(at(8)), "morning");
+  assert.equal(dayPart(at(23)), "night");
+  assert.equal(dayPart(at(3)), "night");
+  assert.equal(dayPart(at(14)), "day");
+  const titles: string[] = [];
+  const hooks = new ClaudeHooks({ begin: (_k, t) => { titles.push(t); return () => {}; }, play: () => ({}) }, () => "id", () => at(23), { rand: () => 0.1 });
+  hooks.handle({ hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: {} });
+  assert.match(titles[0], /밤|늦/);
+  hooks.stop();
+  const seen: string[] = [];
+  let r = 0;
+  const h2 = new ClaudeHooks({ begin: (_k, t) => { seen.push(t); return () => {}; }, play: () => ({}) }, () => "id", () => at(14), { rand: () => (r = (r + 0.37) % 1) });
+  for (const t of ["Read", "Edit", "Bash", "Grep"]) h2.handle({ hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: { command: t } });
+  for (let i = 1; i < seen.length; i++) assert.notEqual(seen[i], seen[i - 1]);
+  h2.stop();
 });

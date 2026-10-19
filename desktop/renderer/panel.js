@@ -823,6 +823,7 @@ function renderSetupView(resetScroll) {
       items: setupCalendars,
       redraw: () => redraw(false),
       onAdd: (body) => calendarOp(() => cy.calendarAdd(body)),
+      onMacList: cy.macCalendars ? () => cy.macCalendars() : undefined,
       onRename: (id, name) => calendarOp(() => cy.calendarRename(id, name)),
       onToggle: (id, on) => calendarOp(() => cy.calendarToggle(id, on)),
       onRemove: (id) => calendarOp(() => cy.calendarRemove(id), true),

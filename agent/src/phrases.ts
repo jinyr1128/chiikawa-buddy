@@ -52,6 +52,9 @@ export const PHRASES = [
   // Claude 연동(Claude Code 가 일할 때 캐릭터가 하는 말 — claude-hooks.ts). {task} = 「main.js 고치기」, {project} = 「(폴더 이름)」 또는 빈칸
   { key: "claude_work", group: "Claude 연동", label: "Claude 가 일하는 중(머리 위)", vars: ["task"], default: ["{task} 중이에요…"] },
   { key: "claude_done", group: "Claude 연동", label: "Claude 일 끝남", vars: ["project"], default: ["다 했어요! 확인해 보세요 🎉 {project}"] },
+  { key: "claude_limit", group: "Claude 연동", label: "토큰(사용량 한도)을 다 써서 멈춤({when} = ' (오후 7시에 다시 할 수 있어)' 또는 빈칸)", vars: ["project", "when"], default: ["토큰을 다 써서 더 못 해요… 조금 쉬었다 해요{when}"] },
+  { key: "claude_morning", group: "Claude 연동", label: "아침(6~10시)에 일하는 중", vars: ["task"], default: ["좋은 아침이에요! {task} 중이에요"] },
+  { key: "claude_night", group: "Claude 연동", label: "늦은 밤(22~5시)에 일하는 중", vars: ["task"], default: ["밤늦게 {task} 중이에요… 끝나면 꼭 쉬어요"] },
   { key: "claude_wait", group: "Claude 연동", label: "Claude 가 확인을 기다림", vars: ["project"], default: ["잠깐 봐 주세요! 확인이 필요해요 {project}"] },
   // 머지
   { key: "merge_ask", group: "머지", label: "머지 물어보기(PR 정보 없을 때)", vars: ["title"], default: ["'{title}' 머지할까요?"] },

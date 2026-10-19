@@ -7,6 +7,7 @@ import type { TodoPatch } from "./store.ts";
 import { parseRulePatch } from "./todo-rules.ts";
 import { ActivityTracker } from "./activity.ts";
 import { ClaudeHooks } from "./claude-hooks.ts";
+import { listMacCalendars } from "./maccal.ts";
 import { INBOX_SOURCES, type Inbox } from "./inbox.ts";
 import { characterId, characterClips } from "./characters.ts";
 import { RUN_STATUSES, type RunRegistry, type RunStatus } from "./runs.ts";
@@ -396,6 +397,9 @@ export class Bus {
     if (!hostOk(req.headers.host, (this.server?.address() as AddressInfo | null)?.port)) return json(res, 403, { error: "forbidden host" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
+    if (req.method === "GET" && url.pathname === "/calendars/mac") {
+      try { return json(res, 200, { calendars: await listMacCalendars() }); } catch (e: any) { return json(res, 503, { error: String(e?.message ?? e) }); }
+    }
     if (req.method === "GET" && url.pathname === "/inbox") {
       if (!this.inbox) return json(res, 503, { error: "inbox unavailable" });
       const source = url.searchParams.get("source") ?? undefined;

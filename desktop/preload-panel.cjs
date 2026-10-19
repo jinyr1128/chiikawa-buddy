@@ -131,6 +131,7 @@ contextBridge.exposeInMainWorld('cy', {
   // · 더하기({ name?, url }) → 데몬이 시험으로 읽고 저장 { ok, name, events, items } | { ok: false, error, duplicate? }
   // · 별칭 고치기(id, name) · 켜기/끄기(id, on) · 하나 빼기(id) → { ok, items, note?, error? }
   calendarList: () => ipcRenderer.invoke('calendar-list'),
+  macCalendars: () => ipcRenderer.invoke('maccal-list'),
   calendarAdd: (body) => ipcRenderer.invoke('calendar-add', { name: String(body?.name ?? ''), url: String(body?.url ?? '') }),
   calendarRename: (id, name) => ipcRenderer.invoke('calendar-rename', String(id || ''), String(name ?? '')),
   calendarToggle: (id, on) => ipcRenderer.invoke('calendar-toggle', String(id || ''), !!on),

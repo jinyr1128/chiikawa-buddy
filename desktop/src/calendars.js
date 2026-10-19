@@ -198,6 +198,7 @@ export function calendarUrlById(cfg, id, hash) {
 export const okCalendarName = (v) => typeof v === 'string' && v.length <= 200;
 // 화면이 넘기는 주소: https:// · webcal://(이 컴퓨터 안 주소만 http://), 2000자까지. 나머지 확인은 데몬이 한다
 export function okCalendarUrl(v) {
+  if (typeof v === 'string' && /^maccal:\/\/[A-Za-z0-9:_.\-]{1,200}$/.test(v.trim())) return true; // 맥 캘린더(회사 구글·네이버 등)
   if (typeof v !== 'string' || !v.trim() || v.length > 2000 || /\s/.test(v.trim())) return false;
   try {
     const u = new URL(v.trim());
