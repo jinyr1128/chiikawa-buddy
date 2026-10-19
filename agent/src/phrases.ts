@@ -4,6 +4,7 @@
 // 기본값은 캐릭터(characters.ts)마다 다르다 — 고친 문구 > 캐릭터 기본 > 아래 default(시사).
 import { character } from "./characters.ts";
 import { voice, type Mood, type VoiceKind } from "./voice.ts";
+import { josa, JOSA_MARK } from "./josa.ts";
 
 export type PhraseDef = { key: string; group: string; label: string; vars: readonly string[]; default: readonly string[] };
 
@@ -96,8 +97,15 @@ export function unknownVars(line: string, vars: readonly string[]): string[] {
   return out;
 }
 
+// 자리표시 채우기. 바로 뒤에 조사 표기가 붙으면 받침에 맞춰 고른다(josa.ts):
+// 「{task}(이)야」→ 생각이야 · 명령 실행이야 · main.js야, 「{task}은(는)」「{task}을(를)」「{task}이(가)」「{task}(으)로」
+const VAR_JOSA = new RegExp(`\\{([^{}\\s]*)\\}(${JOSA_MARK.source.slice(1)})?`, "g");
 export const fillVars = (line: string, vars: Record<string, string | number> = {}) =>
-  line.replace(/\{([^{}\s]*)\}/g, (all, k: string) => (k in vars ? String(vars[k]) : all));
+  line.replace(VAR_JOSA, (all, k: string, mark?: string) => {
+    if (!(k in vars)) return all;
+    const v = String(vars[k]);
+    return mark ? v + josa(v, mark) : v;
+  });
 
 // 문구 하나: 고친 게 있으면 그것, 없으면 기본. 여러 줄이면 r(0–1)로 하나
 export function phrase(key: PhraseKey, vars: Record<string, string | number> = {}, r: number = Math.random()): string {
