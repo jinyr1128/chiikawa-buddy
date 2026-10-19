@@ -24,3 +24,8 @@
 .inbox-row:hover .inbox-toggle { opacity: 1; }
 .inbox-empty { padding: 40px 12px; text-align: center; }
 .inbox-empty .muted { color: var(--muted); font-size: 12px; }
+.inbox-acts { grid-column: 3 / 5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.inbox-reply { flex: 1 1 100%; min-height: 46px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; font-size: 12.5px; resize: vertical; }
+.inbox-ask { font-size: 12px; font-weight: 600; }
+.inbox-ok { font-size: 12px; color: #1f9d55; }
+.inbox-err { font-size: 12px; color: var(--p1); overflow-wrap: anywhere; }

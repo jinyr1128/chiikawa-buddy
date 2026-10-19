@@ -1,7 +1,7 @@
 // 알림함 표시용 순수 함수(패널 탭·캐릭터 배지)
-export const INBOX_FILTERS = [['', '전체'], ['mail', '메일'], ['slack', 'Slack'], ['calendar', '캘린더'], ['notion', '노션'], ['claude', 'Claude'], ['codex', 'Codex'], ['hermes', 'Hermes'], ['system', '기타']];
-const LABELS = { mail: '메일', slack: 'Slack', calendar: '캘린더', notion: '노션', claude: 'Claude', codex: 'Codex', hermes: 'Hermes', system: '알림' };
-const ICONS = { mail: '✉️', slack: '💬', calendar: '📅', notion: '📝', claude: '🤖', codex: '🧠', hermes: '🪽', system: '🔔' };
+export const INBOX_FILTERS = [['', '전체'], ['mail', '메일'], ['slack', 'Slack'], ['calendar', '캘린더'], ['notion', '노션'], ['claude', 'Claude'], ['codex', 'Codex'], ['hermes', 'Hermes'], ['github', 'GitHub'], ['system', '기타']];
+const LABELS = { mail: '메일', slack: 'Slack', calendar: '캘린더', notion: '노션', claude: 'Claude', codex: 'Codex', hermes: 'Hermes', github: 'GitHub', system: '알림' };
+const ICONS = { mail: '✉️', slack: '💬', calendar: '📅', notion: '📝', claude: '🤖', codex: '🧠', hermes: '🪽', github: '🐙', system: '🔔' };
 export const inboxSourceLabel = (s) => LABELS[s] ?? '알림';
 export const inboxIcon = (s) => ICONS[s] ?? '🔔';
 // 캐릭터 머리 위 배지 글: 0 이면 숨김, 99 넘으면 99+

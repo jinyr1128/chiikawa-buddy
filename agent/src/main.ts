@@ -10,6 +10,7 @@ import { Store } from "./store.ts";
 import { Bus, EXIT_PORT_TAKEN } from "./bus.ts";
 import { Inbox, setInbox, notify } from "./inbox.ts";
 import { CodexWatch } from "./codex-watch.ts";
+import { GithubSync } from "./github-sync.ts";
 import { NotionSync, notionApi, notionConnOf, setNotionToolConn } from "./notion.ts";
 import { runs } from "./runs.ts";
 import { modelChoices } from "./models.ts";
@@ -118,6 +119,9 @@ bus.notion = notionApi(join(HOME_DIR, "config.json"), notionSync);
 notionSync.onChange = () => bus.dashboardChanged();
 notionSync.schedule();
 setNotionToolConn(() => notionConnOf(join(HOME_DIR, "config.json")));
+// GitHub(gh 로그인): 3분마다 알림·머지할 수 있는 내 PR → 알림함([머지]·[답장]) — github-sync.ts
+new GithubSync().schedule();
+bus.slackToken = () => { const s = cfg.connectors.slack as { mode?: string; userToken?: string }; return s?.mode === "api" ? s.userToken : undefined; };
 bus.activity.bindRuns(runs); // 돌고 있는 run(대화 제외) → 캐릭터 "공부 중"
 // 집중하기(포커스 타이머): 기록은 cy.db, 바뀌면 SSE focus · 그만하면 「N분 집중했어요」 말풍선. AI 없이도 돈다
 const focus = new Focus(store);

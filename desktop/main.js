@@ -1206,8 +1206,8 @@ function setupAppActivation() {
     const icon = path.join(__dirname, 'assets', 'icon.png');
     // 번들(cy.app)은 icns 를 쓰고, 개발 실행은 Dock 아이콘을 바꿔 준다
     if (!app.isPackaged && fs.existsSync(icon)) app.dock?.setIcon(nativeImage.createFromPath(icon));
-    app.dock?.show();
-    setDockMenu();
+    // 치이카와 비서: Dock 에는 두지 않는다(아래에 캐릭터가 있으니까). 메뉴 막대 아이콘에서 패널·설정을 연다
+    app.dock?.hide();
   }
   quietActivation(2000); // 시작 직후(로그인 자동 실행) 패널을 띄우지 않음
   // did-become-active 로는 열지 않는다: 다른 데스크톱·전체 화면 앱에서 돌아오기만 해도 와서 닫은 패널이 다시 열렸다
@@ -1859,7 +1859,7 @@ function setupIPC() {
   // 알림함(GET /inbox · POST /inbox/read · /inbox/clear)
   ipcMain.handle('inbox-list', (e, q) => {
     if (!fromOurs(e)) return denied();
-    const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|system)$/.test(q.source) ? q.source : '';
+    const src = typeof q?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|github|system)$/.test(q.source) ? q.source : '';
     return request('GET', `/inbox${src || q?.unread ? '?' : ''}${src ? `source=${src}` : ''}${src && q?.unread ? '&' : ''}${q?.unread ? 'unread=1' : ''}`);
   });
   // 알림 「열기」: Slack 은 Slack 앱에서 그 메시지로, Claude 는 Claude 앱으로, 나머지(메일·회의 링크)는 브라우저로
@@ -1876,12 +1876,16 @@ function setupIPC() {
     if (item.source === 'slack' && process.platform === 'darwin' && /^https:\/\/[\w-]+\.slack\.com\//.test(link)) return openApp('Slack', link);
     shell.openExternal(link).catch(() => {});
   });
+  // 카드 버튼: GitHub 머지·답장, Slack 답장(사용자가 직접 누른 것만 — 데몬이 값을 다시 검증한다)
+  ipcMain.handle('github-merge', (e, b) => (fromOurs(e) && b && typeof b.repo === 'string' && Number.isSafeInteger(b.number) ? post('/github/merge', { repo: b.repo, number: b.number }, 60_000) : denied()));
+  ipcMain.handle('github-reply', (e, b) => (fromOurs(e) && b && typeof b.repo === 'string' && Number.isSafeInteger(b.number) && typeof b.text === 'string' && b.text.length <= 10000 ? post('/github/reply', { repo: b.repo, number: b.number, text: b.text }, 60_000) : denied()));
+  ipcMain.handle('slack-reply', (e, b) => (fromOurs(e) && b && typeof b.channel === 'string' && typeof b.text === 'string' && b.text.length <= 4000 ? post('/slack/reply', { channel: b.channel, ...(typeof b.ts === 'string' ? { ts: b.ts } : {}), text: b.text }, 30_000) : denied()));
   ipcMain.on('inbox-read-one', (e, id) => { if (fromOurs(e) && typeof id === 'string' && /^[\w-]{1,64}$/.test(id)) post('/inbox/read', { ids: [id] }).catch(() => {}); });
   ipcMain.handle('inbox-read', (e, body) => {
     if (!fromOurs(e)) return denied();
     const ids = body?.ids === 'all' ? 'all' : Array.isArray(body?.ids) ? body.ids.filter((x) => typeof x === 'string' && /^[\w-]{1,64}$/.test(x)).slice(0, 1000) : null;
     if (!ids) return denied();
-    const source = typeof body?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|system)$/.test(body.source) ? body.source : undefined;
+    const source = typeof body?.source === 'string' && /^(mail|slack|calendar|claude|codex|hermes|notion|github|system)$/.test(body.source) ? body.source : undefined;
     return post('/inbox/read', { ids, read: body?.read !== false, ...(source ? { source } : {}) });
   });
   ipcMain.handle('inbox-clear', (e) => (fromOurs(e) ? post('/inbox/clear', {}) : denied()));

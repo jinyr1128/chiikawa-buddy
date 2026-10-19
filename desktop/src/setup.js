@@ -5,9 +5,9 @@ import { WIN, claudeInstall } from './os-hint.js';
 
 // 슬랙 읽기 전용 앱 매니페스트(ops/slack-inbox-manifest.yaml 과 같다) — 「슬랙 앱 만들기」 링크에 채워 넣는다
 const SLACK_MANIFEST = [
-  'display_information:', '  name: 치이카와 비서', '  description: 내 DM·멘션을 바탕화면 알림함에 모아 보기(읽기 전용)', '  background_color: "#f7a8b8"',
+  'display_information:', '  name: 치이카와 비서', '  description: 내 DM·멘션을 바탕화면 알림함에 모아 보고 바로 답장', '  background_color: "#f7a8b8"',
   'oauth_config:', '  scopes:', '    user:',
-  ...['channels:history', 'groups:history', 'im:history', 'mpim:history', 'channels:read', 'groups:read', 'im:read', 'mpim:read', 'users:read', 'search:read'].map((x) => `      - ${x}`),
+  ...['channels:history', 'groups:history', 'im:history', 'mpim:history', 'channels:read', 'groups:read', 'im:read', 'mpim:read', 'users:read', 'search:read', 'chat:write'].map((x) => `      - ${x}`),
   'settings:', '  org_deploy_enabled: false', '  socket_mode_enabled: false', '  token_rotation_enabled: false',
 ].join('\n');
 export const SLACK_APP_URL = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(SLACK_MANIFEST)}`;

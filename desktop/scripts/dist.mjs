@@ -119,7 +119,7 @@ const paths = await packager({
   extendInfo: {
     CFBundleDisplayName: APP_NAME,
     CFBundleName: APP_NAME,
-    LSUIElement: false,
+    LSUIElement: true, // Dock·⌘Tab 에 안 보이고 메뉴 막대에만
     LSMinimumSystemVersion: '12.0',
     NSCalendarsFullAccessUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',
     NSCalendarsUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',

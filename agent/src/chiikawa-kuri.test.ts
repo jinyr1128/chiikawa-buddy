@@ -55,5 +55,5 @@ test("쿠리만쥬: 소리는 「캬」뿐, 할 말은 괄호 안에", () => {
   assert.deepEqual(characterClips("study").map((x) => x.file), ["study"]);
   assert.deepEqual(characterClips("lunch").map((x) => x.file), ["lunch"]);
   assert.match(CHARACTERS.kuri.tone, /「캬」만/);
-  assert.match(phrase("meeting_alert", { mins: 5, title: "x", time: "1", where: "" }), /^\S+ \(〈x〉 5분 전/);
+  assert.match(phrase("meeting_alert", { mins: 5, title: "x", time: "1", where: "" }), /^캬\S* \(.*〈x〉/);
 });

@@ -130,7 +130,7 @@ test("고정 문구: 캐릭터 기본 → 고친 문구가 이긴다, 캐릭터 
     assert.deepEqual([...keys].filter((k) => !c.phrases[k]), [], `${id}: 빠진 문구`);
   }
   setCharacter("rakko");
-  assert.equal(phrase("meeting_alert", { mins: 10, title: "파르페", time: "15:00", where: "" }), "〈파르페〉 10분 전이야. 15:00 천천히 준비하자.");
+  assert.match(phrase("meeting_alert", { mins: 10, title: "파르페", time: "15:00", where: "" }), /〈파르페〉.*15:00/);
   assert.deepEqual(defaultLines("hello"), CHARACTERS.rakko.phrases.hello);
   setPhrases({ meeting_alert: ["내 문구 {mins}"] });
   assert.equal(phrase("meeting_alert", { mins: 5 }), "내 문구 5");

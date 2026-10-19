@@ -9,6 +9,8 @@ import { ActivityTracker } from "./activity.ts";
 import { ClaudeHooks } from "./claude-hooks.ts";
 import { listMacCalendars } from "./maccal.ts";
 import { hermesToClaude } from "./hermes-hooks.ts";
+import { githubMerge, githubReply } from "./github-sync.ts";
+import { slackReply } from "./slack-reply.ts";
 import { INBOX_SOURCES, type Inbox } from "./inbox.ts";
 import { characterId, characterClips } from "./characters.ts";
 import { RUN_STATUSES, type RunRegistry, type RunStatus } from "./runs.ts";
@@ -282,6 +284,8 @@ export class Bus {
     this.send("characters", { rev: ++this.charactersRev });
   }
   // Claude Code 실시간 연동(POST /claude/hook) — claude-hooks.ts
+  // Slack 답장용 사용자 토큰(config connectors.slack.userToken) — 데몬이 꽂는다
+  slackToken?: () => string | undefined;
   // 노션 연동(notion.ts) — 데몬이 꽂는다
   notion?: { status(): unknown; connect(b: unknown): Promise<unknown>; disconnect(): unknown };
   // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
@@ -673,6 +677,9 @@ export class Bus {
         const r = (await this.notion.connect(await readJson(req))) as { ok: boolean; error?: string };
         return json(res, r.ok ? 200 : 400, r);
       }
+      if (url.pathname === "/github/merge") return json(res, 200, await githubMerge(await readJson(req)));
+      if (url.pathname === "/github/reply") return json(res, 200, await githubReply(await readJson(req)));
+      if (url.pathname === "/slack/reply") return json(res, 200, await slackReply(await readJson(req), this.slackToken?.()));
       if (url.pathname === "/hermes/hook") {
         const ev = hermesToClaude(await readJson(req));
         if (ev) this.claude.handle(ev, "hermes");

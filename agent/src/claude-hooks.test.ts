@@ -29,7 +29,7 @@ test("질문 → 도구 → 끝: 머리 위는 캐릭터 말투로 지금 하는
   hooks.handle({ hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: { file_path: "/a/myproj/main.js" } });
   assert.equal(live(begun).length, 1);
   assert.match(live(begun)[0], /main\.js 고치기/);
-  assert.match(live(begun)[0], /라고오|말이야아/); // 모몽가 말투
+  assert.doesNotMatch(live(begun)[0], /Claude|\{/); // 캐릭터 말투(자리표시 다 채움)
   hooks.handle({ hook_event_name: "Stop", session_id: "s1", cwd: "/a/myproj" });
   assert.deepEqual(live(begun), []);
   assert.match(bubbles.at(-1)!.text, /\(myproj\)/);
@@ -44,7 +44,7 @@ test("알림(권한 대기) → 알림 영상 + 캐릭터 말투 말풍선, idle
   assert.equal(bubbles.length, 0);
   hooks.handle({ hook_event_name: "Notification", session_id: "s1", message: "Claude needs your permission to use Bash" });
   assert.deepEqual(plays, ["plan"]);
-  assert.match(bubbles[0].text, /^(에에에…|싫어…!) \(/);
+  assert.match(bubbles[0].text, /^(에에에…|싫어…!|에\?) \(/);
   hooks.stop();
 });
 

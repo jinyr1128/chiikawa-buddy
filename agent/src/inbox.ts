@@ -6,8 +6,8 @@ import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import { writeFileAtomic } from "./fs-atomic.ts";
 
-export type InboxSource = "mail" | "slack" | "calendar" | "claude" | "codex" | "hermes" | "notion" | "system";
-export const INBOX_SOURCES: readonly InboxSource[] = ["mail", "slack", "calendar", "claude", "codex", "hermes", "notion", "system"];
+export type InboxSource = "mail" | "slack" | "calendar" | "claude" | "codex" | "hermes" | "notion" | "github" | "system";
+export const INBOX_SOURCES: readonly InboxSource[] = ["mail", "slack", "calendar", "claude", "codex", "hermes", "notion", "github", "system"];
 export type InboxItem = {
   id: string;
   key: string;            // 같은 알림인지 가리는 값(메일 계정+uid, Slack 대화+ts 등)
@@ -17,9 +17,21 @@ export type InboxItem = {
   body?: string;          // 앞부분 조금
   link?: string;          // 누르면 열 주소(Gmail·Slack·회의 링크)
   appLink?: string;       // 앱에서 바로 여는 주소(slack://…) — 있으면 link 보다 먼저
+  act?: InboxAct;         // 카드에서 바로 할 수 있는 것: [머지](GitHub PR) · [답장](GitHub 댓글·Slack 스레드)
   at: string;             // 일어난 때 ISO
   read: boolean;
 };
+export type InboxAct = { merge?: { repo: string; number: number }; reply?: { kind: "github"; repo: string; number: number } | { kind: "slack"; channel: string; ts?: string } };
+const REPO_RE = /^[\w.-]+\/[\w.-]+$/;
+export function cleanAct(a: any): InboxAct | undefined {
+  if (!a || typeof a !== "object") return undefined;
+  const out: InboxAct = {};
+  if (a.merge && REPO_RE.test(String(a.merge.repo)) && Number.isSafeInteger(a.merge.number) && a.merge.number > 0) out.merge = { repo: a.merge.repo, number: a.merge.number };
+  const r = a.reply;
+  if (r?.kind === "github" && REPO_RE.test(String(r.repo)) && Number.isSafeInteger(r.number) && r.number > 0) out.reply = { kind: "github", repo: r.repo, number: r.number };
+  if (r?.kind === "slack" && /^[CDG][A-Z0-9]{6,20}$/.test(String(r.channel))) out.reply = { kind: "slack", channel: r.channel, ...(typeof r.ts === "string" && /^\d{9,11}\.\d{1,7}$/.test(r.ts) ? { ts: r.ts } : {}) };
+  return out.merge || out.reply ? out : undefined;
+}
 export type NewInboxItem = Omit<InboxItem, "id" | "read" | "at"> & { at?: string };
 
 export const MAX_ITEMS = 500;
@@ -55,6 +67,7 @@ export class Inbox {
       title: clip(n.title.trim(), 200)!,
       ...(n.body ? { body: clip(n.body, 400) } : {}),
       ...(typeof n.link === "string" && /^https?:\/\//.test(n.link) ? { link: n.link } : {}),
+      ...(cleanAct(n.act) ? { act: cleanAct(n.act) } : {}),
       ...(typeof n.appLink === "string" && /^slack:\/\/channel\?[\w=&.%-]+$/.test(n.appLink) ? { appLink: n.appLink } : {}),
       at: n.at && Number.isFinite(Date.parse(n.at)) ? new Date(n.at).toISOString() : this.now().toISOString(),
       read: false,
@@ -124,7 +137,7 @@ export function setInbox(i: Inbox | null) { sink = i; }
 export function notify(n: NewInboxItem): boolean { return sink ? sink.add(n) : false; }
 
 // 브리핑·채팅 맥락: 자리를 비운 동안 쌓인 안 읽은 알림(출처별, 최신 순). 꽂힌 알림함이 없거나 비었으면 빈칸
-const SRC_KO: Record<InboxSource, string> = { mail: "메일", slack: "Slack", calendar: "캘린더", claude: "Claude 작업", codex: "Codex 작업", hermes: "Hermes 작업", notion: "노션", system: "기타" };
+const SRC_KO: Record<InboxSource, string> = { mail: "메일", slack: "Slack", calendar: "캘린더", claude: "Claude 작업", codex: "Codex 작업", hermes: "Hermes 작업", notion: "노션", github: "GitHub", system: "기타" };
 export function inboxContext(max = 40): string {
   const xs = sink?.list({ unreadOnly: true, limit: max }) ?? [];
   if (!xs.length) return "";

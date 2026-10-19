@@ -1280,7 +1280,17 @@ function toastCard(x) {
   if (x.body) main.append(el('div', 'toast-body', x.body));
   const openIt = () => { cy.inboxOpen?.(x); readOne(x); };
   const acts = el('div', 'toast-acts');
-  acts.append(toastBtn(x.source === 'claude' ? 'Claude 열기' : x.source === 'codex' ? 'Codex 열기' : x.source === 'hermes' ? 'Hermes 열기' : x.source === 'notion' ? '노션에서 보기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt), toastBtn('읽음', '', () => readOne(x)));
+  if (x.act?.merge) {
+    const mb = toastBtn('머지', 'primary', async () => {
+      if (mb.dataset.sure !== '1') { mb.dataset.sure = '1'; mb.textContent = `#${x.act.merge.number} 정말 머지?`; return; }
+      mb.disabled = true; mb.textContent = '머지하는 중…';
+      const r = await cy.githubMerge?.(x.act.merge.repo, x.act.merge.number).catch(() => null);
+      if (r?.data?.ok) readOne(x); else { mb.disabled = false; mb.dataset.sure = ''; mb.textContent = '머지 실패 — 다시'; mb.title = r?.data?.error || ''; }
+    });
+    acts.append(mb);
+  }
+  if (x.act?.reply) acts.append(toastBtn('답장', '', () => cy.openPanel('inbox')));
+  acts.append(toastBtn(x.source === 'claude' ? 'Claude 열기' : x.source === 'codex' ? 'Codex 열기' : x.source === 'hermes' ? 'Hermes 열기' : x.source === 'github' ? 'GitHub에서 보기' : x.source === 'notion' ? '노션에서 보기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt), toastBtn('읽음', '', () => readOne(x)));
   main.append(acts);
   const close = el('button', 'toast-close', '✕');
   close.type = 'button';

@@ -706,6 +706,7 @@ export class SlackRun {
         title: `${authorName}${isDM ? " · DM" : " · 나를 불렀어요"}`, body: oneLine(text),
         link: permalinkOf(this.teamUrl, conv, m.ts, threadTs), at: tsIso(m.ts),
         // Slack 앱에서 바로(브라우저 거치지 않게): 그 대화방 + 메시지
+        act: { reply: { kind: "slack", channel: conv, ts: threadTs ?? m.ts } },
         ...(this.teamId ? { appLink: `slack://channel?team=${this.teamId}&id=${conv}&message=${m.ts}${threadTs && threadTs !== m.ts ? `&thread_ts=${threadTs}` : ""}` } : {}),
       });
     }
