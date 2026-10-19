@@ -150,6 +150,8 @@ function showVideo(k) {
 // 집중 자리는 영상이 여러 개면 들어갈 때마다 앱이 하나를 고른다(studyVariant). null = 그 칸이 없음(정지 그림)
 let studyVariant = 0;
 let lastStudy;
+const STUDY_ROTATE_MS = 10_000;
+let studyRotate = null;
 const clipOf = (k) => (k === 'dancing' ? clipFor(charA, danceClipOf(act), danceVariantOf(act)) : k === 'studying' ? clipFor(charA, 'study', studyVariant) : null);
 function startVideo(k) {
   const v = videos[k];
@@ -179,6 +181,16 @@ function applyActivity() {
   wrap.dataset.view = view;
   wrap.classList.remove('blink');
   clearTimeout(danceCap);
+  clearInterval(studyRotate);
+  studyRotate = null;
+  // 일하는 동안(집중 자리) 영상이 여러 개면 STUDY_ROTATE_MS 마다 다른 것으로 번갈아(오래 일해도 한 가지만 나오지 않게)
+  if (view === 'studying' && variantsOf(charA, 'study').length > 1) {
+    studyRotate = setInterval(() => {
+      if (shownView !== 'studying') return;
+      pickStudy();
+      startVideo('studying');
+    }, STUDY_ROTATE_MS);
+  }
   if (view === 'idle') return showVideo(null);
   if (view === 'dancing') danceCap = setTimeout(() => dispatchActivity({ type: 'danceEnd' }), DANCE_MAX_MS);
   if (sameView) showVideo(null); // 춤 종류만 바뀜(예: 칩 춤 → 데몬 응원) — 새 영상 첫 장면이 나올 때 다시 켠다
