@@ -115,7 +115,7 @@ const SLACK_API = [
   {
     id: 'slack-api-restart',
     feature: 'slack',
-    title: '시사 비서를 껐다 켜세요',
+    title: '치이카와 비서를 껐다 켜세요',
     say: '개요의 연결 카드에서 Slack이 초록이면 슬랙 글 보기가 켜진 것입니다.',
   },
 ];
@@ -467,7 +467,7 @@ function present(step, agent) {
   return code === step.code ? step : { ...step, code };
 }
 
-export const CODEX_MCP_NOTE = '시사는 MCP 연결을 Claude Code 로만 읽어요. Codex 에 등록한 건 Codex 에서는 쓸 수 있지만 시사 브리핑엔 들어가지 않아요.';
+export const CODEX_MCP_NOTE = '치이카와 비서는 MCP 연결을 Claude Code 로만 읽어요. Codex 에 등록한 건 Codex 에서는 쓸 수 있지만 시사 브리핑엔 들어가지 않아요.';
 
 // 고른 기능만, 화면 목록 순서로. 갈래를 아직 안 골랐으면 고르는 화면까지만.
 export function buildWalk(picked, choices = {}, agent = 'claude') {

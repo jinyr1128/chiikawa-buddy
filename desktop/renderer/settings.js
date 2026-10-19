@@ -744,7 +744,7 @@ function renderCharEditor() {
   const fillBtn = el('button', 'ghost', '이 캐릭터 대사로 채우기');
   fillBtn.type = 'button';
   fill.append(el('span', null, '대사 가져오기'), fillSel, fillBtn);
-  box.append(el('h3', null, '대사'), el('p', 'hint', custom ? '비운 칸은 시사 말로 나와요. 저장하면 바로 바뀌어요.' : '고친 칸만 따로 저장해요(앱 파일은 그대로). 「기본값으로」를 누르면 처음으로 돌아가요.'), fill);
+  box.append(el('h3', null, '대사'), el('p', 'hint', custom ? '비운 칸은 원래 캐릭터 말로 나와요. 저장하면 바로 바뀌어요.' : '고친 칸만 따로 저장해요(앱 파일은 그대로). 「기본값으로」를 누르면 처음으로 돌아가요.'), fill);
   let editor = linesEditor(entry, values, base, custom);
   box.append(editor.box);
   fillBtn.addEventListener('click', () => {
@@ -797,7 +797,7 @@ function renderCharEditor() {
     const del = el('button', 'danger-ghost ce-risky', '이 캐릭터 지우기');
     del.type = 'button';
     del.addEventListener('click', async () => {
-      if (!window.confirm(`${name}을(를) 지울까요? 올린 그림도 같이 지워져요. 지금 쓰는 캐릭터면 시사로 돌아가요.`)) return;
+      if (!window.confirm(`${name}을(를) 지울까요? 올린 그림도 같이 지워져요. 지금 쓰는 캐릭터면 기본 캐릭터로 돌아가요.`)) return;
       const r = await cy.deleteCharacter(entry.id).catch(() => null);
       if (!r?.ok) { status.textContent = r?.data?.error ?? '지우지 못했어요'; return; }
       editing = null;

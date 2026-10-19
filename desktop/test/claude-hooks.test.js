@@ -43,7 +43,7 @@ test('Claude 작업 말풍선: claude run 만, 최근 것 먼저, 집중 중엔 
     { kind: 'claude', title: 'Claude · 읽는 중 · a.md', startedAt: '2026-10-19T00:00:01Z' },
     { kind: 'claude', title: 'Claude · 고치는 중 · b.js', startedAt: '2026-10-19T00:00:02Z' },
   ];
-  assert.deepEqual(claudeBubble(runs, null), { label: 'Claude 작업 중', title: '고치는 중 · b.js', more: 1, text: '고치는 중 · b.js 외 1개', claude: true });
+  assert.deepEqual(claudeBubble(runs, null), { label: '작업 중', title: 'Claude · 고치는 중 · b.js', more: 1, text: 'Claude · 고치는 중 · b.js 외 1개', claude: true });
   assert.equal(claudeBubble(runs, { active: {} }), null);
   assert.equal(claudeBubble([], null), null);
 });

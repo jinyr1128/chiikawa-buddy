@@ -17,7 +17,7 @@ import { BubbleExpiry } from '../src/bubble-expiry.js';
 import { createHoverAsk, hoverAskAllowed } from '../src/hover-ask.js';
 import { createPressTracker, missedClick, missedPress, staleHold } from '../src/press.js';
 import { badgeText, badgeTitle, inboxSourceLabel, inboxIcon } from '../src/inbox.js';
-import { createToastQueue } from '../src/toasts.js';
+import { toastView } from '../src/toasts.js';
 
 const cy = window.cy;
 const stack = document.getElementById('stack');
@@ -1241,102 +1241,73 @@ cy.onInbox?.((p) => {
 });
 
 // ---- 알림 팝업: 새 메일·Slack·일정·Claude 알림을 캐릭터 위에 반투명 카드로(맥 알림처럼) ----
-// 누르면 원래 화면(메일·Slack 메시지·회의 링크)을 열고 읽음, ✕ 는 닫기만. 8초 뒤 저절로 사라지고 마우스를 올리면 멈춘다
+// 안 읽은 알림이 기준이라 읽음·열기 전에는 사라지지 않는다(앱을 다시 켜도 다시 뜬다). [열기] 원래 화면으로 + 읽음 · [읽음] · ✕ 도 읽음
 const toastsEl = document.getElementById('toasts');
-const toastQ = createToastQueue();
-const toastTimers = new Map();
-const TOAST_MS = 8000;
 function toastTime(at) {
   const d = Date.now() - Date.parse(at);
   if (!Number.isFinite(d) || d < 60e3) return '방금';
   if (d < 3600e3) return `${Math.floor(d / 60e3)}분 전`;
-  return new Date(at).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  if (d < 86400e3) return new Date(at).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  return new Date(at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
 }
-function armToast(id, ms = TOAST_MS) {
-  clearTimeout(toastTimers.get(id));
-  toastTimers.set(id, setTimeout(() => dropToast(id), ms));
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+function toastBtn(label, cls, fn) {
+  const b = el('button', `toast-btn ${cls}`, label);
+  b.type = 'button';
+  b.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+  return b;
 }
-function dropToast(id) {
-  clearTimeout(toastTimers.get(id));
-  toastTimers.delete(id);
-  toastQ.remove(id);
-  drawToasts();
-}
-function toastCard(t) {
-  const x = t.item ?? t.summary.latest;
-  const src = t.item ? x.source : t.summary.source;
-  const card = document.createElement('div');
-  card.className = 'toast hit';
-  card.dataset.source = src;
-  const icon = document.createElement('div');
-  icon.className = 'toast-icon';
-  icon.textContent = inboxIcon(src);
-  const main = document.createElement('div');
-  main.className = 'toast-main';
-  const head = document.createElement('div');
-  head.className = 'toast-head';
-  const who = document.createElement('b');
-  who.textContent = t.item ? [inboxSourceLabel(src), x.account].filter(Boolean).join(' · ') : `${inboxSourceLabel(src)} 새 알림 ${t.summary.n}개`;
-  const time = document.createElement('span');
-  time.className = 'toast-time';
-  time.textContent = toastTime(x.at);
-  head.append(who, time);
-  const title = document.createElement('div');
-  title.className = 'toast-title';
-  title.textContent = t.item ? x.title : `최근: ${x.title}`;
-  main.append(head, title);
-  if (t.item && x.body) {
-    const body = document.createElement('div');
-    body.className = 'toast-body';
-    body.textContent = x.body;
-    main.append(body);
-  }
-  const close = document.createElement('button');
-  close.type = 'button';
-  close.className = 'toast-close';
-  close.title = '닫기';
-  close.setAttribute('aria-label', '닫기');
-  close.textContent = '✕';
-  close.addEventListener('click', (e) => { e.stopPropagation(); dropToast(t.id); });
-  // 버튼: [열기] 그 메시지·메일·회의로 바로(읽음도) · [읽음] 열지 않고 읽음만 · 묶음 카드는 [알림함]·[모두 읽음]
-  const acts = document.createElement('div');
-  acts.className = 'toast-acts';
-  const btn = (label, cls, fn) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = `toast-btn ${cls}`;
-    b.textContent = label;
-    b.addEventListener('click', (e) => { e.stopPropagation(); fn(); dropToast(t.id); });
-    return b;
-  };
-  const openIt = () => { cy.inboxOpen?.(x); cy.inboxReadOne?.(x.id); };
-  if (t.item) {
-    acts.append(btn(x.source === 'claude' ? 'Claude 열기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt));
-    acts.append(btn('읽음', '', () => cy.inboxReadOne?.(x.id)));
-  } else {
-    acts.append(btn('알림함 보기', 'primary', () => cy.openPanel('inbox')));
-    acts.append(btn('모두 읽음', '', () => cy.inboxReadAll?.(src)));
-  }
+function readOne(x) { cy.inboxReadOne?.(x.id); unreadCache = unreadCache.filter((y) => y.id !== x.id); drawToasts(); }
+function toastCard(x) {
+  const card = el('div', 'toast hit');
+  card.dataset.source = x.source;
+  const main = el('div', 'toast-main');
+  const head = el('div', 'toast-head');
+  head.append(el('b', null, [inboxSourceLabel(x.source), x.account].filter(Boolean).join(' · ')), el('span', 'toast-time', toastTime(x.at)));
+  main.append(head, el('div', 'toast-title', x.title));
+  if (x.body) main.append(el('div', 'toast-body', x.body));
+  const openIt = () => { cy.inboxOpen?.(x); readOne(x); };
+  const acts = el('div', 'toast-acts');
+  acts.append(toastBtn(x.source === 'claude' ? 'Claude 열기' : x.source === 'slack' ? 'Slack에서 보기' : x.source === 'mail' ? '메일 열기' : '열기', 'primary', openIt), toastBtn('읽음', '', () => readOne(x)));
   main.append(acts);
-  card.append(icon, main, close);
-  card.title = t.item ? '눌러서 바로 열기' : '눌러서 알림함 보기';
-  card.addEventListener('click', () => {
-    if (t.item) openIt();
-    else cy.openPanel('inbox');
-    dropToast(t.id);
-  });
-  card.addEventListener('mouseenter', () => clearTimeout(toastTimers.get(t.id)));
-  card.addEventListener('mouseleave', () => armToast(t.id, 4000));
+  const close = el('button', 'toast-close', '✕');
+  close.type = 'button';
+  close.title = '읽음으로 닫기';
+  close.setAttribute('aria-label', '읽음으로 닫기');
+  close.addEventListener('click', (e) => { e.stopPropagation(); readOne(x); });
+  card.append(el('div', 'toast-icon', inboxIcon(x.source)), main, close);
+  card.title = '눌러서 바로 열기';
+  card.addEventListener('click', openIt);
   return card;
 }
+function moreCard(n) {
+  const card = el('div', 'toast toast-more hit');
+  const main = el('div', 'toast-main');
+  main.append(el('div', 'toast-title', `안 읽은 알림 ${n}개 더`));
+  const acts = el('div', 'toast-acts');
+  acts.append(toastBtn('알림함 보기', 'primary', () => cy.openPanel('inbox')), toastBtn('모두 읽음', '', () => { cy.inboxReadAll?.(); unreadCache = []; drawToasts(); }));
+  main.append(acts);
+  card.append(el('div', 'toast-icon', '🔔'), main);
+  card.addEventListener('click', () => cy.openPanel('inbox'));
+  return card;
+}
+let unreadCache = [];
 function drawToasts() {
-  toastsEl.replaceChildren(...toastQ.list().map(toastCard));
+  const v = toastView(unreadCache);
+  toastsEl.replaceChildren(...v.cards.map(toastCard), ...(v.more ? [moreCard(v.more)] : []));
   requestAnimationFrame(recheckHit);
 }
-cy.onInboxItem?.((item) => {
-  const list = toastQ.push(item);
-  for (const t of list) if (!toastTimers.has(t.id) || t.summary) armToast(t.id);
-  for (const id of [...toastTimers.keys()]) if (!list.some((t) => t.id === id)) { clearTimeout(toastTimers.get(id)); toastTimers.delete(id); }
+let toastSeq = 0;
+async function loadToasts() {
+  const seq = ++toastSeq;
+  const r = await cy.inboxList?.({ unread: true }).catch(() => null);
+  if (seq !== toastSeq || !r?.ok || !Array.isArray(r.data?.items)) return;
+  unreadCache = r.data.items;
   drawToasts();
-});
+}
+let toastTimer = null;
+const loadToastsSoon = () => { clearTimeout(toastTimer); toastTimer = setTimeout(loadToasts, 250); };
+cy.onInboxItem?.(loadToastsSoon);
+cy.onInbox?.(loadToastsSoon);
 cy.onVisibility(({ hidden }) => toastsEl.classList.toggle('hidden', !!hidden));
+loadToasts();

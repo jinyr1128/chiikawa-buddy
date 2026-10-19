@@ -52,9 +52,9 @@ export function brainDisconnectCopy(p, active) {
   const cli = CLI_PROVIDERS.includes(p);
   const ask = `${title} 연결을 끊을까요?`;
   const what = cli
-    ? `시사에서 ${title}를 더 쓰지 않아요. ${title} 로그인은 이 맥에 그대로 남아요.`
-    : p === 'genspark' ? '저장해 둔 키를 시사에서 지우고 Genspark 를 더 쓰지 않아요. gsk login 키 파일은 그대로 남아요.'
-    : '저장해 둔 키를 시사에서 지워요.';
+    ? `치이카와 비서에서 ${title}를 더 쓰지 않아요. ${title} 로그인은 이 맥에 그대로 남아요.`
+    : p === 'genspark' ? '저장해 둔 키를 치이카와 비서에서 지우고 Genspark 를 더 쓰지 않아요. gsk login 키 파일은 그대로 남아요.'
+    : '저장해 둔 키를 치이카와 비서에서 지워요.';
   const after = active ? ' 지금 쓰는 AI라서 끊으면 「AI 없이 쓰기」로 바뀌어요.' : '';
   return { ask, note: `${what}${after}`, done: `${title} 연결을 끊었어요.` };
 }
@@ -91,10 +91,10 @@ export function withoutHubDone(done, cap) {
 export function connectorDisconnectCopy(cap, server) {
   const label = CAP_LABEL[cap] ?? cap;
   const what = cap === 'calendar'
-    ? '붙여 넣은 캘린더 주소(구글·Outlook 모두)를 시사 설정에서 지워요.'
-    : cap === 'slack' ? '저장해 둔 Slack 토큰과 연결 설정을 시사 설정에서 지워요.'
-      : cap === 'mail' ? '저장해 둔 메일 비밀번호와 가져온 메일을 시사에서 지워요(모든 계정). 메일함의 메일은 그대로예요.'
-        : '연결 설정을 시사 설정에서 지워요.';
+    ? '붙여 넣은 캘린더 주소(구글·Outlook 모두)를 치이카와 비서 설정에서 지워요.'
+    : cap === 'slack' ? '저장해 둔 Slack 토큰과 연결 설정을 치이카와 비서 설정에서 지워요.'
+      : cap === 'mail' ? '저장해 둔 메일 비밀번호와 가져온 메일을 치이카와 비서에서 지워요(모든 계정). 메일함의 메일은 그대로예요.'
+        : '연결 설정을 치이카와 비서 설정에서 지워요.';
   const cmd = mcpRemoveCommand(server);
   return {
     ask: `${label} 연결을 끊을까요?`,
@@ -108,8 +108,8 @@ export function connectorDisconnectCopy(cap, server) {
 export function reloadNote(r) {
   if (!r || r.ok === false) return '';
   const reload = r.reload;
-  if (reload?.restarting) return '시사가 잠깐 다시 켜지며 적용돼요.';
-  if (r.offline) return '시사가 꺼져 있어서 다음에 켤 때 적용돼요.';
+  if (reload?.restarting) return '치이카와 비서가 잠깐 다시 켜지며 적용돼요.';
+  if (r.offline) return '치이카와 비서가 꺼져 있어서 다음에 켤 때 적용돼요.';
   return '바로 적용돼요.';
 }
 

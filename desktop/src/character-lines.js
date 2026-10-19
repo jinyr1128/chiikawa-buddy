@@ -154,6 +154,18 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "알았어, 머지는 안 할게. PR은 열어 둘게"
+      ],
+      "claude_work": [
+        "{task} 중! 금방 끝낼게!",
+        "{task} 중이야~ 조금만 기다려!"
+      ],
+      "claude_done": [
+        "다 했어! 확인해 줄래? {project}",
+        "끝났다~! 한번 봐 줘 {project}"
+      ],
+      "claude_wait": [
+        "잠깐! 이거 봐 줘야 해 {project}",
+        "확인이 필요해! 와서 봐 줄래? {project}"
       ]
     },
     "local": {
@@ -469,6 +481,17 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "그래, 머지는 안 하지. PR은 열어 두겠다."
+      ],
+      "claude_work": [
+        "{task}… 집중하는 중이다.",
+        "{task} 중이다. 방해하지 마."
+      ],
+      "claude_done": [
+        "끝났다. 확인해라. {project}",
+        "완료. 훌륭하군. {project}"
+      ],
+      "claude_wait": [
+        "확인이 필요하다. 와서 봐라. {project}"
       ]
     },
     "local": {
@@ -797,6 +820,18 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "알았어, 머지는 안 해. PR은 열어 둘게"
+      ],
+      "claude_work": [
+        "{task} 중이라고오!!! 방해하지 마!",
+        "{task} 중이란 말이야아아!!!"
+      ],
+      "claude_done": [
+        "다 했다고오!!! 날 칭찬하란 말이야아아!!! {project}",
+        "끝! 으쌰! 호샤! 예뻐해. 예뻐하라구. {project}"
+      ],
+      "claude_wait": [
+        "빨리 와서 보란 말이야아아!!! {project}",
+        "힐끄으으읏…… 확인 안 해 주면 우애애애앵!! {project}"
       ]
     },
     "local": {
@@ -1095,6 +1130,18 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "우나(머지는 안 할게. PR은 열어 둘게.)"
+      ],
+      "claude_work": [
+        "야하!({task} 중!)",
+        "우나 야하({task} 중이야!)"
+      ],
+      "claude_done": [
+        "우라!(다 했어! 확인해 봐! {project})",
+        "이야하~!!!(끝났어! {project})"
+      ],
+      "claude_wait": [
+        "아앙?(확인이 필요해! 와서 봐! {project})",
+        "하아~~?(이거 해도 돼? {project})"
       ]
     },
     "local": {
@@ -1395,6 +1442,17 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "으응? (머지는 안 할게. PR은 열어 둘게.)"
+      ],
+      "claude_work": [
+        "헤헤헤... ({task} 중이야)",
+        "으응? ({task} 열심히 하는 중)"
+      ],
+      "claude_done": [
+        "으아아!! (다 했어! 확인해 줘 {project})",
+        "헤헤헤... (끝났어! {project})"
+      ],
+      "claude_wait": [
+        "으응? (확인이 필요해. 봐 줄래? {project})"
       ]
     },
     "local": {
@@ -1697,6 +1755,18 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "에? (머지는 안 할게. PR은 열어 둘게.)"
+      ],
+      "claude_work": [
+        "에헤헤 ({task} 중…)",
+        "와…!! ({task} 열심히 하는 중!)"
+      ],
+      "claude_done": [
+        "와…!! (다 했어! 확인해 줘 {project})",
+        "에헤헤 (끝났어! {project})"
+      ],
+      "claude_wait": [
+        "에에에… (확인해 줘야 해… {project})",
+        "싫어…! (이거 해도 되는지 봐 줘 {project})"
       ]
     },
     "local": {
@@ -1999,6 +2069,17 @@ export const CHARACTER_LINES = {
       ],
       "merge_declined": [
         "캬아아~ (머지는 안 할게. PR은 열어 둘게.)"
+      ],
+      "claude_work": [
+        "캬 ({task} 중…)",
+        "캬아 ({task} 천천히 하는 중이야)"
+      ],
+      "claude_done": [
+        "캬아~ (다 했다! 한잔하자 {project})",
+        "캬아아~ (끝났어. 확인해 봐 {project})"
+      ],
+      "claude_wait": [
+        "캬…? (확인이 필요해 {project})"
       ]
     },
     "local": {

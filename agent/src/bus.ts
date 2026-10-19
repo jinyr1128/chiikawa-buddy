@@ -289,7 +289,7 @@ export class Bus {
   inboxChanged() {
     if (this.inbox) this.send("inbox", { unread: this.inbox.unread(), bySource: this.inbox.unreadBySource() });
   }
-  readonly claude = new ClaudeHooks(this.activity, (b) => this.bubble(b), () => characterId());
+  readonly claude = new ClaudeHooks(this.activity, (b) => this.bubble(b));
   constructor() {
     this.activity.onChange = () => this.send("state", this.state());
     this.activity.variants = (clip) => characterClips(clip); // 지금 캐릭터의 그 칸 영상 목록(clips.ts)

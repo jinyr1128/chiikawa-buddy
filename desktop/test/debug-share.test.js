@@ -142,9 +142,9 @@ test('묶음·QR 에도 토큰이 없다', () => {
 
 test('QR 요약은 용량을 넘기면 줄을 줄인다', () => {
   const errs = Array.from({ length: 40 }, (_, i) => `2026-10-12T12:00:00+09:00 [error] fail line ${i} ${'가'.repeat(40)}`);
-  const qr = compactQrPayload({ header: '시사 비서 0.1.0\n데몬: 연결 안 됨', logText: errs.join('\n'), maxBytes: 400 });
+  const qr = compactQrPayload({ header: '치이카와 비서 0.1.0\n데몬: 연결 안 됨', logText: errs.join('\n'), maxBytes: 400 });
   assert.ok(utf8Bytes(qr) <= 400);
-  assert.match(qr, /시사 비서/);
+  assert.match(qr, /치이카와 비서/);
   encode(qr, { ecc: 'M', maxVersion: 20, border: 2 });
 });
 

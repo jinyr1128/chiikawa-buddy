@@ -452,7 +452,7 @@ function mailForm({ busy, result, onConnect, onOpen }) {
   // 자세한 방법(서비스별)·연결한 뒤 확인하기: 접어 두고 눌러서 펼친다
   if (svc.guide?.length) kids.push(h('details.setup-mail-more', null, h('summary', { text: `${svc.title} 자세한 방법 보기` }), h('ol', null, svc.guide.map((t) => h('li', null, ...richNodes(t))))));
   kids.push(h('details.setup-mail-more', null, h('summary', { text: '연결한 뒤 확인하기' }), h('ol', null, MAIL_CHECK.map((t) => h('li', null, ...richNodes(t))))));
-  kids.push(h('small.setup-mail-note', { text: ['읽기만 해요. 보내기·지우기·읽음 표시 바꾸기는 하지 않아요.', svc.note, '비밀번호는 이 맥의 시사 설정 파일에만 저장해요. 이미 붙인 주소를 넣으면 비밀번호를 바꿔요.'].filter(Boolean).join(' ') }));
+  kids.push(h('small.setup-mail-note', { text: ['읽기만 해요. 보내기·지우기·읽음 표시 바꾸기는 하지 않아요.', svc.note, '비밀번호는 이 맥의 치이카와 비서 설정 파일에만 저장해요. 이미 붙인 주소를 넣으면 비밀번호를 바꿔요.'].filter(Boolean).join(' ') }));
   if (result && !result.ok) kids.push(h('p.setup-gate', null, ...richNodes(result.text)));
   const connect = h('button.primary', { type: 'button', text: busy ? '확인하는 중…' : '연결', disabled: !!busy });
   connect.addEventListener('click', () => {
@@ -567,7 +567,7 @@ function aiKeyView({ provider, say, keyStatus, keyNote, gskFound, onOpen, onCopy
   return screen({
     say,
     title: `${provider.title} 키 만들기`,
-    identity: `${provider.note} 키는 이 칸에만 붙입니다. 이 맥의 시사 설정 파일에만 저장하고, 화면에는 다시 보이지 않습니다.`,
+    identity: `${provider.note} 키는 이 칸에만 붙입니다. 이 맥의 치이카와 비서 설정 파일에만 저장하고, 화면에는 다시 보이지 않습니다.`,
     rows: provider.rows,
     rowCtx: { url: provider.url, onOpen, onCopy },
     extra: h('div', null,

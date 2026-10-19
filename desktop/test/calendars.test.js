@@ -136,9 +136,9 @@ test('[빼기] 문구·반영 안내·화면 글(해요체, em dash 없음)', ()
   ];
   for (const t of texts) assert.ok(!String(t).includes('—'), `em dash 없음: ${t}`);
   assert.match(CALENDAR_DUP, /이미 연결된 캘린더예요/);
-  assert.equal(calendarReloadNote({ changed: true, restarting: true }, false), '시사가 잠깐 다시 켜지며 적용돼요.');
-  assert.equal(calendarReloadNote({ changed: true, restarting: false }, false), '시사를 다시 켜면 적용돼요.');
-  assert.equal(calendarReloadNote(null, true), '시사가 꺼져 있어서 다음에 켤 때 적용돼요.');
+  assert.equal(calendarReloadNote({ changed: true, restarting: true }, false), '치이카와 비서가 잠깐 다시 켜지며 적용돼요.');
+  assert.equal(calendarReloadNote({ changed: true, restarting: false }, false), '치이카와 비서를 다시 켜면 적용돼요.');
+  assert.equal(calendarReloadNote(null, true), '치이카와 비서가 꺼져 있어서 다음에 켤 때 적용돼요.');
   assert.equal(calendarReloadNote({ changed: false, restarting: false }, false), '');
   assert.equal(calendarReloadNote({ changed: true, restarting: false, applied: true }, false), '바로 적용했어요. 일정을 가져오는 중이에요.');
 });

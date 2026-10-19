@@ -248,7 +248,7 @@ export function mountModels({ section, h, cy, getSisa, onSisa, gotoSetup }) {
     }
     for (const [agent, provider] of [['codex', 'codexcli'], ['claude', 'claudecode']]) {
       if (!connected.includes(provider) && detected[agent]) kids.push(h('div.card.models-card', null,
-        h('p', { text: `${PROVIDER_TITLE[provider]} 로그인 확인됨 · 시사에서 사용할 수 있어요` }),
+        h('p', { text: `${PROVIDER_TITLE[provider]} 로그인 확인됨 · 치이카와 비서에서 사용할 수 있어요` }),
         h('button.primary', { type: 'button', disabled: busy, text: `${PROVIDER_TITLE[provider]} 연결해서 사용`, onclick: () => connectCli(agent) })));
     }
     kids.push(h('button.ghost', { type: 'button', text: 'AI 연결 추가', onclick: gotoSetup }));

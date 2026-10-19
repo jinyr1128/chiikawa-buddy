@@ -5,6 +5,7 @@
 // - 신호가 끊기면(앱 종료·강제 종료) STALE_MS 뒤 저절로 쉬는 상태로
 import { basename } from "node:path";
 import { notify } from "./inbox.ts";
+import { phrase } from "./phrases.ts";
 
 export type ClaudeHookEvent = {
   hook_event_name?: string;
@@ -22,26 +23,27 @@ type BubbleLike = (b: { id?: string; text: string; kind: "info" | "done"; ttlMs?
 export const CLAUDE_KIND = "claude";
 export const STALE_MS = 10 * 60e3;
 
-const TOOL_LABEL: Record<string, string> = {
-  Read: "읽는 중", Edit: "고치는 중", MultiEdit: "고치는 중", Write: "쓰는 중", NotebookEdit: "노트 고치는 중",
-  Bash: "명령 실행 중", Grep: "찾는 중", Glob: "찾는 중", LS: "둘러보는 중",
-  WebSearch: "검색하는 중", WebFetch: "인터넷 보는 중", Task: "친구 부르는 중", Agent: "친구 부르는 중",
-  TodoWrite: "할 일 정리 중", Skill: "기술 꺼내는 중",
+const TOOL_TASK: Record<string, string> = {
+  Read: "읽기", Edit: "고치기", MultiEdit: "고치기", Write: "쓰기", NotebookEdit: "노트 고치기",
+  Bash: "명령 실행", Grep: "찾기", Glob: "파일 찾기", LS: "둘러보기",
+  WebSearch: "검색", WebFetch: "인터넷 보기", Task: "친구 부르기", Agent: "친구 부르기",
+  TodoWrite: "할 일 정리", Skill: "기술 꺼내기",
 };
 
-export function toolLabel(tool?: string): string {
-  if (!tool) return "생각 중";
+// 도구 하나 → 캐릭터 대사의 {task}: 「main.js 고치기」, 「메일 보기」, 「생각」
+export function taskText(tool?: string, input?: Record<string, unknown>): string {
+  if (!tool) return "생각";
+  let verb: string;
   if (tool.startsWith("mcp__")) {
     const name = tool.split("__").pop() ?? "";
-    if (/mail|gmail/i.test(tool)) return "메일 보는 중";
-    if (/calendar/i.test(tool)) return "일정 보는 중";
-    if (/slack/i.test(tool)) return "슬랙 보는 중";
-    if (/notion/i.test(tool)) return "노션 보는 중";
-    if (/browser|chrome/i.test(tool)) return "브라우저 쓰는 중";
-    return name ? `${name} 쓰는 중` : "도구 쓰는 중";
-  }
-  return TOOL_LABEL[tool] ?? `${tool} 하는 중`;
+    verb = /mail|gmail/i.test(tool) ? "메일 보기" : /calendar/i.test(tool) ? "일정 보기" : /slack/i.test(tool) ? "슬랙 보기"
+      : /notion/i.test(tool) ? "노션 보기" : /browser|chrome/i.test(tool) ? "브라우저 쓰기" : name ? `${name} 쓰기` : "도구 쓰기";
+  } else verb = TOOL_TASK[tool] ?? `${tool} 하기`;
+  const d = toolDetail(tool, input);
+  return d && /읽기|고치기|쓰기|찾기|검색|인터넷 보기/.test(verb) ? `${d} ${verb}` : verb;
 }
+// 예전 이름(테스트·다른 곳): 「고치기」 같은 일 이름
+export const toolLabel = (tool?: string): string => taskText(tool);
 
 // 도구 입력에서 짧은 설명 하나(파일 이름·검색어 등). 명령 전문·비밀은 싣지 않는다
 export function toolDetail(tool: string | undefined, input: Record<string, unknown> | undefined): string {
@@ -58,19 +60,6 @@ export function toolDetail(tool: string | undefined, input: Record<string, unkno
   return d.length > 30 ? d.slice(0, 29) + "…" : d;
 }
 
-// 캐릭터마다 말투: 소리 + (뜻) 형식인 캐릭터는 괄호로
-const SOUND: Record<string, { done: string; wait: string }> = {
-  chiikawa: { done: "와…!!", wait: "에에에…" },
-  momonga: { done: "다 했다고오!!! 칭찬하란 말이야아아!", wait: "힐끄으으읏……" },
-  usagi: { done: "우라!", wait: "아앙?" },
-  kani: { done: "헤헤헤…", wait: "으아…" },
-  kuri: { done: "캬아~", wait: "캬…?" },
-};
-export function say(character: string, kind: "done" | "wait", text: string): string {
-  const s = SOUND[character];
-  return s ? `${s[kind]} (${text})` : text;
-}
-
 type Session = { end: () => void; title: string; cwd?: string; at: number };
 
 export class ClaudeHooks {
@@ -79,13 +68,11 @@ export class ClaudeHooks {
 
   private activity: ActivityLike;
   private bubble: BubbleLike;
-  private character: () => string;
   private now: () => number;
 
-  constructor(activity: ActivityLike, bubble: BubbleLike, character: () => string, now: () => number = Date.now) {
+  constructor(activity: ActivityLike, bubble: BubbleLike, now: () => number = Date.now) {
     this.activity = activity;
     this.bubble = bubble;
-    this.character = character;
     this.now = now;
     this.sweep = setInterval(() => this.dropStale(), 60e3);
     this.sweep.unref?.();
@@ -95,15 +82,14 @@ export class ClaudeHooks {
     const name = ev.hook_event_name;
     const id = typeof ev.session_id === "string" && ev.session_id ? ev.session_id.slice(0, 80) : "unknown";
     const project = typeof ev.cwd === "string" && ev.cwd ? basename(ev.cwd) : "";
+    const where = project ? `(${project})` : "";
     switch (name) {
       case "UserPromptSubmit":
-        this.set(id, "생각 중", ev.cwd);
+        this.set(id, "생각", ev.cwd);
         return;
-      case "PreToolUse": {
-        const detail = toolDetail(ev.tool_name, ev.tool_input);
-        this.set(id, detail ? `${toolLabel(ev.tool_name)} · ${detail}` : toolLabel(ev.tool_name), ev.cwd);
+      case "PreToolUse":
+        this.set(id, taskText(ev.tool_name, ev.tool_input), ev.cwd);
         return;
-      }
       case "PostToolUse":
         this.touch(id);
         return;
@@ -111,16 +97,19 @@ export class ClaudeHooks {
         // idle_prompt(오래 입력 없음)는 조용히, 나머지(권한 승인 등)는 알린다
         if (ev.notification_type === "idle_prompt") return;
         const msg = typeof ev.message === "string" ? ev.message.slice(0, 200) : "확인이 필요해요";
+        const text = phrase("claude_wait", { project: where }).trim();
         this.activity.play(6000, "plan");
-        notify({ source: "claude", key: `claude-wait:${id}:${this.now()}`, account: project || undefined, title: "Claude가 확인을 기다려요", body: msg });
-        this.bubble({ id: `claude-wait-${id}`, kind: "info", ttlMs: 30e3, text: say(this.character(), "wait", `Claude가 기다려요${project ? ` · ${project}` : ""}`), detail: msg });
+        notify({ source: "claude", key: `claude-wait:${id}:${this.now()}`, account: project || undefined, title: text, body: msg });
+        this.bubble({ id: `claude-wait-${id}`, kind: "info", ttlMs: 30e3, text, detail: msg });
         return;
       }
       case "Stop": {
         const had = this.sessions.has(id);
         this.end(id);
-        if (had) notify({ source: "claude", key: `claude-done:${id}:${this.now()}`, account: project || undefined, title: "Claude 작업 끝" });
-        if (had) this.bubble({ id: `claude-done-${id}`, kind: "done", ttlMs: 10e3, text: say(this.character(), "done", `Claude 작업 끝났어${project ? ` · ${project}` : ""}!`) });
+        if (!had) return;
+        const text = phrase("claude_done", { project: where }).trim();
+        notify({ source: "claude", key: `claude-done:${id}:${this.now()}`, account: project || undefined, title: text });
+        this.bubble({ id: `claude-done-${id}`, kind: "done", ttlMs: 10e3, text });
         return;
       }
       case "SessionEnd":
@@ -131,10 +120,9 @@ export class ClaudeHooks {
     }
   }
 
-  private set(id: string, title: string, cwd?: string) {
+  private set(id: string, title: string, cwd?: string) { // title = 일 이름({task})
     const prev = this.sessions.get(id);
-    const project = cwd ? basename(cwd) : prev?.cwd ? basename(prev.cwd) : "";
-    const full = `Claude · ${title}${project && title === "생각 중" ? ` (${project})` : ""}`;
+    const full = phrase("claude_work", { task: title }).trim(); // 캐릭터 말투로(「main.js 고치기 하는 중이라고오!!!」)
     if (prev && prev.title === full) { prev.at = this.now(); return; }
     const end = this.activity.begin(CLAUDE_KIND, full);
     prev?.end(); // 새 것을 먼저 잡고 옛 것을 놓는다(잠깐 idle 로 깜빡이지 않게)

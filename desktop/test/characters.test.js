@@ -149,11 +149,11 @@ test('말투 글(persona): 캐릭터마다, 기본 글은 다 「안 고친 것�
 
 test('이름: 「하치와레 비서」처럼, 모르는 id 는 시사', async () => {
   const { appName, characterName } = await import('../src/character.js');
-  assert.equal(appName('shisa'), '시사 비서');
-  assert.equal(appName('hachi'), '하치와레 비서');
-  assert.equal(appName('rakko'), '랏코 비서');
-  assert.equal(appName('momonga'), '모몽가 비서');
-  assert.equal(appName('usagi'), '우사기 비서');
+  assert.equal(appName('shisa'), '치이카와 비서');
+  assert.equal(appName('hachi'), '치이카와 비서');
+  assert.equal(appName('rakko'), '치이카와 비서');
+  assert.equal(appName('momonga'), '치이카와 비서');
+  assert.equal(appName('usagi'), '치이카와 비서');
   assert.equal(characterName('nope'), '시사');
 });
 

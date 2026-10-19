@@ -1,36 +1,8 @@
-// 캐릭터 위 알림 팝업(맥 알림처럼 반투명 카드) — 순수 로직: 몇 개를 보일지, 몰려 오면 묶기
-// 한 출처에서 burstMs 안에 burstN 개 이상 오면(처음 연결·밀린 알림) 「Slack 새 알림 12개」 한 장으로 묶는다
-export const TOAST_DEFAULTS = { max: 3, burstMs: 3000, burstN: 4 };
+// 캐릭터 위 알림 팝업(맥 알림처럼 반투명 카드) — 순수 로직
+// 안 읽은 알림이 기준: 읽음·열기 전에는 사라지지 않는다(앱을 다시 켜도 다시 뜬다). 최신 max 장 + 「N개 더」 한 장
+export const TOAST_MAX = 3;
 
-export function createToastQueue(opts = {}) {
-  const o = { ...TOAST_DEFAULTS, ...opts };
-  let toasts = [];            // [{ id, item } | { id, summary: { source, n, latest } }]
-  const recent = new Map();   // source → 최근 도착 시각들
-
-  function push(item, now = Date.now()) {
-    if (!item || typeof item.id !== 'string') return toasts;
-    const src = item.source || 'system';
-    const times = (recent.get(src) ?? []).filter((t) => now - t < o.burstMs);
-    times.push(now);
-    recent.set(src, times);
-    const sumId = `sum:${src}`;
-    const sum = toasts.find((t) => t.id === sumId);
-    if (sum) {
-      sum.summary = { ...sum.summary, n: sum.summary.n + 1, latest: item };
-      toasts = [sum, ...toasts.filter((t) => t !== sum)];
-    } else if (times.length >= o.burstN) {
-      // 이미 따로 뜬 같은 출처 카드들을 한 장으로 접는다
-      const same = toasts.filter((t) => t.item?.source === src);
-      toasts = [{ id: sumId, summary: { source: src, n: same.length + 1, latest: item } }, ...toasts.filter((t) => !same.includes(t))];
-    } else {
-      toasts = [{ id: item.id, item }, ...toasts.filter((t) => t.id !== item.id)];
-    }
-    toasts = toasts.slice(0, o.max);
-    return toasts;
-  }
-  function remove(id) {
-    toasts = toasts.filter((t) => t.id !== id);
-    return toasts;
-  }
-  return { push, remove, list: () => toasts };
+export function toastView(unread, max = TOAST_MAX) {
+  const list = (Array.isArray(unread) ? unread : []).filter((x) => x && typeof x.id === 'string' && !x.read);
+  return { cards: list.slice(0, max), more: Math.max(0, list.length - max) };
 }

@@ -57,7 +57,7 @@ test('연결 카드: imap 메일은 주소·서비스·가져온 메일 수 · �
   assert.equal(mailStatusText(m), 'Gmail · me@gmail.com · 최근 메일 4통 읽음');
   assert.match(mailStatusText(mailConnected(shapeConnectors([{ cap: 'mail', mode: 'imap', ready: true, account: 'me@gmail.com', preset: 'gmail', sync: { phase: 'failed', reason: '앱 비밀번호가 틀렸어요' } }]))), /못 가져왔어요: 앱 비밀번호가 틀렸어요/);
   assert.equal(mailConnected(shapeConnectors([{ cap: 'mail', mode: 'mcp', ready: true, server: 'gmail' }])), null);
-  assert.match(connectorDisconnectCopy('mail').note, /메일 비밀번호와 가져온 메일을 시사에서 지워요/);
+  assert.match(connectorDisconnectCopy('mail').note, /메일 비밀번호와 가져온 메일을 치이카와 비서에서 지워요/);
 });
 
 test('도움 보내기: password 칸은 가리고, 연결 요약엔 imap 모드만', () => {

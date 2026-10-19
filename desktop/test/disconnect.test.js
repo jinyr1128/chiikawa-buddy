@@ -76,7 +76,7 @@ test('확인 문구: CLI 로그인은 남는다, 지금 쓰는 AI 면 AI 없이 
   assert.match(cli.note, /로그인은 이 맥에 그대로 남아요/);
   assert.match(cli.note, /「AI 없이 쓰기」로 바뀌어요/);
   const key = brainDisconnectCopy('gemini', false);
-  assert.match(key.note, /키를 시사에서 지워요/);
+  assert.match(key.note, /키를 치이카와 비서에서 지워요/);
   assert.doesNotMatch(key.note, /AI 없이/);
   const src = readFileSync(new URL('../src/disconnect.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /—/);
@@ -102,8 +102,8 @@ test('커넥터 연결 해제: config 값·마법사 표시·안내 문구', () 
   assert.equal(mcpRemoveCommand('evil; rm -rf ~'), '');
   assert.ok(okCap('mail'));
   assert.equal(okCap('github'), false);
-  assert.equal(reloadNote({ ok: true, reload: { changed: true, restarting: true } }), '시사가 잠깐 다시 켜지며 적용돼요.');
-  assert.equal(reloadNote({ ok: true, offline: true }), '시사가 꺼져 있어서 다음에 켤 때 적용돼요.');
+  assert.equal(reloadNote({ ok: true, reload: { changed: true, restarting: true } }), '치이카와 비서가 잠깐 다시 켜지며 적용돼요.');
+  assert.equal(reloadNote({ ok: true, offline: true }), '치이카와 비서가 꺼져 있어서 다음에 켤 때 적용돼요.');
   assert.equal(reloadNote({ ok: true, reload: { changed: true, restarting: false } }), '바로 적용돼요.');
   assert.equal(reloadNote({ ok: false }), '');
 });
@@ -124,7 +124,7 @@ test('줄마다 주 동작: 꺼져 있으면 연결하기, 켜져 있으면(준�
 
 test('[연결 해제] 단추: 누르면 그 자리에서 묻고, 취소·실패·성공', async () => {
   const calls = [];
-  let answer = { ok: false, error: '시사 설정 파일에 쓰지 못했어요.' };
+  let answer = { ok: false, error: '치이카와 비서 설정 파일에 쓰지 못했어요.' };
   const events = [];
   const box = disconnectControl(doc, {
     ...connectorDisconnectCopy('issues', 'atlassian'),

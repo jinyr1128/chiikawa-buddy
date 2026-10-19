@@ -72,7 +72,9 @@ export const localSay = (id) => LOCAL_SAY[okCharacter(id)] ?? SHISA_SAY_LOCAL;
 
 // 화면에 쓰는 이름: 「하치와레」·「하치와레 비서」(앱 이름·메뉴·창 제목)
 export const characterName = (id) => CHARACTERS[okCharacter(id)].name;
-export const appName = (id) => `${characterName(id)} 비서`;
+export const APP_NAME = '치이카와 비서';
+// 앱 이름은 캐릭터와 상관없이 「치이카와 비서」(캐릭터를 바꿔도 Dock·메뉴·창 제목이 그대로)
+export const appName = (_id) => APP_NAME;
 export const okCharacter = (id) => (typeof id === 'string' && Object.hasOwn(CHARACTERS, id) ? id : DEFAULT_CHARACTER);
 
 // ---- 사용자 캐릭터 그림·영상 ----

@@ -10,7 +10,7 @@ const fileOf = (u) => new URL(`../../assets/${resolveAsset(u).rel}`, import.meta
 
 test('카니: 고를 수 있고, 눈 뜬·감은 그림으로 깜빡이고, 춤·응원·일정 알림·점심·집중은 각자 장면 영상', () => {
   assert.ok(CHARACTER_IDS.includes('kani'));
-  assert.equal(appName('kani'), '카니 비서');
+  assert.equal(appName('kani'), '치이카와 비서');
   const a = characterAssets('kani');
   assert.ok(a.closed, '깜빡임');
   for (const u of [a.open, a.closed]) assert.ok(fs.existsSync(fileOf(u)), u);

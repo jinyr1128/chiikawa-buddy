@@ -114,8 +114,8 @@ export function claudeBubble(runs, focus) {
   const xs = (Array.isArray(runs) ? runs : []).filter((r) => r && r.kind === 'claude' && typeof r.title === 'string')
     .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
   if (!xs.length) return null;
-  const title = xs[0].title.replace(/^Claude · /, '');
-  return { label: 'Claude 작업 중', title, more: xs.length - 1, text: `${title}${xs.length > 1 ? ` 외 ${xs.length - 1}개` : ''}`, claude: true };
+  const title = xs[0].title;
+  return { label: '작업 중', title, more: xs.length - 1, text: `${title}${xs.length > 1 ? ` 외 ${xs.length - 1}개` : ''}`, claude: true };
 }
 
 // ---- 잔디 단계(GitHub 기여 그래프처럼): 0 = 빈 칸, 1~4 = 오래 집중할수록 진하게 ----

@@ -49,6 +49,10 @@ export const PHRASES = [
   { key: "fix_done", group: "코드 작업", label: "끝(진행 말풍선 없을 때)", vars: ["title"], default: ["\"{title}\" 끝났어요! PR 올렸어요"] },
   { key: "followup_pr", group: "코드 작업", label: "이어서 한 작업 PR 올림", vars: [], default: ["이어서 한 작업도 PR 에 올렸어요!"] },
   { key: "followup_done", group: "코드 작업", label: "이어서 한 작업 끝(진행 말풍선 없을 때)", vars: ["title"], default: ["\"{title}\" 끝났어요!"] },
+  // Claude 연동(Claude Code 가 일할 때 캐릭터가 하는 말 — claude-hooks.ts). {task} = 「main.js 고치기」, {project} = 「(폴더 이름)」 또는 빈칸
+  { key: "claude_work", group: "Claude 연동", label: "Claude 가 일하는 중(머리 위)", vars: ["task"], default: ["{task} 중이에요…"] },
+  { key: "claude_done", group: "Claude 연동", label: "Claude 일 끝남", vars: ["project"], default: ["다 했어요! 확인해 보세요 🎉 {project}"] },
+  { key: "claude_wait", group: "Claude 연동", label: "Claude 가 확인을 기다림", vars: ["project"], default: ["잠깐 봐 주세요! 확인이 필요해요 {project}"] },
   // 머지
   { key: "merge_ask", group: "머지", label: "머지 물어보기(PR 정보 없을 때)", vars: ["title"], default: ["'{title}' 머지할까요?"] },
   { key: "merge_merging", group: "머지", label: "머지하는 중", vars: [], default: ["머지하는 중이에요…"] },

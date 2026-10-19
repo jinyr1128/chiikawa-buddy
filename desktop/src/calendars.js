@@ -25,7 +25,7 @@ export const CAL_TEXT = {
   connect: '연결',
   connecting: '확인하는 중…',
   cancel: '닫기',
-  note: '주소는 이 맥의 시사 설정 파일에만 저장해요. 연결을 누르면 그 캘린더를 한 번 읽어 보고, 되면 저장해요.',
+  note: '주소는 이 맥의 치이카와 비서 설정 파일에만 저장해요. 연결을 누르면 그 캘린더를 한 번 읽어 보고, 되면 저장해요.',
   badUrl: '주소가 **https://** 로 시작해야 해요. **iCal 형식의 비공개 주소**(ICS)를 복사해 붙여 주세요.',
   added: (name, n) => `**「${name}」 캘린더를 연결했어요.** 오늘·내일 일정 ${n}개를 찾았어요.`,
   offline: (who) => `${who}가 꺼져 있어서 확인할 수 없어요. ${who}를 켜고 다시 해 주세요.`,
@@ -221,7 +221,7 @@ export const CALENDAR_DUP = '이미 연결된 캘린더예요. 다른 주소를 
 export function calendarRemoveCopy(row, last) {
   return {
     ask: `${row?.name ? `「${row.name}」` : `${row?.title ?? '캘린더'} 「${row?.label ?? ''}」`} 캘린더를 뺄까요?`,
-    note: last ? '마지막 캘린더라서 빼면 캘린더 연결이 꺼져요.' : '이 캘린더만 시사 설정에서 지워요. 다른 캘린더는 그대로예요.',
+    note: last ? '마지막 캘린더라서 빼면 캘린더 연결이 꺼져요.' : '이 캘린더만 치이카와 비서 설정에서 지워요. 다른 캘린더는 그대로예요.',
     done: '캘린더를 뺐어요.',
     label: '빼기',
   };
@@ -229,9 +229,9 @@ export function calendarRemoveCopy(row, last) {
 
 // 데몬 응답(POST /connectors/reload) → 한 줄 안내. 꺼져 있으면 다음에 켤 때, 바뀌었는데 다시 켜지지 않으면 다시 켜야 한다고
 export function calendarReloadNote(reload, offline) {
-  if (offline) return '시사가 꺼져 있어서 다음에 켤 때 적용돼요.';
+  if (offline) return '치이카와 비서가 꺼져 있어서 다음에 켤 때 적용돼요.';
   if (reload?.applied && !reload.restarting) return '바로 적용했어요. 일정을 가져오는 중이에요.'; // 캘린더만 바뀜: 데몬이 다시 켜지지 않고 바로 가져온다
-  if (reload?.restarting) return '시사가 잠깐 다시 켜지며 적용돼요.';
-  if (reload?.changed) return '시사를 다시 켜면 적용돼요.';
+  if (reload?.restarting) return '치이카와 비서가 잠깐 다시 켜지며 적용돼요.';
+  if (reload?.changed) return '치이카와 비서를 다시 켜면 적용돼요.';
   return '';
 }

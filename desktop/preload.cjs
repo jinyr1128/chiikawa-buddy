@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('cy', {
   togglePanel: () => ipcRenderer.send('toggle-panel'),
   onInbox: on('inbox'),
   onInboxItem: on('inbox_item'),
+  inboxList: (q) => ipcRenderer.invoke('inbox-list', { source: String(q?.source ?? ''), unread: !!q?.unread }),
   inboxOpen: (item) => ipcRenderer.send('inbox-open', { source: String(item?.source ?? ''), link: String(item?.link ?? ''), appLink: String(item?.appLink ?? '') }),
   inboxReadAll: (source) => ipcRenderer.invoke('inbox-read', { ids: 'all', read: true, ...(source ? { source: String(source) } : {}) }),
   inboxReadOne: (id) => ipcRenderer.send('inbox-read-one', String(id ?? '')),

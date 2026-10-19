@@ -3,11 +3,20 @@
 
 import { WIN, claudeInstall } from './os-hint.js';
 
+// 슬랙 읽기 전용 앱 매니페스트(ops/slack-inbox-manifest.yaml 과 같다) — 「슬랙 앱 만들기」 링크에 채워 넣는다
+const SLACK_MANIFEST = [
+  'display_information:', '  name: 치이카와 비서', '  description: 내 DM·멘션을 바탕화면 알림함에 모아 보기(읽기 전용)', '  background_color: "#f7a8b8"',
+  'oauth_config:', '  scopes:', '    user:',
+  ...['channels:history', 'groups:history', 'im:history', 'mpim:history', 'channels:read', 'groups:read', 'im:read', 'mpim:read', 'users:read', 'search:read'].map((x) => `      - ${x}`),
+  'settings:', '  org_deploy_enabled: false', '  socket_mode_enabled: false', '  token_rotation_enabled: false',
+].join('\n');
+export const SLACK_APP_URL = `https://api.slack.com/apps?new_app=1&manifest_yaml=${encodeURIComponent(SLACK_MANIFEST)}`;
+
 export const SETUP_STEPS = [
   {
     id: 'welcome',
     label: '시작',
-    title: '이 맥에 시사 비서를 붙이는 순서',
+    title: '이 맥에 치이카와 비서를 붙이는 순서',
     lead: '토큰은 이 창에 붙이지 마세요. 아래 명령을 복사해 터미널에서 실행하고, 비밀값은 ~/.cy-agent/config.json 에만 적습니다. 데이터도 그 폴더 밖에 나가지 않습니다.',
     blocks: [
       { type: 'ol', items: [
@@ -43,43 +52,41 @@ export const SETUP_STEPS = [
     cap: 'slack',
     label: 'Slack',
     title: 'Slack 연결',
-    lead: '하는 일은 두 가지예요. 이 맥의 Claude에게 슬랙을 읽어 줄 프로그램을 등록하고, 시사 비서에게 "슬랙은 그 프로그램으로 봐"라고 적어 주는 것입니다.',
+    lead: '내 DM과 나를 부른 멘션을 캐릭터 위 알림·알림함으로 받아요. 읽기 전용 슬랙 앱을 하나 만들어 열쇠 하나만 넣으면 돼요.',
     blocks: [
       { type: 'paths', items: [
         {
-          title: 'Slack MCP로 읽기',
-          badge: '기본',
+          title: '슬랙 앱으로 직접 읽기 (알림함에 DM·멘션이 쌓여요)',
+          badge: '추천',
           recommend: true,
-          hint: '열쇠는 xoxp- 로 시작하는 긴 글자입니다. 없으면 아래 "슬랙 앱으로 직접 읽기"를 열어 열쇠만 만드세요. 그 안의 설정까지 넣을 필요는 없습니다.',
+          hint: '읽기 전용 앱을 하나 만들어 열쇠(xoxp- 로 시작하는 User OAuth Token) 하나만 넣어요. 5분마다 새 DM·나를 부른 멘션을 가져와 캐릭터 위 알림과 알림함에 띄워요. 메시지를 보내거나 지우지는 못해요.',
           steps: [
-            '이 맥에 Claude Code가 깔려 있고, 터미널에서 claude 로 한 번 로그인한 상태여야 합니다.',
-            '돋보기에서 터미널을 엽니다. 첫 번째 상자를 붙여 넣고, xoxp-... 만 자기 열쇠로 바꾼 뒤 엔터를 칩니다.',
-            '그 명령은 "Claude야, 내 계정에 슬랙 읽기 프로그램을 등록해"라는 뜻입니다. --scope user 는 이 폴더가 아니라 나에게 저장하라는 뜻이라, 빼면 시사 비서가 못 찾습니다. -e 는 열쇠를 그 프로그램에만 넘깁니다. -e 바로 뒤에 slack 이라는 이름을 쓰면 실패하니 상자 그대로 두세요.',
-            '이어서 claude mcp list 를 칩니다. slack 옆에 연결됨이 보이면 등록은 된 것입니다.',
-            '파인더에서 자신의 홈 폴더 → .cy-agent → config.json 을 엽니다. 두 번째 상자를 넣습니다. 파일이 이미 있으면 slack 칸만 바꿉니다. 이 파일은 시사 비서에게 슬랙을 어디서 읽을지 알려 주는 메모입니다.',
-            '시사 비서를 껐다 켭니다. 개요의 연결 카드에서 Slack이 초록이면 끝입니다.',
+            '아래 「슬랙 앱 만들기(설정 채워 둠)」를 눌러요. 워크스페이스를 고르고 Next → Create 를 눌러요.',
+            '왼쪽 Install App(또는 OAuth & Permissions) → Install to Workspace → 허용. 회사 워크스페이스는 관리자 승인이 필요할 수 있어요. 회사 보안 담당자에게 먼저 확인하는 걸 권해요.',
+            'OAuth & Permissions → User OAuth Token(xoxp-…) 옆 Copy. 이 열쇠는 비밀번호와 같아서 캡처하거나 남에게 보내지 마세요.',
+            '레포가 있으면 터미널에서 node ops/connect-slack.mjs 를 실행하고 붙여 넣어요(화면에 별표로만 보여요). 레포가 없으면 홈 폴더 → .cy-agent → config.json 에 아래 상자를 넣어요.',
+            '개요의 연결 카드에서 Slack 이 초록이면 끝이에요. 몇 분 안에 최근 3일 DM·멘션이 알림함에 들어와요.',
+          ],
+          codeLabel: 'config.json (레포 없이 넣을 때)',
+          code: '{\n  "connectors": {\n    "slack": { "mode": "api", "userToken": "xoxp-..." }\n  }\n}',
+          links: [{ href: SLACK_APP_URL, text: '슬랙 앱 만들기(설정 채워 둠)' }],
+        },
+        {
+          title: 'Slack MCP로 읽기',
+          badge: '선택',
+          collapsed: true,
+          hint: '앱을 만들 수 없을 때. 브리핑·채팅이 그때그때 Claude Code 로 슬랙을 읽어요. 이 방법은 알림함·캐릭터 위 알림에 슬랙이 쌓이지 않아요.',
+          steps: [
+            '이 맥에 Claude Code가 깔려 있고, 터미널에서 claude 로 한 번 로그인한 상태여야 해요.',
+            '터미널에 첫 번째 상자를 붙여 넣고, xoxp-... 만 자기 열쇠로 바꾼 뒤 엔터를 쳐요. --scope user 는 빼지 마세요(빼면 치이카와 비서가 못 찾아요).',
+            'claude mcp list 를 쳐서 slack 옆에 연결됨이 보이면 등록된 거예요.',
+            '홈 폴더 → .cy-agent → config.json 에 두 번째 상자를 넣고 치이카와 비서를 껐다 켜요.',
           ],
           codeLabel: '1. 터미널에 붙여 넣기',
           code: 'claude mcp add --scope user -e SLACK_MCP_XOXP_TOKEN=xoxp-... --transport stdio slack \\\n  -- npx -y slack-mcp-server@latest --transport stdio',
           configLabel: '2. config.json 에 넣기',
           config: '{ "connectors": { "slack": { "mode": "mcp", "preset": "slack-mcp-server" } } }',
           links: [{ href: 'https://github.com/korotovsky/slack-mcp-server', text: 'slack-mcp-server 설명' }],
-        },
-        {
-          title: '슬랙 앱으로 직접 읽기',
-          badge: '선택',
-          collapsed: true,
-          hint: '내 워크스페이스에 앱을 직접 만드는 방법이에요. 다른 사람과 같이 쓰기 어렵고, 5분마다 이 맥에 모아 둡니다.',
-          steps: [
-            'api.slack.com/apps → Create New App → From a manifest. YAML에 레포의 ops/slack-user-manifest.yaml 을 붙여 넣고 만듭니다.',
-            'Install to Workspace 로 설치합니다. 워크스페이스가 승인을 요구하면 관리자 승인 뒤에 토큰이 생깁니다.',
-            'OAuth & Permissions에서 User OAuth Token(xoxp-)과 Bot User OAuth Token(xoxb-)을 복사합니다.',
-            'Basic Information → App-Level Tokens에서 스코프 connections:write 로 앱 토큰(xapp-)을 만듭니다. Slack에서 내 멤버 ID(U…)도 복사합니다.',
-            '아래 JSON을 ~/.cy-agent/config.json 에 넣고 데몬을 다시 띄웁니다.',
-          ],
-          codeLabel: 'config.json',
-          code: '{\n  "slackBotToken": "xoxb-...",\n  "slackAppToken": "xapp-...",\n  "slackUserId": "U...",\n  "connectors": {\n    "slack": { "mode": "api", "userToken": "xoxp-..." }\n  }\n}',
-          links: [{ href: 'https://api.slack.com/apps', text: 'Slack 앱 만들기' }],
         },
       ] },
       { type: 'note', text: 'Slack 공식 원격 MCP(https://mcp.slack.com/mcp)는 도구 이름이 문서에 다 없어서 프리셋이 없습니다. 연결에 성공하면 claude 의 /mcp 에서 이름을 확인해 server 와 tools.search·history·replies 를 직접 적습니다.' },
@@ -222,7 +229,7 @@ export const SETUP_STEPS = [
     blocks: [
       { type: 'ol', items: [
         '비밀값이 들어간 파일을 채팅이나 레포에 붙이지 않았는지 확인합니다.',
-        WIN ? '앱이 데몬을 띄웠다면 알림 영역(작업 표시줄 오른쪽)의 시사 아이콘을 오른쪽 클릭 → **종료** 한 뒤 시작 메뉴에서 시사를 다시 엽니다.' : '이미 launchd로 깔려 있으면 아래 명령으로 데몬만 다시 띄웁니다.',
+        WIN ? '앱이 데몬을 띄웠다면 알림 영역(작업 표시줄 오른쪽)의 치이카와 비서 아이콘을 오른쪽 클릭 → **종료** 한 뒤 시작 메뉴에서 치이카와 비서를 다시 엽니다.' : '이미 launchd로 깔려 있으면 아래 명령으로 데몬만 다시 띄웁니다.',
         '개발 중이라 터미널에서 데몬을 띄웠다면, 그 프로세스를 끄고 agent 폴더에서 npm start 를 다시 합니다.',
         'claude mcp list 와 데몬 로그의 [connectors] 줄로 확인합니다. “(준비 안 됨)”이 붙으면 이유가 같이 나옵니다.',
       ] },
