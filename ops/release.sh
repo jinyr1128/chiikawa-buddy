@@ -7,7 +7,7 @@ VER="$(node -p "require('$ROOT/desktop/package.json').version")"
 DIST="$ROOT/desktop/dist/release-$VER"
 mkdir -p "$DIST"
 (cd "$ROOT/desktop" && npm run dist -- --no-dmg)
-APP="$(find "$ROOT/desktop/dist/app" -maxdepth 2 -name '치이카와 매니저.app' -print -quit)"
+APP="$(find "$ROOT/desktop/dist/app" -maxdepth 2 -name '*.app' -print -quit)" # 한글 이름은 조합형·완성형이 달라 이름으로 찾으면 놓친다
 [ -d "$APP" ] || { echo '앱 빌드 결과 없음'; exit 1; }
 codesign --verify --deep --strict "$APP"
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/chiikawa-manager-arm64.zip"
