@@ -5,6 +5,9 @@
 
 ## 설치
 
+**가장 쉬운 방법 — 설치 파일 바로 받기**: [윈도우 릴리스 모음](../../../releases?q=windows&expanded=true)에서 가장 위(최신) `v<버전>-windows`를 열고 `ChiikawaManager-<버전>-Setup.exe`를 받아 두 번 클릭해요. 몇 초 만에 설치되고 바로 켜져요(git·AI 필요 없음).
+- 이 방법은 **기본 캐릭터 8명**으로 시작해요. 움짤 캐릭터 묶음(풀버전)과 Claude Code 연동까지 한 번에 하려면 아래 AI·PowerShell 방법을 써요.
+
 **AI에게 맡기기(추천)**: Claude Code·Codex에 저장소 주소를 붙이고 「이거 내 PC에 설치해줘. AGENTS.md 대로 해줘」.
 
 **직접 설치(PowerShell)**:
