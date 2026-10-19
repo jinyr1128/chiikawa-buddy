@@ -1292,9 +1292,42 @@ function moreCard(n) {
   return card;
 }
 let unreadCache = [];
+// 카드는 id 로 기억해 두고 바뀐 것만 고친다(다 지우고 새로 그리면 등장 애니메이션이 매번 다시 돌아 깜빡인다)
+const toastEls = new Map(); // id → { el, sig }
+const toastSig = (x) => `${x.title}|${x.body ?? ''}|${x.account ?? ''}`;
 function drawToasts() {
   const v = toastView(unreadCache);
-  toastsEl.replaceChildren(...v.cards.map(toastCard), ...(v.more ? [moreCard(v.more)] : []));
+  const want = [...v.cards.map((x) => x.id), ...(v.more ? ['__more'] : [])];
+  // 빠진 카드: 살짝 사라지게 한 뒤 뗀다
+  for (const [id, t] of toastEls) {
+    if (want.includes(id)) continue;
+    toastEls.delete(id);
+    t.el.classList.add('leaving');
+    setTimeout(() => t.el.remove(), 160);
+  }
+  const live = () => [...toastsEl.children].filter((n) => !n.classList.contains('leaving'));
+  v.cards.forEach((x, i) => {
+    let t = toastEls.get(x.id);
+    if (!t || t.sig !== toastSig(x)) {
+      const el = toastCard(x);
+      if (t) { t.el.replaceWith(el); el.classList.add('static'); } else el.classList.add('entering');
+      t = { el, sig: toastSig(x) };
+      toastEls.set(x.id, t);
+    } else {
+      const time = t.el.querySelector('.toast-time');
+      if (time) time.textContent = toastTime(x.at);
+    }
+    const nodes = live();
+    if (nodes[i] !== t.el) toastsEl.insertBefore(t.el, nodes[i] ?? null);
+  });
+  if (v.more) {
+    let t = toastEls.get('__more');
+    if (!t) { t = { el: moreCard(v.more), sig: '' }; t.el.classList.add('entering'); toastEls.set('__more', t); }
+    const title = t.el.querySelector('.toast-title');
+    if (title) title.textContent = `안 읽은 알림 ${v.more}개 더`;
+    const nodes = live();
+    if (nodes[v.cards.length] !== t.el) toastsEl.insertBefore(t.el, nodes[v.cards.length] ?? null);
+  }
   requestAnimationFrame(recheckHit);
 }
 let toastSeq = 0;
@@ -1302,8 +1335,10 @@ async function loadToasts() {
   const seq = ++toastSeq;
   const r = await cy.inboxList?.({ unread: true }).catch(() => null);
   if (seq !== toastSeq || !r?.ok || !Array.isArray(r.data?.items)) return;
-  unreadCache = r.data.items;
-  drawToasts();
+  const next = r.data.items;
+  const same = next.length === unreadCache.length && next.every((x, i) => x.id === unreadCache[i].id && toastSig(x) === toastSig(unreadCache[i]));
+  unreadCache = next;
+  if (!same) drawToasts();
 }
 let toastTimer = null;
 const loadToastsSoon = () => { clearTimeout(toastTimer); toastTimer = setTimeout(loadToasts, 250); };
