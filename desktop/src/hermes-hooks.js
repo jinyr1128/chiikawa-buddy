@@ -1,13 +1,13 @@
 // Hermes Agent 연동 켜고 끄기: ~/.hermes/config.yaml 에 셸 hook 블록을 넣고(우리 표시 줄 사이만), Hermes 승인 목록
 // (~/.hermes/shell-hooks-allowlist.json)에 우리 스크립트 하나만 승인으로 남긴다(Hermes 는 처음 보는 hook 을 터미널에서 묻는데, 데스크톱 앱엔 물을 곳이 없다).
-// 스크립트(~/.cy-agent/hooks/hermes-hook.sh)는 받은 신호를 치이카와 비서(POST /hermes/hook)에 넘기기만 하고, 앱이 꺼져 있어도 1초 안에 조용히 끝난다.
+// 스크립트(~/.cy-agent/hooks/hermes-hook.sh)는 받은 신호를 치이카와 매니저(POST /hermes/hook)에 넘기기만 하고, 앱이 꺼져 있어도 1초 안에 조용히 끝난다.
 // 고치기 전 원본은 .bak-<시각> 으로 남긴다. 사용자가 직접 쓴 hooks: 가 이미 있으면 건드리지 않고 알려 준다.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 export const HERMES_EVENTS = ['pre_llm_call', 'pre_tool_call', 'post_tool_call', 'post_llm_call', 'api_request_error', 'on_session_end'];
-const START = '# chiikawa-buddy:hermes-start (치이카와 비서 연동 — 이 블록을 지우면 연동이 꺼져요)';
+const START = '# chiikawa-buddy:hermes-start (치이카와 매니저 연동 — 이 블록을 지우면 연동이 꺼져요)';
 const END = '# chiikawa-buddy:hermes-end';
 
 export function hermesPaths(home = os.homedir()) {
@@ -47,7 +47,7 @@ export function setInstalled(on, port, home) {
     // 1) 스크립트
     if (on) {
       fs.mkdirSync(path.dirname(p.script), { recursive: true });
-      writeAtomic(p.script, `#!/bin/sh\n# 치이카와 비서: Hermes hook 신호를 앱에 넘긴다(앱이 꺼져 있어도 조용히 끝)\ncurl -s -m 1 -X POST -H 'x-cy-agent: 1' -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:${port}/hermes/hook >/dev/null 2>&1\nexit 0\n`, 0o755);
+      writeAtomic(p.script, `#!/bin/sh\n# 치이카와 매니저: Hermes hook 신호를 앱에 넘긴다(앱이 꺼져 있어도 조용히 끝)\ncurl -s -m 1 -X POST -H 'x-cy-agent: 1' -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:${port}/hermes/hook >/dev/null 2>&1\nexit 0\n`, 0o755);
     }
     // 2) config.yaml
     backup(p.config);

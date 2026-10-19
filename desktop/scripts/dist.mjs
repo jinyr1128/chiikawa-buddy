@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'); // desktop/
 const REPO = path.join(ROOT, '..');
-const APP_NAME = '치이카와 비서';
+const APP_NAME = '치이카와 매니저';
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const VERSION = pkg.version;
 

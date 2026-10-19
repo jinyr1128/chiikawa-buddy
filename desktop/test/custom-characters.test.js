@@ -91,7 +91,7 @@ test('목록 넣기: 사용자 캐릭터를 고를 수 있고 이름·그림·�
   assert.ok(characterIds().includes(U));
   assert.deepEqual([...CHARACTER_IDS], ['shisa', 'hachi', 'rakko', 'momonga', 'usagi', 'kani', 'chiikawa', 'kuri'], '기본 여덟 목록은 그대로');
   assert.equal(characterName(U), '까망');
-  assert.equal(appName(U), '치이카와 비서');
+  assert.equal(appName(U), '치이카와 매니저');
   assert.equal(characterAssets(U).clips.cheer.kind, 'img');
   assert.equal(characterAssets(U).openFrame, true, '목록의 칸별 테두리를 쓴다');
   assert.equal(localSay(U).mergeDone, '까망 머지!');

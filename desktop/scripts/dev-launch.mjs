@@ -6,7 +6,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const NAME = '시사 비서';
+const NAME = '치이카와 매니저';
 const DEST = path.join(ROOT, '.dev-app', `${NAME}.app`);
 const buddy = '/usr/libexec/PlistBuddy';
 

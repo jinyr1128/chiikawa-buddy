@@ -15,7 +15,7 @@ function run(args: string[], timeoutMs = 30e3): Promise<string> {
     execFile(macCalBin(), args, { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) {
         const denied = /denied/.test(String(stderr)) || (err as any).code === 3;
-        reject(new Error(denied ? "맥 캘린더 접근이 꺼져 있어요. 시스템 설정 → 개인정보 보호 및 보안 → 캘린더에서 치이카와 비서를 켜 주세요." : "맥 캘린더를 읽지 못했어요."));
+        reject(new Error(denied ? "맥 캘린더 접근이 꺼져 있어요. 시스템 설정 → 개인정보 보호 및 보안 → 캘린더에서 치이카와 매니저를 켜 주세요." : "맥 캘린더를 읽지 못했어요."));
         return;
       }
       resolve(String(stdout));

@@ -65,7 +65,7 @@ test('안내 문구에 문서와 같은 등록 명령이 있다', () => {
   const slackPaths = slackStep.blocks.find((b) => b.type === 'paths').items;
   assert.equal(slackPaths[0].recommend, true);
   assert.equal(slackPaths[0].collapsed, undefined);
-  // 치이카와 비서: 알림함에 쌓이는 「슬랙 앱으로 직접 읽기」가 추천(맨 앞·펼침), MCP 는 접어 둔 선택
+  // 치이카와 매니저: 알림함에 쌓이는 「슬랙 앱으로 직접 읽기」가 추천(맨 앞·펼침), MCP 는 접어 둔 선택
   assert.match(slackPaths[0].title, /^슬랙 앱으로 직접 읽기/);
   assert.match(slackPaths[0].links[0].href, /^https:\/\/api\.slack\.com\/apps\?new_app=1&manifest_yaml=/);
   const mcp = slackPaths.find((p) => p.title === 'Slack MCP로 읽기');

@@ -1,7 +1,7 @@
-# 치이카와 비서 — Slack 읽기 전용 앱(내 사용자 토큰만, 봇 없음). 알림함에 DM·멘션을 모으는 데 쓴다.
+# 치이카와 매니저 — Slack 읽기 전용 앱(내 사용자 토큰만, 봇 없음). 알림함에 DM·멘션을 모으는 데 쓴다.
 # 설치하면 OAuth & Permissions 의 "User OAuth Token"(xoxp-…)이 생긴다 → node ops/connect-slack.mjs 로 넣는다
 display_information:
-  name: 치이카와 비서
+  name: 치이카와 매니저
   description: 내 DM·멘션을 바탕화면 알림함에 모아 보고 바로 답장
   background_color: "#f7a8b8"
 oauth_config:

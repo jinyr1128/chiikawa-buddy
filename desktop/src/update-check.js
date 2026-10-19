@@ -101,8 +101,8 @@ export function updateBubble({ version, url, assetUrl, checkout = false, platfor
     ? `새 버전 v${version} 가 나왔어요. 받은 레포 폴더에서 ./ops/update.sh 를 실행하면 바뀌어요.`
     : platform === 'win32'
       ? portable
-        ? `새 버전 v${version} 가 나왔어요. 치이카와 비서를 종료하고 새 zip 을 받아 풀어서 Shisa.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
-        : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 비서를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 할 일·기록은 그대로예요.`
+        ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 Shisa.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
+        : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 매니저를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 할 일·기록은 그대로예요.`
       : platform === 'darwin'
         ? `새 버전 v${version} 가 나왔어요. 새 dmg 를 받아 응용 프로그램에 덮어 넣으면 돼요. 할 일·기록은 그대로예요.`
         : `새 버전 v${version} 가 나왔어요. 새 버전을 받아 바꿔 주세요. 할 일·기록은 그대로예요.`;

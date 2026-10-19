@@ -17,7 +17,7 @@ export async function slackReply(b: unknown, token: string | undefined, f: typeo
     });
     const j: any = await r.json();
     if (j.ok) return { ok: true };
-    if (j.error === "missing_scope" || j.error === "not_allowed_token_type") return { ok: false, error: "Slack 앱에 쓰기 권한이 없어요. api.slack.com/apps → 치이카와 비서 → OAuth & Permissions → User Token Scopes 에 chat:write 를 추가하고 Reinstall 한 뒤, 새 User OAuth Token 을 다시 넣어 주세요." };
+    if (j.error === "missing_scope" || j.error === "not_allowed_token_type") return { ok: false, error: "Slack 앱에 쓰기 권한이 없어요. api.slack.com/apps → 치이카와 매니저 → OAuth & Permissions → User Token Scopes 에 chat:write 를 추가하고 Reinstall 한 뒤, 새 User OAuth Token 을 다시 넣어 주세요." };
     return { ok: false, error: `Slack 이 거절했어요: ${j.error}` };
   } catch (e: any) { return { ok: false, error: `보내지 못했어요: ${e?.message ?? e}` }; }
 }

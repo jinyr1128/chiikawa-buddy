@@ -452,7 +452,7 @@ function mailForm({ busy, result, onConnect, onOpen }) {
   // 자세한 방법(서비스별)·연결한 뒤 확인하기: 접어 두고 눌러서 펼친다
   if (svc.guide?.length) kids.push(h('details.setup-mail-more', null, h('summary', { text: `${svc.title} 자세한 방법 보기` }), h('ol', null, svc.guide.map((t) => h('li', null, ...richNodes(t))))));
   kids.push(h('details.setup-mail-more', null, h('summary', { text: '연결한 뒤 확인하기' }), h('ol', null, MAIL_CHECK.map((t) => h('li', null, ...richNodes(t))))));
-  kids.push(h('small.setup-mail-note', { text: ['읽기만 해요. 보내기·지우기·읽음 표시 바꾸기는 하지 않아요.', svc.note, '비밀번호는 이 맥의 치이카와 비서 설정 파일에만 저장해요. 이미 붙인 주소를 넣으면 비밀번호를 바꿔요.'].filter(Boolean).join(' ') }));
+  kids.push(h('small.setup-mail-note', { text: ['읽기만 해요. 보내기·지우기·읽음 표시 바꾸기는 하지 않아요.', svc.note, '비밀번호는 이 맥의 치이카와 매니저 설정 파일에만 저장해요. 이미 붙인 주소를 넣으면 비밀번호를 바꿔요.'].filter(Boolean).join(' ') }));
   if (result && !result.ok) kids.push(h('p.setup-gate', null, ...richNodes(result.text)));
   const connect = h('button.primary', { type: 'button', text: busy ? '확인하는 중…' : '연결', disabled: !!busy });
   connect.addEventListener('click', () => {
@@ -496,10 +496,10 @@ function mailBlock({ mail, busy, result, noAi, onConnect, onDisconnect, onRemove
 const notionDraft = { token: '', email: '' };
 let notionConfirming = false;
 const NOTION_STEPS = [
-  '아래 **노션 통합 만들기**를 눌러 노션에 로그인한 뒤 **새 통합**을 만들어요. 이름은 「치이카와 비서」, 종류는 **내부**로 해요.',
+  '아래 **노션 통합 만들기**를 눌러 노션에 로그인한 뒤 **새 통합**을 만들어요. 이름은 「치이카와 매니저」, 종류는 **내부**로 해요.',
   '**기능**에서 **콘텐츠 읽기**·**댓글 읽기**·**이메일 주소를 포함한 사용자 정보 읽기**만 켜요(쓰기는 끄기).',
   '**내부 통합 시크릿**(ntn_ 로 시작)을 복사해 아래 칸에 붙여요. 이메일 칸에는 노션 로그인 이메일을 적어요(나에게 배정된 할 일을 찾는 데 써요).',
-  '알림받고 싶은 페이지·할 일 데이터베이스에서 오른쪽 위 **···** → **연결** → 「치이카와 비서」를 추가해요. 추가한 곳만 읽어요.',
+  '알림받고 싶은 페이지·할 일 데이터베이스에서 오른쪽 위 **···** → **연결** → 「치이카와 매니저」를 추가해요. 추가한 곳만 읽어요.',
 ];
 function notionBlock({ status, busy, result, defaultEmail, onConnect, onDisconnect, onOpen }) {
   const box = h('div.setup-folder.setup-notion', { dataset: { id: 'notion' } });
@@ -520,7 +520,7 @@ function notionBlock({ status, busy, result, defaultEmail, onConnect, onDisconne
     const email = h('input', { type: 'text', inputmode: 'email', autocomplete: 'off', spellcheck: 'false', placeholder: 'me@company.com', 'aria-label': '노션 로그인 이메일', value: notionDraft.email, dataset: { slot: 'notion-email' } });
     email.addEventListener('input', () => { notionDraft.email = email.value; });
     kids.push(h('div.setup-fields', null, h('label', null, h('span', { text: '내부 통합 시크릿' }), token), h('label', null, h('span', { text: '노션 로그인 이메일' }), email)));
-    kids.push(h('small.setup-mail-note', { text: '열쇠는 이 맥의 치이카와 비서 설정 파일에만 저장해요. 화면에는 다시 보이지 않아요.' }));
+    kids.push(h('small.setup-mail-note', { text: '열쇠는 이 맥의 치이카와 매니저 설정 파일에만 저장해요. 화면에는 다시 보이지 않아요.' }));
     const connect = h('button.primary', { type: 'button', text: busy ? '확인하는 중…' : '연결', disabled: !!busy });
     connect.addEventListener('click', () => onConnect?.({ token: notionDraft.token.trim(), email: notionDraft.email.trim() }));
     kids.push(h('div.setup-fields.row', null, h('span.spacer'), connect));
@@ -612,7 +612,7 @@ function aiKeyView({ provider, say, keyStatus, keyNote, gskFound, onOpen, onCopy
   return screen({
     say,
     title: `${provider.title} 키 만들기`,
-    identity: `${provider.note} 키는 이 칸에만 붙입니다. 이 맥의 치이카와 비서 설정 파일에만 저장하고, 화면에는 다시 보이지 않습니다.`,
+    identity: `${provider.note} 키는 이 칸에만 붙입니다. 이 맥의 치이카와 매니저 설정 파일에만 저장하고, 화면에는 다시 보이지 않습니다.`,
     rows: provider.rows,
     rowCtx: { url: provider.url, onOpen, onCopy },
     extra: h('div', null,

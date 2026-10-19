@@ -63,15 +63,15 @@ test("우사기: 중요 안내의 사실·질문을 괄호에 남기고, 외침�
 
 test("소개: 시사는 「cy」가 아니라 「시사」라고 소개하고, 이름만 바꾼 시사·예전 소개 글로 저장된 대사는 그 이름으로", () => {
   for (const [name, sys] of Object.entries(SYSTEMS)) {
-    assert.ok(sys.startsWith('너는 사용자 개인 PC에 상주하는 비서 캐릭터 "시사"다.'), name);
+    assert.ok(sys.startsWith('너는 사용자 개인 PC에 상주하는 매니저 캐릭터 "시사"다.'), name);
     assert.ok(!sys.includes('비서 "cy"'), `${name}: 예전 소개가 남음`);
   }
   installCharacters({ overrides: { shisa: { name: "시사짱" } } });
-  assert.ok(withCharacter(SYSTEM).startsWith('너는 사용자 개인 PC에 상주하는 비서 캐릭터 "시사짱"다.'));
+  assert.ok(withCharacter(SYSTEM).startsWith('너는 사용자 개인 PC에 상주하는 매니저 캐릭터 "시사짱"다.'));
   installCharacters({ overrides: { shisa: { prompt: { intro: LEGACY_SHISA_INTRO } } }, users: [{ id: "u-abc12345", lines: { name: "까망", prompt: { intro: LEGACY_SHISA_INTRO, tone: "까망 말투.", persona: "" } } }] });
   assert.equal(withCharacter(SYSTEM), SYSTEM, "예전 소개 글은 기본 소개로");
   setCharacter("u-abc12345");
-  assert.ok(withCharacter(SYSTEM).startsWith('너는 사용자 개인 PC에 상주하는 비서 캐릭터 "까망"다. 까망 말투.'));
+  assert.ok(withCharacter(SYSTEM).startsWith('너는 사용자 개인 PC에 상주하는 매니저 캐릭터 "까망"다. 까망 말투.'));
 });
 
 test("시스템 프롬프트: 시사면 글자 하나 안 바뀌고, 다른 캐릭터면 모든 프롬프트에서 시사 소개·말투가 그 캐릭터 것으로", () => {

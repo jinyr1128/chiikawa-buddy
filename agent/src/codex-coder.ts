@@ -37,7 +37,7 @@ class Queue {
   }
 }
 
-export const CODEX_AUTH_MISSING = 'Codex 로그인 정보를 찾지 못했어요. 치이카와 비서는 Codex 로그인 파일(~/.codex/auth.json)을 써요. Codex 설정(config.toml)에 cli_auth_credentials_store = "file" 을 넣고 codex login 으로 다시 로그인해 주세요.';
+export const CODEX_AUTH_MISSING = 'Codex 로그인 정보를 찾지 못했어요. 치이카와 매니저는 Codex 로그인 파일(~/.codex/auth.json)을 써요. Codex 설정(config.toml)에 cli_auth_credentials_store = "file" 을 넣고 codex login 으로 다시 로그인해 주세요.';
 export const CODEX_SANDBOX_UNSURE = 'Codex 가 작업 폴더 제한(샌드박스)을 확인해 주지 않아 시작하지 않았어요. Codex 를 최신으로 업데이트해 주세요.';
 
 // 사용자 Codex 홈(인증 원본). CODEX_HOME 이 있으면 그것
@@ -280,7 +280,7 @@ export function createCodexQuery({ prompt, options = {} }: { prompt: string | As
       write({ method: 'initialized', params: {} });
       const instructions = typeof options.systemPrompt === 'string' ? options.systemPrompt : options.systemPrompt?.append ?? '';
       const started = await rpc('thread/start', { cwd, model: model || null, approvalPolicy: 'on-request', approvalsReviewer: 'user', sandbox: 'workspace-write', ephemeral: true,
-        developerInstructions: `${instructions}\n파일 수정과 테스트까지만 한다. git commit/push/merge, PR 생성은 치이카와 비서가 직접 한다. ${ESCALATION_NOTE}`,
+        developerInstructions: `${instructions}\n파일 수정과 테스트까지만 한다. git commit/push/merge, PR 생성은 치이카와 매니저가 직접 한다. ${ESCALATION_NOTE}`,
         config: codexThreadConfig(cwd) });
       if (!sandboxIsSafe(started?.sandbox, cwd)) throw new Error(CODEX_SANDBOX_UNSURE);
       threadId = started.thread.id;

@@ -1206,7 +1206,7 @@ function setupAppActivation() {
     const icon = path.join(__dirname, 'assets', 'icon.png');
     // 번들(cy.app)은 icns 를 쓰고, 개발 실행은 Dock 아이콘을 바꿔 준다
     if (!app.isPackaged && fs.existsSync(icon)) app.dock?.setIcon(nativeImage.createFromPath(icon));
-    // 치이카와 비서: Dock 에는 두지 않는다(아래에 캐릭터가 있으니까). 메뉴 막대 아이콘에서 패널·설정을 연다
+    // 치이카와 매니저: Dock 에는 두지 않는다(아래에 캐릭터가 있으니까). 메뉴 막대 아이콘에서 패널·설정을 연다
     app.dock?.hide();
   }
   quietActivation(2000); // 시작 직후(로그인 자동 실행) 패널을 띄우지 않음

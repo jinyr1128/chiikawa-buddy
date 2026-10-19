@@ -84,7 +84,7 @@ export function mountGuidelines(doc, cy, flash = () => {}) {
   async function apply(promise, okText) {
     const r = await promise.catch(() => null);
     if (!r?.ok) {
-      flash(r?.data?.error ? `저장 못 했어요: ${r.data.error}` : '저장 못 했어요 — 치이카와 비서에 연결되지 않았어요', true);
+      flash(r?.data?.error ? `저장 못 했어요: ${r.data.error}` : '저장 못 했어요 — 치이카와 매니저에 연결되지 않았어요', true);
       render();
       return false;
     }

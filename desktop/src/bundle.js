@@ -126,7 +126,7 @@ export function loginItemPlan({ platform = 'darwin', packaged, launchd = false, 
 
 // 설정 창에 보일 한 줄(켜고 끌 수 없을 때 이유)
 export function loginItemHint(reason) {
-  if (reason === 'launchd') return '터미널로 설치한 치이카와 비서는 launchd 가 로그인할 때 켜 줘요. 여기서는 바꾸지 않아요.';
+  if (reason === 'launchd') return '터미널로 설치한 치이카와 매니저는 launchd 가 로그인할 때 켜 줘요. 여기서는 바꾸지 않아요.';
   if (reason === 'dev') return '레포에서 띄운 개발용 실행이라 여기서는 바꾸지 않아요.';
   if (reason === 'test') return '시험용 실행(다른 데이터 폴더·포트)이라 여기서는 바꾸지 않아요.';
   if (reason === 'platform') return '이 컴퓨터에서는 지원하지 않아요.';

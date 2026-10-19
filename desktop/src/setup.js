@@ -5,7 +5,7 @@ import { WIN, claudeInstall } from './os-hint.js';
 
 // 슬랙 읽기 전용 앱 매니페스트(ops/slack-inbox-manifest.yaml 과 같다) — 「슬랙 앱 만들기」 링크에 채워 넣는다
 const SLACK_MANIFEST = [
-  'display_information:', '  name: 치이카와 비서', '  description: 내 DM·멘션을 바탕화면 알림함에 모아 보고 바로 답장', '  background_color: "#f7a8b8"',
+  'display_information:', '  name: 치이카와 매니저', '  description: 내 DM·멘션을 바탕화면 알림함에 모아 보고 바로 답장', '  background_color: "#f7a8b8"',
   'oauth_config:', '  scopes:', '    user:',
   ...['channels:history', 'groups:history', 'im:history', 'mpim:history', 'channels:read', 'groups:read', 'im:read', 'mpim:read', 'users:read', 'search:read', 'chat:write'].map((x) => `      - ${x}`),
   'settings:', '  org_deploy_enabled: false', '  socket_mode_enabled: false', '  token_rotation_enabled: false',
@@ -16,7 +16,7 @@ export const SETUP_STEPS = [
   {
     id: 'welcome',
     label: '시작',
-    title: '이 맥에 치이카와 비서를 붙이는 순서',
+    title: '이 맥에 치이카와 매니저를 붙이는 순서',
     lead: '토큰은 이 창에 붙이지 마세요. 아래 명령을 복사해 터미널에서 실행하고, 비밀값은 ~/.cy-agent/config.json 에만 적습니다. 데이터도 그 폴더 밖에 나가지 않습니다.',
     blocks: [
       { type: 'ol', items: [
@@ -78,9 +78,9 @@ export const SETUP_STEPS = [
           hint: '앱을 만들 수 없을 때. 브리핑·채팅이 그때그때 Claude Code 로 슬랙을 읽어요. 이 방법은 알림함·캐릭터 위 알림에 슬랙이 쌓이지 않아요.',
           steps: [
             '이 맥에 Claude Code가 깔려 있고, 터미널에서 claude 로 한 번 로그인한 상태여야 해요.',
-            '터미널에 첫 번째 상자를 붙여 넣고, xoxp-... 만 자기 열쇠로 바꾼 뒤 엔터를 쳐요. --scope user 는 빼지 마세요(빼면 치이카와 비서가 못 찾아요).',
+            '터미널에 첫 번째 상자를 붙여 넣고, xoxp-... 만 자기 열쇠로 바꾼 뒤 엔터를 쳐요. --scope user 는 빼지 마세요(빼면 치이카와 매니저가 못 찾아요).',
             'claude mcp list 를 쳐서 slack 옆에 연결됨이 보이면 등록된 거예요.',
-            '홈 폴더 → .cy-agent → config.json 에 두 번째 상자를 넣고 치이카와 비서를 껐다 켜요.',
+            '홈 폴더 → .cy-agent → config.json 에 두 번째 상자를 넣고 치이카와 매니저를 껐다 켜요.',
           ],
           codeLabel: '1. 터미널에 붙여 넣기',
           code: 'claude mcp add --scope user -e SLACK_MCP_XOXP_TOKEN=xoxp-... --transport stdio slack \\\n  -- npx -y slack-mcp-server@latest --transport stdio',
@@ -229,7 +229,7 @@ export const SETUP_STEPS = [
     blocks: [
       { type: 'ol', items: [
         '비밀값이 들어간 파일을 채팅이나 레포에 붙이지 않았는지 확인합니다.',
-        WIN ? '앱이 데몬을 띄웠다면 알림 영역(작업 표시줄 오른쪽)의 치이카와 비서 아이콘을 오른쪽 클릭 → **종료** 한 뒤 시작 메뉴에서 치이카와 비서를 다시 엽니다.' : '이미 launchd로 깔려 있으면 아래 명령으로 데몬만 다시 띄웁니다.',
+        WIN ? '앱이 데몬을 띄웠다면 알림 영역(작업 표시줄 오른쪽)의 치이카와 매니저 아이콘을 오른쪽 클릭 → **종료** 한 뒤 시작 메뉴에서 치이카와 매니저를 다시 엽니다.' : '이미 launchd로 깔려 있으면 아래 명령으로 데몬만 다시 띄웁니다.',
         '개발 중이라 터미널에서 데몬을 띄웠다면, 그 프로세스를 끄고 agent 폴더에서 npm start 를 다시 합니다.',
         'claude mcp list 와 데몬 로그의 [connectors] 줄로 확인합니다. “(준비 안 됨)”이 붙으면 이유가 같이 나옵니다.',
       ] },

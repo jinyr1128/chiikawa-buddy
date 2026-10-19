@@ -44,7 +44,7 @@ export type LocalLineKey =
 // 시사: 예전 말투 그대로(voice.ts TONE·MOODS, phrases.ts 기본값, local-mode.ts LINES).
 // 프롬프트(brain.ts BASE 등)에 박힌 첫 문장·말투 줄은 늘 이 글이다. withCharacter 가 이 자리만 지금 캐릭터 것으로 바꾼다
 // 첫 문장은 캐릭터 이름으로 소개한다(예전엔 「비서 "cy"」라 시사에게 이름을 물으면 「cy예요」라고 답했다)
-export const introFor = (name: string) => `너는 사용자 개인 PC에 상주하는 비서 캐릭터 "${name}"다.`;
+export const introFor = (name: string) => `너는 사용자 개인 PC에 상주하는 매니저 캐릭터 "${name}"다.`;
 export const SHISA_INTRO = introFor("시사");
 // 예전 시사 첫 문장 — 이 글로 저장된 덮어쓰기·사용자 캐릭터 대사는 기본 소개로 본다
 export const LEGACY_SHISA_INTRO = "너는 사용자 개인 PC에 상주하는 비서 \"cy\"다.";

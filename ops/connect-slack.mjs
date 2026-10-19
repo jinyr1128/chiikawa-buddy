@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Slack 사용자 토큰(xoxp-…)을 치이카와 비서에 연결한다. 토큰은 화면에 보이지 않게 입력받아
+// Slack 사용자 토큰(xoxp-…)을 치이카와 매니저에 연결한다. 토큰은 화면에 보이지 않게 입력받아
 // ~/.cy-agent/config.json 의 connectors.slack 에만 저장하고(권한 600), 데몬에 다시 읽으라고 알린다.
 // 사용: node ops/connect-slack.mjs
 import fs from 'node:fs';
@@ -61,11 +61,11 @@ fs.mkdirSync(HOME, { recursive: true });
 const tmp = `${CONFIG}.tmp-${process.pid}`;
 fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2) + '\n', { mode: 0o600 });
 fs.renameSync(tmp, CONFIG);
-console.log('저장했어요. 치이카와 비서가 Slack 을 다시 읽어요…');
+console.log('저장했어요. 치이카와 매니저가 Slack 을 다시 읽어요…');
 
 try {
   const r = await fetch(`http://127.0.0.1:${PORT}/connectors/reload`, { method: 'POST', headers: { 'x-cy-agent': '1', 'content-type': 'application/json' }, body: '{}' });
   console.log(r.ok ? '🎉 연결 끝! 몇 분 안에 최근 3일 DM·멘션이 알림함에 들어와요.' : '앱을 한 번 껐다 켜 주세요(메뉴 막대 → 종료 → 다시 열기).');
 } catch {
-  console.log('치이카와 비서가 꺼져 있어요. 켜면 바로 읽어요.');
+  console.log('치이카와 매니저가 꺼져 있어요. 켜면 바로 읽어요.');
 }

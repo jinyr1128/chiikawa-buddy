@@ -1728,7 +1728,7 @@ function onRowKey(t, e) {
 // 이 할 일에 적용된 할 일 규칙(있으면)
 const ruleLine = (t) => (t.appliedRule ? h('div.applied-rule.muted.small', { title: '할 일 규칙이 우선순위·메모를 정했어요' }, h('span', { text: `📏 규칙: ${t.appliedRule.text}` })) : null);
 // 어디까지 됐는지(데몬이 작업 세션을 읽고 남긴 한 줄 — 사용자 메모와 따로)
-const progressLine = (t) => (t.progress ? h('div.applied-rule.muted.small', { title: '작업 세션을 보고 비서가 남긴 진척' }, h('span', { text: `⏳ 진행: ${t.progress}` })) : null);
+const progressLine = (t) => (t.progress ? h('div.applied-rule.muted.small', { title: '작업 세션을 보고 매니저가 남긴 진척' }, h('span', { text: `⏳ 진행: ${t.progress}` })) : null);
 
 // 펼친 설명: 링크가 있으면 설명을 눌러 원본으로. 원본(Slack 메시지·커밋·메일·세션) 블록
 function todoDetailView(t) {

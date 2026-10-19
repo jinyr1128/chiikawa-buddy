@@ -69,7 +69,7 @@ test('systemFor: custom 이 있어도 AI별 규칙은 항상 붙는다', () => {
 test('짧은 예전 기본 글은 기본값으로 본다', () => {
   assert.equal(isStockPersona(''), true);
   assert.equal(isStockPersona(SISA_BASE), true);
-  assert.equal(isStockPersona(`너는 시사야. 사용자의 오늘 할 일을 함께 보는 작은 비서다.
+  assert.equal(isStockPersona(`너는 시사야. 사용자의 오늘 할 일을 함께 보는 작은 매니저다.
 오늘 할 일 현황은 대화 맨 앞에 따로 알려 준다. 거기 없는 일은 지어내지 않는다.
 끝낸 일이 많으면 짧게 칭찬한다. 적으면 다그치지 않고, 남은 것 하나만 골라 응원한다.
 말투는 다정한 해요체로, 한두 문장 안에서 쉬운 한국어로 말한다.

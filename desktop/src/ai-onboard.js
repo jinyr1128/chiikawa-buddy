@@ -75,7 +75,7 @@ export const AI_PROVIDERS = [
       { text: '브라우저에 **Genspark** 가 열립니다. 계정이 없으면 가입합니다.', link: true },
       '아래 **요금제 열기**에서 유료 플랜을 고릅니다. 무료 플랜은 API 를 쓸 수 없습니다.',
       '터미널에서 아래 명령으로 공식 CLI 를 깔고 로그인합니다. 키가 이 맥에 저장됩니다.',
-      '아래 **gsk login 한 키 쓰기**를 누르면 그 키를 씁니다. 키는 치이카와 비서 설정에 따로 저장하지 않습니다.',
+      '아래 **gsk login 한 키 쓰기**를 누르면 그 키를 씁니다. 키는 치이카와 매니저 설정에 따로 저장하지 않습니다.',
       { keys: [MOD, 'V'], text: '키를 직접 붙여 넣어도 됩니다. **gsk-** 로 시작합니다. 붙인 뒤 **확인**을 누릅니다.' },
     ],
     stuck: [
@@ -145,22 +145,22 @@ export function todoBrief({ open = [], done = [] } = {}) {
 }
 
 export const HUB = [
-  { id: 'claude', title: 'Claude Code', blurb: '코드 작업을 맡길 때 씁니다. 연결하지 않아도 할 일 비서는 됩니다.', kind: 'code' },
-  { id: 'codex', title: 'Codex', blurb: '대화·브리핑·할 일 정리를 Codex 로 돌립니다. 설정 창 「세부 모델」에서 코드 작업 AI도 Codex로 고를 수 있습니다. 연결하지 않아도 할 일 비서는 됩니다.', kind: 'code' },
-  { id: 'gcal', title: '구글 캘린더', blurb: '내 일정을 치이카와 비서가 읽습니다. 캘린더마다 별칭과 비밀 주소를 넣으면 되고, 여러 개 붙일 수 있습니다.', kind: 'done' },
-  { id: 'outlook', title: 'Outlook 캘린더', blurb: '내 일정을 치이카와 비서가 읽습니다. 여러 개 붙일 수 있고 구글 캘린더와 같이 써도 됩니다. 회사가 일정 게시를 막았으면 쓸 수 없습니다.', kind: 'done' },
-  { id: 'slack', title: 'Slack', blurb: '슬랙 글을 치이카와 비서가 읽습니다. 슬랙 공식 로그인만 쓰고 쿠키는 복사하지 않습니다. 회사처럼 관리자 승인이 필요한 곳은 막힐 수 있습니다. Claude Code가 먼저 필요합니다.', kind: 'done', needsAgent: 'claude' },
-  { id: 'jira', title: 'Jira', blurb: '나한테 온 이슈를 치이카와 비서가 읽습니다. 브라우저 로그인만 합니다. Claude Code가 먼저 필요합니다.', kind: 'done', needsAgent: 'claude' },
+  { id: 'claude', title: 'Claude Code', blurb: '코드 작업을 맡길 때 씁니다. 연결하지 않아도 할 일 매니저는 됩니다.', kind: 'code' },
+  { id: 'codex', title: 'Codex', blurb: '대화·브리핑·할 일 정리를 Codex 로 돌립니다. 설정 창 「세부 모델」에서 코드 작업 AI도 Codex로 고를 수 있습니다. 연결하지 않아도 할 일 매니저는 됩니다.', kind: 'code' },
+  { id: 'gcal', title: '구글 캘린더', blurb: '내 일정을 치이카와 매니저가 읽습니다. 캘린더마다 별칭과 비밀 주소를 넣으면 되고, 여러 개 붙일 수 있습니다.', kind: 'done' },
+  { id: 'outlook', title: 'Outlook 캘린더', blurb: '내 일정을 치이카와 매니저가 읽습니다. 여러 개 붙일 수 있고 구글 캘린더와 같이 써도 됩니다. 회사가 일정 게시를 막았으면 쓸 수 없습니다.', kind: 'done' },
+  { id: 'slack', title: 'Slack', blurb: '슬랙 글을 치이카와 매니저가 읽습니다. 슬랙 공식 로그인만 쓰고 쿠키는 복사하지 않습니다. 회사처럼 관리자 승인이 필요한 곳은 막힐 수 있습니다. Claude Code가 먼저 필요합니다.', kind: 'done', needsAgent: 'claude' },
+  { id: 'jira', title: 'Jira', blurb: '나한테 온 이슈를 치이카와 매니저가 읽습니다. 브라우저 로그인만 합니다. Claude Code가 먼저 필요합니다.', kind: 'done', needsAgent: 'claude' },
   { id: 'repos', title: '레포 폴더', blurb: '코드를 고치게 할 레포가 모인 폴더(예: 홈의 code 폴더)를 알려 주세요. 적은 폴더만 읽고, 그 안 레포의 내 커밋을 개요에 보여 줘요. 코드 고치기는 Claude Code 가 있을 때 돼요.', kind: 'folder' },
-  { id: 'github', title: 'GitHub', blurb: 'GitHub에 로그인해 두면, 치이카와 비서가 고친 코드를 변경 요청으로 올릴 수 있습니다. Claude Code나 Codex가 먼저 필요합니다.', kind: 'done', needsAgent: true },
+  { id: 'github', title: 'GitHub', blurb: 'GitHub에 로그인해 두면, 치이카와 매니저가 고친 코드를 변경 요청으로 올릴 수 있습니다. Claude Code나 Codex가 먼저 필요합니다.', kind: 'done', needsAgent: true },
 ];
 
 // 설치 마법사에서 고르는 네 가지 플랜. hub 는 그 플랜에서 보여 줄 연결 목록(순서대로).
 export const PLANS = [
   { id: 'calendar', title: '일정 관리만 하기', need: '준비물이 없습니다. 결제도 필요 없습니다', blurb: '내 일정과 오늘 할 일을 정해진 말로 알려 드립니다.', ai: 'none', hub: ['gcal', 'outlook'] },
-  { id: 'chat', title: '채팅 + 일정 관리', need: 'AI 키가 필요합니다. 무료로 만들 수 있습니다', blurb: '치이카와 비서와 자유롭게 대화하고, 내 일정도 함께 봅니다.', ai: 'key', hub: ['gcal', 'outlook'] },
+  { id: 'chat', title: '채팅 + 일정 관리', need: 'AI 키가 필요합니다. 무료로 만들 수 있습니다', blurb: '치이카와 매니저와 자유롭게 대화하고, 내 일정도 함께 봅니다.', ai: 'key', hub: ['gcal', 'outlook'] },
   { id: 'tools', title: '채팅 + 일정 관리 + 다른 기능', need: 'Claude Code가 필요합니다(Codex 는 대화·할 일 정리까지)', blurb: '대화와 일정에 더해, 슬랙과 지라의 소식도 함께 봅니다.', ai: 'cli', hub: ['gcal', 'outlook', 'slack', 'jira'] },
-  { id: 'code', title: '코딩까지 전부 다', need: 'Claude Code와 GitHub 연결이 필요합니다', blurb: '위의 모든 기능에 더해, 치이카와 비서가 코드를 고쳐 변경 요청까지 올립니다.', ai: 'cli', hub: ['gcal', 'outlook', 'slack', 'jira', 'github'] },
+  { id: 'code', title: '코딩까지 전부 다', need: 'Claude Code와 GitHub 연결이 필요합니다', blurb: '위의 모든 기능에 더해, 치이카와 매니저가 코드를 고쳐 변경 요청까지 올립니다.', ai: 'cli', hub: ['gcal', 'outlook', 'slack', 'jira', 'github'] },
 ];
 
 export function planById(id) {
@@ -354,7 +354,7 @@ function jiraSteps(agent) {
       code: 'claude',
       details: [
         '로그인 화면이 안 열리면 회사 관리자가 Atlassian의 Rovo MCP를 막은 것입니다. 관리자에게 허용을 부탁하거나, 이 기능은 건너뛰세요.',
-        '여러 사이트가 있으면 치이카와 비서가 볼 사이트만 허용하세요.',
+        '여러 사이트가 있으면 치이카와 매니저가 볼 사이트만 허용하세요.',
       ],
     },
     {
@@ -406,7 +406,7 @@ function slackSteps(agent) {
     {
       id: 'slack-add',
       title: '슬랙 공식 주소를 등록하세요',
-      identity: '방법이 둘 있습니다. **하나만** 하면 됩니다. 치이카와 비서 연결 카드까지 켜려면 **방법 1** 입니다.',
+      identity: '방법이 둘 있습니다. **하나만** 하면 됩니다. 치이카와 매니저 연결 카드까지 켜려면 **방법 1** 입니다.',
       rows: [
         TERMINAL,
         { keys: [MOD, 'V'], text: '**방법 1**: 아래 첫 번째 명령을 터미널에 붙이고 **↩** 를 누릅니다.' },
@@ -414,7 +414,7 @@ function slackSteps(agent) {
       ],
       details: [
         '방법 1은 슬랙이 정해 둔 번호(client-id)를 같이 넣습니다. 번호가 없으면 dynamic client registration 오류가 납니다.',
-        '방법 2는 슬랙 공식 플러그인입니다. Claude Code 안에서는 슬랙이 되지만, 치이카와 비서의 연결 카드는 초록으로 안 켜집니다.',
+        '방법 2는 슬랙 공식 플러그인입니다. Claude Code 안에서는 슬랙이 되지만, 치이카와 매니저의 연결 카드는 초록으로 안 켜집니다.',
         '이미 있다고 나오면 예전에 같은 이름으로 등록한 것이 남아 있는 것입니다. 터미널에 claude mcp remove slack --scope user 를 먼저 치고, 명령을 다시 붙이세요.',
       ],
       codeLabel: '방법 1 · 터미널에 붙여 넣기',
@@ -478,7 +478,7 @@ function githubSteps(agent) {
     {
       id: 'github-install',
       title: 'GitHub 도구(gh)를 설치하세요',
-      identity: '치이카와 비서가 고친 코드를 GitHub에 올릴 때 이 프로그램을 씁니다.',
+      identity: '치이카와 매니저가 고친 코드를 GitHub에 올릴 때 이 프로그램을 씁니다.',
       rows: [
         PASTE_ENTER('터미널에 아래 명령'),
         WIN ? '**이미 설치되어 있다**는 글이 나오면 바로 **다음**을 누릅니다.' : '글자 한 줄로 **gh 의 위치**가 나오면 이미 설치된 것입니다. 바로 **다음**을 누릅니다.',
@@ -509,7 +509,7 @@ function githubSteps(agent) {
       details: [
         '브라우저가 안 열리면 터미널에 나온 주소를 복사해 크롬에 붙이세요.',
         '회사 GitHub 조직의 코드를 쓴다면, 브라우저에서 그 조직을 **승인**하라고 할 수 있습니다. 안내대로 하고, 안 되면 조직 관리자에게 물어보세요.',
-        '**Authenticate Git** 질문에 Y 를 고르면, 치이카와 비서가 코드를 GitHub에 올릴 때 같은 로그인을 쓰게 해 줍니다.',
+        '**Authenticate Git** 질문에 Y 를 고르면, 치이카와 매니저가 코드를 GitHub에 올릴 때 같은 로그인을 쓰게 해 줍니다.',
       ],
       codeLabel: '터미널에 붙여 넣기',
       code: 'gh auth login',

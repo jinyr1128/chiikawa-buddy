@@ -66,7 +66,7 @@ test('고르기 전에는 갈래 단계가 없다', () => {
   assert.match(textOf(after), /api\.githubcopilot\.com\/mcp\/readonly/);
 });
 
-test('Codex 로 MCP 를 등록하는 단계엔 「치이카와 비서는 Claude Code 로만 읽는다」 안내가 붙는다(Claude 면 없음)', async () => {
+test('Codex 로 MCP 를 등록하는 단계엔 「치이카와 매니저는 Claude Code 로만 읽는다」 안내가 붙는다(Claude 면 없음)', async () => {
   const { CODEX_MCP_NOTE } = await import('../src/setup-flow.js');
   const codex = buildWalk(['issues'], { issues: 'jira' }, 'codex');
   const add = codex.find((s) => typeof s.code === 'string' && s.code.includes('codex mcp add'));

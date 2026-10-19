@@ -171,7 +171,7 @@ export function formatHeader(meta = {}) {
   const daemon = meta.daemonReachable === true ? '연결됨' : '연결 안 됨';
   const port = meta.daemonPort != null ? String(meta.daemonPort) : '';
   const lines = [
-    '시사 비서 오류 기록',
+    '치이카와 매니저 오류 기록',
     `시각: ${formatStamp(meta.now instanceof Date ? meta.now : new Date())}`,
     `앱: ${meta.appVersion || '0.1.0'}`,
     `Electron: ${meta.electron || '?'}`,

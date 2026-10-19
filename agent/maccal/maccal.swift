@@ -18,7 +18,7 @@ if #available(macOS 14.0, *) {
   store.requestAccess(to: .event) { g, _ in granted = g; sem.signal() }
 }
 sem.wait()
-if !granted { fail("denied: 시스템 설정 → 개인정보 보호 및 보안 → 캘린더에서 치이카와 비서를 켜 주세요", 3) }
+if !granted { fail("denied: 시스템 설정 → 개인정보 보호 및 보안 → 캘린더에서 치이카와 매니저를 켜 주세요", 3) }
 
 func hex(_ c: CGColor?) -> String {
   guard let c = c, let comps = c.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!, intent: .defaultIntent, options: nil)?.components, comps.count >= 3 else { return "" }

@@ -99,7 +99,7 @@ test("평평하게·다시 묶기·기본값과 다른 칸만·이름 바꾸기"
   const r = renameLines({ name: "하치와레", canned: { who: ["나는 **하치와레**야!"] }, prompt: { intro: "비서 캐릭터 \"하치와레\"다." } }, "하치와레", "까망");
   assert.deepEqual(r, { name: "까망", canned: { who: ["나는 **까망**야!"] }, prompt: { intro: "비서 캐릭터 \"까망\"다." } });
   const s = renameLines(shisaDefaults(), "시사", "까망") as any;
-  assert.equal(s.prompt.intro, "너는 사용자 개인 PC에 상주하는 비서 캐릭터 \"까망\"다.", "시사 첫 문장은 cy 라 새 이름 소개로");
+  assert.equal(s.prompt.intro, "너는 사용자 개인 PC에 상주하는 매니저 캐릭터 \"까망\"다.", "시사 첫 문장은 cy 라 새 이름 소개로");
   assert.ok(s.flair.tail.happy.includes("(기쁜 까망)"));
   assert.ok(!JSON.stringify(s).includes("시사"));
 });
