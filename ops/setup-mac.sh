@@ -8,7 +8,7 @@
 set -euo pipefail
 
 REPO="$(git -C "$(dirname "$0")/.." remote get-url origin 2>/dev/null | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
-[ -n "$REPO" ] || REPO="jinyr1128/chiikawa-buddy"
+[ -n "$REPO" ] || REPO="jinyr1128/chiikawa-manager"
 TAG=""
 PREFIX="/Applications"
 HOME_DIR="${CY_AGENT_HOME:-$HOME/.cy-agent}"
@@ -34,6 +34,13 @@ APP="$PREFIX/$APP_NAME.app"
 say() { printf '\n\033[1m▶ %s\033[0m\n' "$*"; }
 die() { printf '\n\033[31m✖ %s\033[0m\n' "$*"; exit 1; }
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+# 기존 앱 또는 데이터가 있으면 ‘설치’ 요청도 보존 업데이트로 처리한다.
+# 설정 내용을 읽지 않고 존재 여부만 확인한다.
+if [ -d "$APP" ] || [ -f "$HOME_DIR/config.json" ]; then
+  UPDATE_ONLY=1; HOOKS=0
+  say "기존 설치 확인 — 연결·설정·캐릭터를 유지하고 앱만 업데이트"
+fi
 
 say "맥 확인"
 [ "$(uname -s)" = "Darwin" ] || die "맥에서만 돼요."

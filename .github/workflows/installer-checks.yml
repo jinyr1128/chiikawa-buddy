@@ -1,0 +1,24 @@
+name: installer-checks
+on:
+  push:
+    paths:
+      - 'ops/setup-*.sh'
+      - 'ops/setup-*.ps1'
+      - '.github/workflows/installer-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mac installer syntax
+        run: bash -n ops/setup-mac.sh
+      - name: Windows installer syntax (no installation)
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'ops/setup-win.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count) { $errors | Format-List; exit 1 }

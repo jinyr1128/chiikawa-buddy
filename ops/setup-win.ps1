@@ -5,7 +5,7 @@
 #  3) 캐릭터 묶음을 %USERPROFILE%\.cy-agent 에 넣고, Claude Code 가 있으면 AI 를 Claude Code 로 정하고 Claude Code 연동(hook)을 켠다
 #  4) 앱을 켠다. Slack·메일·캘린더·노션은 앱의 「연결 관리」에서 각자 계정으로
 # 옵션: -NoHooks (Claude Code 연동 안 켜기) · -Repo owner/name (다른 저장소에서 받기)
-param([switch]$NoHooks, [string]$Repo = '')
+param([switch]$NoHooks, [string]$Repo = '', [switch]$UpdateOnly)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -17,7 +17,12 @@ $Root = Split-Path -Parent $PSScriptRoot
 if (-not $Repo) {
   try { $u = (git -C $Root remote get-url origin 2>$null); if ($u -match 'github\.com[:/]([^/]+/[^/.]+)') { $Repo = $Matches[1] } } catch {}
 }
-if (-not $Repo) { $Repo = 'jinyr1128/chiikawa-buddy' }
+if (-not $Repo) { $Repo = 'jinyr1128/chiikawa-manager' }
+
+$HomeDir = if ($env:CY_AGENT_HOME) { $env:CY_AGENT_HOME } else { Join-Path $env:USERPROFILE '.cy-agent' }
+$existingApp = Join-Path $env:LOCALAPPDATA 'ChiikawaManager\Update.exe'
+if ((Test-Path $existingApp) -or (Test-Path (Join-Path $HomeDir 'config.json'))) { $UpdateOnly = $true }
+if ($UpdateOnly) { $NoHooks = $true; Say "기존 설치 확인 — 연결·설정·캐릭터를 유지하고 앱만 업데이트" }
 
 Say "윈도우 확인"
 if ($env:OS -ne 'Windows_NT') { Die "윈도우에서만 돼요." }
@@ -43,7 +48,7 @@ function Test-Sum($file, $sumFile) {
 }
 $setup = Get-Asset $setupAsset; $sums = Get-Asset $sumAsset; Test-Sum $setup $sums
 $pack = $null
-if ($main) {
+if ($main -and -not $UpdateOnly) {
   $packAsset = $main.assets | Where-Object { $_.name -eq 'chiikawa-characters.zip' } | Select-Object -First 1
   $packSum = $main.assets | Where-Object { $_.name -eq 'SHA256SUMS.txt' } | Select-Object -First 1
   if ($packAsset -and $packSum) { $pack = Get-Asset $packAsset; $ps = Get-Asset $packSum; Test-Sum $pack $ps }
@@ -65,18 +70,21 @@ function Run-Node { param([Parameter(ValueFromRemainingArguments = $true)]$Args2
 $HomeDir = if ($env:CY_AGENT_HOME) { $env:CY_AGENT_HOME } else { Join-Path $env:USERPROFILE '.cy-agent' }
 New-Item -ItemType Directory -Force -Path $HomeDir | Out-Null
 
-if ($pack) { Say "캐릭터 넣기"; Run-Node (Join-Path $Root 'ops\character-pack\import.mjs') $pack | Out-Null }
+if ($pack -and -not $UpdateOnly) { Say "캐릭터 넣기"; Run-Node (Join-Path $Root 'ops\character-pack\import.mjs') $pack | Out-Null }
 
-Say "처음 설정"
+$hasClaude = [bool](Get-Command claude -ErrorAction SilentlyContinue)
 $cfgPath = Join-Path $HomeDir 'config.json'
+if (-not $UpdateOnly -and -not (Test-Path $cfgPath)) {
+Say "처음 설정"
 $cfg = @{}
-if (Test-Path $cfgPath) { try { $cfg = Get-Content $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable } catch { try { $o = Get-Content $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json; $cfg = @{}; $o.PSObject.Properties | ForEach-Object { $cfg[$_.Name] = $_.Value } } catch { $cfg = @{} } } }
 $hasClaude = [bool](Get-Command claude -ErrorAction SilentlyContinue)
 if (-not $cfg.ContainsKey('brain') -and $hasClaude) { $cfg['brain'] = @{ provider = 'claude-code' } }
 if ($cfg.ContainsKey('brain') -and -not $cfg.ContainsKey('onboarded')) { $cfg['onboarded'] = $true }
 if (-not $cfg.ContainsKey('calendarAlert')) { $cfg['calendarAlert'] = @{ minutesBefore = @(30, 10) } }
 [IO.File]::WriteAllText($cfgPath, ($cfg | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false))
 if ($hasClaude) { Write-Host "AI: Claude Code" } else { Write-Host "AI: 앱을 켜면 고르는 화면이 나와요" }
+
+}
 
 if (-not $NoHooks) {
   Say "AI 작업 연동"
@@ -93,7 +101,7 @@ Remove-Item -Recurse -Force $Work -ErrorAction SilentlyContinue
 Write-Host @"
 
 🎉 설치 끝! 작업 표시줄 오른쪽 알림 영역(시계 옆, 안 보이면 ^)의 캐릭터 얼굴 아이콘 → 「홈」, 캐릭터는 「캐릭터 바꾸기」에서.
-다음은 각자 계정으로 해 주세요(앱의 「연결 관리」에서 버튼·붙여 넣기만 하면 돼요):
+기존 계정 연결·설정·기록은 유지됩니다. 처음 설치한 분만 「연결 관리」에서 연결하세요:
   • Slack · 메일(Gmail 앱 비밀번호) · 캘린더(iCal 비공개 주소) · 노션 · GitHub
 처음 실행할 때 파란 「Windows의 PC 보호」 창이 뜨면 「추가 정보」 → 「실행」.
 "@
