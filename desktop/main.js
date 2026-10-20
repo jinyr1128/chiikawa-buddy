@@ -1486,8 +1486,9 @@ function setupIPC() {
     preload: path.join(__dirname, 'preload-settings.cjs'),
     html: path.join(__dirname, 'renderer', 'settings.html'),
   });
-  ipcMain.on('hide-bubbles', (e) => {
-    if (win && e.sender === win.webContents) appPrefs.set({ bubblesVisible: false });
+  ipcMain.on('toggle-overlay-visibility', (e, kind) => {
+    if (!win || e.sender !== win.webContents || !['bubblesVisible', 'notificationsVisible'].includes(kind)) return;
+    appPrefs.set({ [kind]: state[kind] === false });
   });
   ipcMain.on('set-interactive', (e, on) => {
     if (!win || e.sender !== win.webContents) return;
@@ -2389,8 +2390,8 @@ const appPrefs = {
       saveState();
       sendOverlayPrefs();
     }
-    if (['characterScale', 'bubbleScale', 'bubblesVisible'].some(k => k in patch)) {
-      for (const k of ['characterScale', 'bubbleScale', 'bubblesVisible']) if (k in patch) state[k] = patch[k];
+    if (['characterScale', 'bubbleScale', 'bubblesVisible', 'notificationsVisible'].some(k => k in patch)) {
+      for (const k of ['characterScale', 'bubbleScale', 'bubblesVisible', 'notificationsVisible']) if (k in patch) state[k] = patch[k];
       applyOverlaySize(); saveState(); sendOverlayPrefs();
     }
     return appPrefs.get();

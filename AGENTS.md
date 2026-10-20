@@ -19,7 +19,7 @@
    - Codex: 설정이 필요 없다. CLI 를 원하면 `npm i -g @openai/codex` 후 사용자가 `codex login`.
    - `curl -s http://127.0.0.1:47823/usage` 로 AI 사용량(한도 %·오늘 토큰)이 읽히는지 본다. 한도 %는 그 도구를 한 번 쓰고 나면 채워진다.
 
-업데이트: 저장소 폴더에서 `git pull && ./ops/setup-mac.sh` (앱을 끄고 새 버전으로 바꾼 뒤 다시 켠다. 설정·캐릭터는 그대로).
+업데이트: 저장소 폴더에서 `./ops/update.sh` (앱을 끄고 새 버전으로 바꾼 뒤 다시 켠다. 계정 연결·설정·캐릭터·기록은 그대로).
 
 지우기: `osascript -e 'tell application "치이카와 매니저" to quit'; rm -rf "/Applications/치이카와 매니저.app"` (데이터는 `~/.cy-agent`, Claude 연동 끄기는 `node ops/claude-hooks.mjs off`, Hermes 는 `node ops/hermes-hooks.mjs off`).
 

@@ -4,7 +4,7 @@ import { appearance, overlayLayout, resizeOverlay } from '../src/appearance.js';
 import { sanitizeAppPrefs } from '../src/settings.js';
 import { pickAsset, RELEASES_PAGE } from '../src/update-check.js';
 test('old settings retain default appearance; invalid persisted scales recover',()=>{
- assert.deepEqual(appearance({}),{characterScale:100,bubbleScale:100,bubblesVisible:true});
+ assert.deepEqual(appearance({}),{characterScale:100,bubbleScale:100,bubblesVisible:true,notificationsVisible:true});
  assert.equal(appearance({characterScale:NaN}).characterScale,100);
  assert.equal(appearance({characterScale:1000}).characterScale,150);
  assert.equal(appearance({bubblesVisible:false}).bubblesVisible,false);
@@ -27,4 +27,11 @@ test('settings accepts scales and visibility but rejects malformed values',()=>{
 test('public Mac zip release can be discovered by update notification',()=>{
  const url=`${RELEASES_PAGE}/download/v0.5.1/chiikawa-manager-arm64.zip`;
  assert.equal(pickAsset([{name:'chiikawa-manager-arm64.zip',browser_download_url:url}],{platform:'darwin',arch:'arm64'}).url,url);
+});
+
+test('bubble and translucent notification visibility are independent',()=>{
+ assert.equal(appearance({bubblesVisible:false}).notificationsVisible,true);
+ assert.equal(appearance({notificationsVisible:false}).bubblesVisible,true);
+ assert.deepEqual(sanitizeAppPrefs({notificationsVisible:false,bubblesVisible:true}),{notificationsVisible:false,bubblesVisible:true});
+ assert.equal(sanitizeAppPrefs({notificationsVisible:'false'}),null);
 });

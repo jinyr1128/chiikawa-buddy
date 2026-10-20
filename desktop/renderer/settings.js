@@ -249,7 +249,8 @@ function renderAppPrefs() {
   const rows = [
     { key: 'openAtLogin', on: login.on === true, label: `로그인할 때 ${who()} 켜기`, disabled: !login.available },
     { key: 'updateCheck', on: appPrefs.updateCheck !== false, label: '새 버전이 나오면 알려 주기 (하루 한 번 확인)' },
-    { key: 'bubblesVisible', on: appPrefs.bubblesVisible !== false, label: '말풍선 표시 (끄면 캐릭터만 보여요 · 알림 내역은 홈에서 확인)' },
+    { key: 'bubblesVisible', on: appPrefs.bubblesVisible !== false, label: '말풍선 표시 (대화·작업 상태·입력창)' },
+    { key: 'notificationsVisible', on: appPrefs.notificationsVisible !== false, label: '반투명 알림 표시 (숨겨도 알림은 홈에 쌓여요)' },
     { key: 'panelOverlay', on: appPrefs.panelOverlay !== false, label: '캐릭터 위에 답·입력창 (패널이나 다른 창에서 한 대화의 답도 캐릭터 위에 띄워요 · 캐릭터 위에 마우스를 2초 두면 입력창이 열려요)' },
   ];
   for (const r of rows) {
@@ -1313,3 +1314,6 @@ window.addEventListener('focus', () => { cy.getSettings().then((r) => { if (r?.o
 window.addEventListener('focus', () => { loadCalendars(); }); // 패널에서 캘린더를 더하거나 뺐으면
 window.addEventListener('focus', () => { if (!busy.size) cy.getConnections().then((c) => { if (c?.ok && Array.isArray(c.data?.rows)) { rows = mergeRows(rows, c.data.rows); renderRows(); } }).catch(() => {}); });
 load();
+
+// 캐릭터 옆 버튼으로 바꾼 표시 설정도 창으로 돌아오면 맞춘다.
+window.addEventListener('focus', () => loadAppPrefs());

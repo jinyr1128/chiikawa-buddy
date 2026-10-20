@@ -437,7 +437,7 @@ export function metaText(row, now = new Date()) {
 export function sanitizeAppPrefs(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
   const keys = Object.keys(p);
-  if (!keys.length || !keys.every((k) => k === 'openAtLogin' || k === 'updateCheck' || k === 'panelOverlay' || k === 'characterScale' || k === 'bubbleScale' || k === 'bubblesVisible')) return null;
+  if (!keys.length || !keys.every((k) => k === 'openAtLogin' || k === 'updateCheck' || k === 'panelOverlay' || k === 'characterScale' || k === 'bubbleScale' || k === 'bubblesVisible' || k === 'notificationsVisible')) return null;
   const out = {};
   for (const k of keys) {
     if (k === 'characterScale' || k === 'bubbleScale') {

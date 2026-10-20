@@ -16,7 +16,7 @@ contextBridge.exposeInMainWorld('cy', {
   onChat: on('chat'),
   // { panelOverlay, panelOpen } — 설정 「패널이 열려 있어도 캐릭터 위에 답 띄우기」 · 지금 패널이 보이는지
   onOverlayPrefs: on('overlay-prefs'),
-  hideBubbles: () => ipcRenderer.send('hide-bubbles'),
+  toggleOverlayVisibility: (kind) => ipcRenderer.send('toggle-overlay-visibility', String(kind)),
   onAgents: on('agents'), // { running } — 돌고 있는 서브에이전트 수(캡션 "에이전트 N개 실행 중")
   setInteractive: (v) => ipcRenderer.send('set-interactive', !!v),
   // 윈도우: 메인이 직접 물은 커서 위치(창 안 좌표 { x, y }, 밖이면 null) — forward 의 mousemove 가 끊겨도 hit 검사를 하게(src/hit-watch.js)

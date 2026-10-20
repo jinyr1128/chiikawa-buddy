@@ -1,7 +1,7 @@
 // 로컬 표시 설정. 데몬/계정 정보와 분리해 이 컴퓨터에만 저장한다.
 export function appearance(p = {}) {
   const scale = v => typeof v === 'number' && Number.isFinite(v) ? Math.max(50, Math.min(150, v)) : 100;
-  return { characterScale: scale(p.characterScale), bubbleScale: scale(p.bubbleScale), bubblesVisible: p.bubblesVisible !== false };
+  return { characterScale: scale(p.characterScale), bubbleScale: scale(p.bubbleScale), bubblesVisible: p.bubblesVisible !== false, notificationsVisible: p.notificationsVisible !== false };
 }
 export function overlayLayout(p = {}, area = { width: 10000, height: 10000 }) {
   const a = appearance(p);

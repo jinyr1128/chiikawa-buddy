@@ -672,9 +672,11 @@ body.char-hidden #stage { visibility: hidden; }
 
 /* 크기 조절은 레이아웃 배율을 사용해 실제 클릭 영역도 함께 맞춘다. */
 #stage > * { flex-shrink: 0; }
-#stage > :not(#char-wrap) { zoom: var(--bubble-zoom, 1); }
+#stage > :not(#char-wrap):not(#visibility-controls) { zoom: var(--bubble-zoom, 1); }
 #char-wrap { zoom: var(--character-zoom, 1); }
 #stack { width: 380px; max-width: none; }
 #toasts { width: 380px; max-width: none; }
-body.bubbles-hidden #stage > :not(#char-wrap) { display: none !important; }
-#hide-bubbles { border: 1px solid var(--bubble-border); border-radius: 9px; padding: 3px 8px; margin: 0 0 4px; font: inherit; font-size: 11px; color: var(--bubble-muted); background: var(--bubble-bg); cursor: pointer; }
+body.bubbles-hidden :is(#stack, #focus, #doing, #ask, #caption) { display: none !important; }
+body.notifications-hidden #toasts { display: none !important; }
+#visibility-controls { display: flex; gap: 4px; margin-bottom: 4px; }
+#visibility-controls button { border: 1px solid var(--bubble-border); border-radius: 9px; padding: 3px 8px; margin: 0 0 4px; font: inherit; font-size: 11px; color: var(--bubble-muted); background: var(--bubble-bg); cursor: pointer; }
