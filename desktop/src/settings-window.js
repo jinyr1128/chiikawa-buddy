@@ -84,7 +84,7 @@ export function setupSettings(deps) {
   });
   // 출처 링크(「날씨: Open-Meteo」·CC BY 4.0): 정해 둔 두 주소만 기본 브라우저로
   ipcMain.on('settings-open-source', (e, which) => {
-    const url = { weather: WEATHER_ATTRIBUTION.url, license: WEATHER_ATTRIBUTION.licenseUrl }[which];
+    const url = { updates: 'https://github.com/jinyr1128/chiikawa-manager/releases/latest', weather: WEATHER_ATTRIBUTION.url, license: WEATHER_ATTRIBUTION.licenseUrl }[which];
     if (isMine(e) && url) deps.shell?.openExternal?.(url);
   });
   ipcMain.handle('settings-calendars', (e) => (isMine(e) && deps.calendars ? deps.calendars() : denied()));

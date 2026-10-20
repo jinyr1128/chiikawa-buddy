@@ -888,7 +888,12 @@ function showReply(r) {
 cy.onChat((ev) => { catchUp(); dispatchChat({ type: 'event', ev }); });
 // 설정 「패널이 열려 있어도 캐릭터 위에 답 띄우기」(기본 켜짐) · 지금 패널이 보이는지(메인이 알려 줌)
 let overlay = { panelOverlay: false, panelOpen: false };
+document.getElementById('hide-bubbles')?.addEventListener('click', () => cy.hideBubbles?.());
 cy.onOverlayPrefs?.((p) => {
+  document.documentElement.style.setProperty('--character-zoom', String(p.characterZoom ?? 1));
+  document.documentElement.style.setProperty('--bubble-zoom', String(p.bubbleZoom ?? 1));
+  document.body.classList.toggle('bubbles-hidden', p.bubblesVisible === false);
+  requestAnimationFrame(() => recheckHit());
   overlay = { panelOverlay: p?.panelOverlay === true, panelOpen: p?.panelOpen === true };
   dispatchChat({ type: 'all', on: overlay.panelOverlay }); // 켜면 패널에서 한 대화의 답도 머리 위 말풍선으로
   if (!hoverAskAllowed(hoverAskState())) hoverAsk.cancel(); // 끄거나 패널을 닫으면 재던 호버 입력창도 취소

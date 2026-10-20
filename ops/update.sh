@@ -14,4 +14,4 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
 fi
 echo "→ 최신 코드 받는 중…"
 git pull -q --ff-only || { echo "✗ 최신 코드를 받지 못했어요. 인터넷 연결을 확인해 주세요."; exit 1; }
-exec "$DIR/ops/setup-mac.sh" "$@"
+exec "$DIR/ops/setup-mac.sh" --update-only "$@"

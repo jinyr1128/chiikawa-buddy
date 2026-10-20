@@ -12,10 +12,11 @@ REPO="$(git -C "$(dirname "$0")/.." remote get-url origin 2>/dev/null | sed -E '
 TAG=""
 PREFIX="/Applications"
 HOME_DIR="${CY_AGENT_HOME:-$HOME/.cy-agent}"
-BUILD=0; HOOKS=1; OPEN=1
+BUILD=0; HOOKS=1; OPEN=1; UPDATE_ONLY=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --build) BUILD=1 ;;
+    --update-only) UPDATE_ONLY=1; HOOKS=0 ;;
     --tag) TAG="$2"; shift ;;
     --prefix) PREFIX="$2"; shift ;;
     --home) HOME_DIR="$2"; shift ;;
@@ -109,11 +110,12 @@ xattr -dr com.apple.quarantine "$APP" 2>/dev/null || true
 NODE_BIN="$(command -v node || true)"
 run_node() { if [ -n "$NODE_BIN" ]; then "$NODE_BIN" "$@"; else ELECTRON_RUN_AS_NODE=1 "$APP/Contents/MacOS/chiikawa-buddy" "$@"; fi; }
 
-if [ -n "${PACK:-}" ] && [ -f "$PACK" ]; then
+if [ "$UPDATE_ONLY" = 0 ] && [ -n "${PACK:-}" ] && [ -f "$PACK" ]; then
   say "캐릭터 넣기"
   CY_AGENT_HOME="$HOME_DIR" run_node "$ROOT/ops/character-pack/import.mjs" "$PACK"
 fi
 
+if [ "$UPDATE_ONLY" = 0 ] && [ ! -f "$HOME_DIR/config.json" ]; then
 say "처음 설정"
 mkdir -p "$HOME_DIR"
 CY_AGENT_HOME="$HOME_DIR" run_node -e '
@@ -127,6 +129,8 @@ c.calendarAlert = c.calendarAlert ?? { minutesBefore: [30, 10] }; // 회의 30�
 fs.writeFileSync(p, JSON.stringify(c, null, 2) + "\n", { mode: 0o600 });
 console.log(claude ? "AI: Claude Code" : "AI: 앱을 켜면 고르는 화면이 나와요");
 '
+
+fi
 
 if [ "$HOOKS" = 1 ]; then
   say "AI 작업 연동"
@@ -146,7 +150,7 @@ fi
 cat <<EOF
 
 🎉 설치 끝! 메뉴 막대(화면 위 오른쪽)의 아이콘 → 「홈」, 캐릭터는 「캐릭터 바꾸기」에서.
-다음은 각자 계정으로 해 주세요(앱의 「연결 관리」 화면에서 버튼·붙여 넣기만 하면 돼요):
+기존 계정 연결·설정·기록은 유지됩니다. 처음 설치한 분만 「연결 관리」에서 연결하세요:
   • Slack · 메일(Gmail 앱 비밀번호) · 캘린더(맥 캘린더 계정) · 노션 · GitHub
 처음 캘린더를 고를 때 macOS 가 「캘린더 접근」을 물으면 [허용].
 EOF

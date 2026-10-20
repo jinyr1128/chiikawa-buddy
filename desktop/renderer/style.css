@@ -669,3 +669,12 @@ body.char-hidden #stage { visibility: hidden; }
 .toast.speech-box, .toast.speech-box:hover { background: rgba(38, 38, 43, 0.92); border-color: rgba(255, 255, 255, 0.08); color: #f5f5f7; }
 .toast.speech-box .toast-time { color: rgba(235, 235, 245, 0.55); }
 .toast.speech-box .toast-body { color: rgba(235, 235, 245, 0.75); }
+
+/* 크기 조절은 레이아웃 배율을 사용해 실제 클릭 영역도 함께 맞춘다. */
+#stage > * { flex-shrink: 0; }
+#stage > :not(#char-wrap) { zoom: var(--bubble-zoom, 1); }
+#char-wrap { zoom: var(--character-zoom, 1); }
+#stack { width: 380px; max-width: none; }
+#toasts { width: 380px; max-width: none; }
+body.bubbles-hidden #stage > :not(#char-wrap) { display: none !important; }
+#hide-bubbles { border: 1px solid var(--bubble-border); border-radius: 9px; padding: 3px 8px; margin: 0 0 4px; font: inherit; font-size: 11px; color: var(--bubble-muted); background: var(--bubble-bg); cursor: pointer; }

@@ -437,10 +437,12 @@ export function metaText(row, now = new Date()) {
 export function sanitizeAppPrefs(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
   const keys = Object.keys(p);
-  if (!keys.length || !keys.every((k) => k === 'openAtLogin' || k === 'updateCheck' || k === 'panelOverlay')) return null;
+  if (!keys.length || !keys.every((k) => k === 'openAtLogin' || k === 'updateCheck' || k === 'panelOverlay' || k === 'characterScale' || k === 'bubbleScale' || k === 'bubblesVisible')) return null;
   const out = {};
   for (const k of keys) {
-    if (typeof p[k] !== 'boolean') return null;
+    if (k === 'characterScale' || k === 'bubbleScale') {
+      if (typeof p[k] !== 'number' || !Number.isFinite(p[k]) || p[k] < 50 || p[k] > 150) return null;
+    } else if (typeof p[k] !== 'boolean') return null;
     out[k] = p[k];
   }
   return out;

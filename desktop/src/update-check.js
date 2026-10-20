@@ -1,5 +1,5 @@
 // 새 버전 알림: 하루 한 번 GitHub Releases 의 최신 릴리스를 보고(인증 없이), 지금보다 새로우면 캐릭터 말풍선. 순수 로직.
-export const REPO_SLUG = 'jinyr1128/chiikawa-buddy'; // 치이카와 버디: 원본 시사 릴리스로 덮어쓰라고 알리지 않게 우리 저장소만 본다
+export const REPO_SLUG = 'jinyr1128/chiikawa-manager'; // 치이카와 버디: 원본 시사 릴리스로 덮어쓰라고 알리지 않게 우리 저장소만 본다
 // 목록으로 본다: 윈도우는 맥과 따로 v<버전>-windows 릴리스(--latest=false)라 /releases/latest 로는 윈도우 PC 가 늘 맥 릴리스만 봤다
 export const RELEASES_API = `https://api.github.com/repos/${REPO_SLUG}/releases?per_page=100`;
 export const RELEASES_PAGE = `https://github.com/${REPO_SLUG}/releases`;
@@ -39,7 +39,7 @@ function assetMatchers({ platform, arch, portable }) {
     if (portable) return archs.map((a) => new RegExp(`-win-${a}\\.zip$`, 'i'));
     return archs.map((a) => (a === 'x64' ? (n) => /-Setup\.exe$/i.test(n) && !/-arm64-Setup\.exe$/i.test(n) : /-arm64-Setup\.exe$/i));
   }
-  if (platform === 'darwin') return archs.map((a) => new RegExp(`-${a}\\.dmg$`, 'i'));
+  if (platform === 'darwin') return archs.flatMap((a) => [new RegExp(`-${a}\\.dmg$`, 'i'), new RegExp(`^chiikawa-manager-${a}\\.zip$`, 'i')]);
   return [];
 }
 const matches = (m, name) => (typeof m === 'function' ? m(name) : m.test(name));
@@ -101,11 +101,11 @@ export function updateBubble({ version, url, assetUrl, checkout = false, platfor
     ? `새 버전 v${version} 가 나왔어요. 받은 레포 폴더에서 ./ops/update.sh 를 실행하면 바뀌어요.`
     : platform === 'win32'
       ? portable
-        ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 ChiikawaManager.exe 를 실행하면 돼요. 할 일·기록은 그대로예요.`
-        : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 매니저를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 할 일·기록은 그대로예요.`
+        ? `새 버전 v${version} 가 나왔어요. 치이카와 매니저를 종료하고 새 zip 을 받아 풀어서 ChiikawaManager.exe 를 실행하면 돼요. 계정 연결·설정·기록은 그대로예요.`
+        : `새 버전 v${version} 가 나왔어요. 알림 영역 아이콘에서 치이카와 매니저를 종료한 뒤 새 Setup.exe 를 받아 실행하면 바뀌어요. 계정 연결·설정·기록은 그대로예요.`
       : platform === 'darwin'
-        ? `새 버전 v${version} 가 나왔어요. 받은 저장소 폴더에서 ./ops/update.sh 를 실행하거나, AI에게 「치이카와 매니저 업데이트해줘」라고 하면 돼요. 할 일·기록은 그대로예요.`
-        : `새 버전 v${version} 가 나왔어요. 새 버전을 받아 바꿔 주세요. 할 일·기록은 그대로예요.`;
+        ? `새 버전 v${version} 가 나왔어요. 받은 저장소 폴더에서 ./ops/update.sh 를 실행하거나, AI에게 「치이카와 매니저 업데이트해줘」라고 하면 돼요. 계정 연결·설정·기록은 그대로예요.`
+        : `새 버전 v${version} 가 나왔어요. 새 버전을 받아 바꿔 주세요. 계정 연결·설정·기록은 그대로예요.`;
   const link = (!checkout && assetUrl) || url || RELEASES_PAGE;
   return { id: BUBBLE_ID, kind: 'info', text, link, linkLabel: checkout ? '바뀐 점 보기' : '받으러 가기', ttlMs: 120000, closable: true };
 }

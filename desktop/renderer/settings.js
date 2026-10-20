@@ -249,6 +249,7 @@ function renderAppPrefs() {
   const rows = [
     { key: 'openAtLogin', on: login.on === true, label: `로그인할 때 ${who()} 켜기`, disabled: !login.available },
     { key: 'updateCheck', on: appPrefs.updateCheck !== false, label: '새 버전이 나오면 알려 주기 (하루 한 번 확인)' },
+    { key: 'bubblesVisible', on: appPrefs.bubblesVisible !== false, label: '말풍선 표시 (끄면 캐릭터만 보여요 · 알림 내역은 홈에서 확인)' },
     { key: 'panelOverlay', on: appPrefs.panelOverlay !== false, label: '캐릭터 위에 답·입력창 (패널이나 다른 창에서 한 대화의 답도 캐릭터 위에 띄워요 · 캐릭터 위에 마우스를 2초 두면 입력창이 열려요)' },
   ];
   for (const r of rows) {
@@ -266,6 +267,32 @@ function renderAppPrefs() {
     lab.append(cb, document.createTextNode(r.label));
     box.append(lab);
   }
+  for (const [key, title] of [['characterScale', '캐릭터 크기'], ['bubbleScale', '안내 말풍선 크기']]) {
+    const row = el('label', 'appearance-size');
+    const label = el('span', null, title);
+    const slider = el('input'); slider.type = 'range'; slider.min = '50'; slider.max = '150'; slider.step = '10';
+    slider.value = String(appPrefs[key] ?? 100); slider.setAttribute('aria-label', title);
+    const value = el('output', null, `${slider.value}%`);
+    slider.addEventListener('input', () => { value.textContent = `${slider.value}%`; });
+    slider.addEventListener('change', async () => {
+      slider.disabled = true;
+      const res = await cy.setAppPrefs({ [key]: Number(slider.value) }).catch(() => null);
+      if (res?.ok) { appPrefs = res; flash('크기를 저장했어요'); } else flash('저장하지 못했어요. 다시 시도해 주세요');
+      renderAppPrefs();
+    });
+    row.append(label, slider, value); box.append(row);
+  }
+  const reset = el('button', 'small', '크기 기본값으로'); reset.type = 'button';
+  reset.addEventListener('click', async () => {
+    reset.disabled = true;
+    const res = await cy.setAppPrefs({ characterScale: 100, bubbleScale: 100 }).catch(() => null);
+    if (res?.ok) { appPrefs = res; flash('기본 크기로 바꿨어요'); }
+    renderAppPrefs();
+  });
+  box.append(reset, el('p', 'hint', '50~150% · 놓으면 바로 적용되고 다음 실행에도 유지돼요. 작은 화면에서는 화면에 맞춰 줄여요.'));
+  const update = el('button', 'small', '업데이트 다운로드 · 방법 보기');
+  update.type = 'button'; update.addEventListener('click', () => cy.openSource('updates'));
+  box.append(update, el('p', 'hint', '앱을 종료한 뒤 새 버전으로 교체하세요. 연결된 계정·설정·기록은 앱 밖에 보관되어 유지돼요. 앱 삭제/연결 해제는 하지 마세요.'));
   const hint = $('app-hint');
   hint.textContent = login.hint || '';
   hint.hidden = !login.hint;

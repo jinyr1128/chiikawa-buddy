@@ -62,7 +62,8 @@ const SQUIRREL = squirrelPlan({ platform: process.platform, argv: process.argv, 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.CY_AGENT_PORT) || 47823;
 const BASE = `http://127.0.0.1:${PORT}`;
-const SIZE = { width: 420, height: 580 }; // 그림 말풍선(스티커)+넓은 목록 말풍선(380px)이 들어가게. 투명·클릭 투과라 커도 안 보인다
+let SIZE = { width: 420, height: 580 };
+import { appearance, overlayLayout, resizeOverlay } from './src/appearance.js'; // 그림 말풍선(스티커)+넓은 목록 말풍선(380px)이 들어가게. 투명·클릭 투과라 커도 안 보인다
 const OLD_HEIGHT = 420; // 예전 창 높이 — 저장된 위치를 그만큼 올려 캐릭터 자리를 유지
 const OLD_WIDTH = 360; // 예전 창 너비 — 넓어진 만큼의 절반을 왼쪽으로(캐릭터는 가운데라 자리 유지)
 // 개인 캐릭터 그림(저장소 밖). 없으면 번들 플레이스홀더
@@ -487,6 +488,7 @@ function attachContentsDebug(wc, tag) {
 
 // ---- 창 ----
 function initialPosition() {
+  SIZE = overlaySize();
   const areas = screen.getAllDisplays().map((d) => d.workArea);
   // 창 높이가 바뀌었으면 저장 위치를 그만큼 올린다(캐릭터는 창 아래에 붙어 있음)
   const savedH = Number(state.winHeight) || OLD_HEIGHT;
@@ -573,8 +575,25 @@ function send(channel, payload) {
 }
 
 // 설정 「패널이 열려 있어도 캐릭터 위에 답 띄우기」(기본 켜짐)와 지금 패널이 보이는지. 캐릭터 창이 다른 창 답 말풍선·2초 호버 입력창을 정한다
+function overlaySize() {
+  const area = win && !win.isDestroyed() ? screen.getDisplayMatching(win.getBounds()).workArea : screen.getPrimaryDisplay().workArea;
+  const { width, height } = overlayLayout(state, area);
+  return { width, height };
+}
+function applyOverlaySize() {
+  if (!win || win.isDestroyed()) return;
+  const bounds = win.getBounds();
+  const area = screen.getDisplayMatching(bounds).workArea;
+  SIZE = overlaySize();
+  const next = resizeOverlay(bounds, SIZE, area);
+  win.setBounds(next);
+  state.pos = { x: next.x, y: next.y };
+  state.winWidth = SIZE.width; state.winHeight = SIZE.height;
+  saveState();
+}
 function sendOverlayPrefs() {
-  send('overlay-prefs', { panelOverlay: state.panelOverlay !== false, panelOpen: !!(panel && !panel.isDestroyed() && panel.isVisible()) });
+  if (!win || win.isDestroyed()) return;
+  send('overlay-prefs', { ...appearance(state), ...overlayLayout(state, screen.getDisplayMatching(win.getBounds()).workArea), panelOverlay: state.panelOverlay !== false, panelOpen: !!(panel && !panel.isDestroyed() && panel.isVisible()) });
 }
 
 function sendPanel(channel, payload) {
@@ -1467,6 +1486,9 @@ function setupIPC() {
     preload: path.join(__dirname, 'preload-settings.cjs'),
     html: path.join(__dirname, 'renderer', 'settings.html'),
   });
+  ipcMain.on('hide-bubbles', (e) => {
+    if (win && e.sender === win.webContents) appPrefs.set({ bubblesVisible: false });
+  });
   ipcMain.on('set-interactive', (e, on) => {
     if (!win || e.sender !== win.webContents) return;
     wantInteractive = !!on;
@@ -2346,7 +2368,7 @@ const appPrefs = {
     if (p.manage) {
       try { on = app.getLoginItemSettings(loginTarget()).openAtLogin === true; } catch { on = state.openAtLogin === true; }
     }
-    return { ok: true, version: app.getVersion(), openAtLogin: { available: p.manage, on, hint: loginItemHint(p.reason) }, updateCheck: state.updateCheck !== false, panelOverlay: state.panelOverlay !== false };
+    return { ok: true, version: app.getVersion(), ...appearance(state), openAtLogin: { available: p.manage, on, hint: loginItemHint(p.reason) }, updateCheck: state.updateCheck !== false, panelOverlay: state.panelOverlay !== false };
   },
   set(patch) {
     if ('openAtLogin' in patch) {
@@ -2366,6 +2388,10 @@ const appPrefs = {
       state.panelOverlay = patch.panelOverlay;
       saveState();
       sendOverlayPrefs();
+    }
+    if (['characterScale', 'bubbleScale', 'bubblesVisible'].some(k => k in patch)) {
+      for (const k of ['characterScale', 'bubbleScale', 'bubblesVisible']) if (k in patch) state[k] = patch[k];
+      applyOverlaySize(); saveState(); sendOverlayPrefs();
     }
     return appPrefs.get();
   },
@@ -2454,7 +2480,7 @@ if (SQUIRREL) {
     // 클릭 투과 보강(윈도우): 커서를 직접 물어 hit 검사 · 절전/잠금·화면 바뀜 뒤엔 forward 훅을 바로 다시 건다
     startHitWatch();
     for (const ev of ['resume', 'unlock-screen']) powerMonitor.on(ev, () => hitWatch?.rearmNow());
-    for (const ev of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(ev, () => hitWatch?.rearmNow());
+    for (const ev of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(ev, () => { applyOverlaySize(); sendOverlayPrefs(); hitWatch?.rearmNow(); });
 
     // 디스플레이 구성 바뀌면 화면 밖으로 나갔는지 확인
     screen.on('display-removed', () => {

@@ -283,3 +283,8 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin:
 .cal-editor input[type="text"] { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); min-width: 0; }
 .cal-editor .setup-gate { margin: 0; font-size: 12px; color: var(--err-fg); }
 .cal-editor .setup-gate.ok { color: var(--ok); }
+
+.appearance-size { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.appearance-size span { min-width: 120px; }
+.appearance-size input { flex: 1; min-width: 80px; }
+.appearance-size output { min-width: 42px; text-align: right; }
