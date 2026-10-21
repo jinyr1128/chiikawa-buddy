@@ -17,7 +17,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 if (-not $Repo) {
   try { $u = (git -C $Root remote get-url origin 2>$null); if ($u -match 'github\.com[:/]([^/]+/[^/.]+)') { $Repo = $Matches[1] } } catch {}
 }
-if (-not $Repo) { $Repo = 'jinyr1128/chiikawa-manager' }
+if (-not $Repo) { $Repo = 'jinyr1128/chiikawa-buddy' }
 
 $HomeDir = if ($env:CY_AGENT_HOME) { $env:CY_AGENT_HOME } else { Join-Path $env:USERPROFILE '.cy-agent' }
 $existingApp = Join-Path $env:LOCALAPPDATA 'ChiikawaManager\Update.exe'

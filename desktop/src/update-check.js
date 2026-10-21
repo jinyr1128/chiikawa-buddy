@@ -1,5 +1,5 @@
 // 새 버전 알림: 하루 한 번 GitHub Releases 의 최신 릴리스를 보고(인증 없이), 지금보다 새로우면 캐릭터 말풍선. 순수 로직.
-export const REPO_SLUG = 'jinyr1128/chiikawa-manager'; // 치이카와 버디: 원본 시사 릴리스로 덮어쓰라고 알리지 않게 우리 저장소만 본다
+export const REPO_SLUG = 'jinyr1128/chiikawa-buddy'; // 치이카와 버디: 원본 시사 릴리스로 덮어쓰라고 알리지 않게 우리 저장소만 본다
 // 목록으로 본다: 윈도우는 맥과 따로 v<버전>-windows 릴리스(--latest=false)라 /releases/latest 로는 윈도우 PC 가 늘 맥 릴리스만 봤다
 export const RELEASES_API = `https://api.github.com/repos/${REPO_SLUG}/releases?per_page=100`;
 export const RELEASES_PAGE = `https://github.com/${REPO_SLUG}/releases`;

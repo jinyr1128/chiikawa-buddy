@@ -8,7 +8,7 @@
 set -euo pipefail
 
 REPO="$(git -C "$(dirname "$0")/.." remote get-url origin 2>/dev/null | sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##')"
-[ -n "$REPO" ] || REPO="jinyr1128/chiikawa-manager"
+[ -n "$REPO" ] || REPO="jinyr1128/chiikawa-buddy"
 TAG=""
 PREFIX="/Applications"
 HOME_DIR="${CY_AGENT_HOME:-$HOME/.cy-agent}"

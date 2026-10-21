@@ -14,7 +14,7 @@
 내 컴퓨터의 파일·터미널을 사용할 수 있는 AI에게 아래 내용을 그대로 붙여 넣으세요.
 
 ```text
-https://github.com/jinyr1128/chiikawa-manager
+https://github.com/jinyr1128/chiikawa-buddy
 이거 내 컴퓨터에 설치해줘. 최신 AGENTS.md를 읽고 진행해줘.
 이미 설치되어 있으면 기존 계정 연결·설정·캐릭터·기록을 그대로 유지하고 최신 버전으로 업데이트해줘.
 설치 후 실행과 버전, 연결 상태까지 확인해줘.
@@ -40,8 +40,8 @@ https://github.com/jinyr1128/chiikawa-manager
 
 ### AI 없이 직접 설치하는 분
 
-- **Mac M1 이상:** [최신 Mac 다운로드](https://github.com/jinyr1128/chiikawa-manager/releases/latest)에서 `chiikawa-manager-arm64.zip`을 받습니다. 압축을 풀고 앱을 ‘응용 프로그램’으로 옮겨 실행합니다. AI 작업 연동까지 자동으로 설정하려면 아래 AI 설치 방법을 이용하세요.
-- **Windows 10·11:** [Windows 릴리스](https://github.com/jinyr1128/chiikawa-manager/releases?q=windows&expanded=true)에서 가장 최신 버전의 `Setup.exe`를 받아 실행합니다. Mac zip은 Windows에서 실행되지 않습니다.
+- **Mac M1 이상:** [최신 Mac 다운로드](https://github.com/jinyr1128/chiikawa-buddy/releases/latest)에서 `chiikawa-manager-arm64.zip`을 받습니다. 압축을 풀고 앱을 ‘응용 프로그램’으로 옮겨 실행합니다. AI 작업 연동까지 자동으로 설정하려면 아래 AI 설치 방법을 이용하세요.
+- **Windows 10·11:** [Windows 릴리스](https://github.com/jinyr1128/chiikawa-buddy/releases?q=windows&expanded=true)에서 가장 최신 버전의 `Setup.exe`를 받아 실행합니다. Mac zip은 Windows에서 실행되지 않습니다.
 - 실행 후 메뉴 막대/알림 영역의 캐릭터 아이콘 → **홈 → 연결 관리**에서 필요한 서비스만 연결합니다.
 
 ### 이미 설치한 분 — 연결을 유지하고 업데이트

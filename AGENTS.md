@@ -4,7 +4,7 @@
 
 ## 먼저 기존 설치를 확인한다
 
-- 공개 배포 저장소는 `https://github.com/jinyr1128/chiikawa-manager`이다. 최신 원격 AGENTS.md와 설치 스크립트를 사용한다. 예전 로컬 스크립트로 먼저 설치하지 않는다.
+- 공개 배포 저장소는 `https://github.com/jinyr1128/chiikawa-buddy`이다. 최신 원격 AGENTS.md와 설치 스크립트를 사용한다. 예전 로컬 스크립트로 먼저 설치하지 않는다.
 - OS, 실행 중인 앱의 실제 경로, 설치 위치와 버전을 확인한다. Mac 기본 `/Applications/치이카와 매니저.app`, Windows 기본 `%LOCALAPPDATA%\ChiikawaManager\Update.exe`. 다른 위치에 설치했으면 그 위치를 유지한다.
 - `CY_AGENT_HOME`을 사용했다면 기존 값을 유지한다. 기본 데이터 폴더는 `~/.cy-agent`/`%USERPROFILE%\.cy-agent`, 화면 설정은 OS 앱 데이터의 `cy-agent-desktop`이다. 파일 존재 여부만으로 기존 사용자인지 판단하며 토큰·비밀번호·메모·대화 내용을 출력하거나 복사하지 않는다.
 - **기존 앱/데이터가 있으면 업데이트**, 없으면 신규 설치다. 기존 계정을 연결 해제하거나 데이터·사용자 설정을 지우지 않는다. 개인용 수정 앱이면 공개판으로 덮어쓰지 말고 개인용 소스에 변경을 적용한다.
@@ -16,8 +16,8 @@
 2. 저장소가 아직 없으면 사용자가 준 주소로 `git clone <주소> chiikawa-manager` 한다. 공개 저장소면 GitHub 로그인이 필요 없다.
    - 비공개 저장소(클론이 안 됨)면 `gh auth status` 로 로그인을 확인한다. 로그인은 **사용자가 직접** 한다 — 터미널에 `gh auth login --hostname github.com --git-protocol https --web` 을 띄우고 브라우저에서 코드를 넣고 Authorize 하라고 안내한 뒤 기다린다(비밀번호·코드를 대신 입력하지 않는다). 저장소 주인이 초대한 계정이어야 한다.
 3. 저장소 폴더에서 설치 스크립트를 실행한다(5분 안팎).
-   - 맥: `./ops/setup-mac.sh --repo jinyr1128/chiikawa-manager`. 기존 설치면 `--update-only`를 추가한다. 기본 위치가 아니면 기존 앱의 상위 폴더를 `--prefix`로 지정한다.
-   - 윈도우: `powershell -ExecutionPolicy Bypass -File ops\setup-win.ps1 -Repo jinyr1128/chiikawa-manager` (관리자 권한 필요 없음, `%LOCALAPPDATA%\ChiikawaManager` 에 깔림). 처음 실행 때 「Windows의 PC 보호」 창이 뜨면 사용자에게 「추가 정보 → 실행」을 누르라고 안내한다. 윈도우에서 Claude Code 작업 표시(hook)는 Claude Code 가 쓰는 Git Bash 로 돈다.
+   - 맥: `./ops/setup-mac.sh --repo jinyr1128/chiikawa-buddy`. 기존 설치면 `--update-only`를 추가한다. 기본 위치가 아니면 기존 앱의 상위 폴더를 `--prefix`로 지정한다.
+   - 윈도우: `powershell -ExecutionPolicy Bypass -File ops\setup-win.ps1 -Repo jinyr1128/chiikawa-buddy` (관리자 권한 필요 없음, `%LOCALAPPDATA%\ChiikawaManager` 에 깔림). 처음 실행 때 「Windows의 PC 보호」 창이 뜨면 사용자에게 「추가 정보 → 실행」을 누르라고 안내한다. 윈도우에서 Claude Code 작업 표시(hook)는 Claude Code 가 쓰는 Git Bash 로 돈다.
    - Windows 기존 설치는 `-UpdateOnly`를 추가한다. 휴대용 버전은 기존 위치의 실행 파일과 데이터 경로를 유지해 해당 플랫폼 zip으로 업데이트한다. 설치판으로 임의 전환하지 않는다.
    - 두 설치 스크립트도 기존 앱/설정 파일을 감지하면 초기 설정·캐릭터 가져오기·후크 재설치를 건너뛴다.
    - 공통: 이 폴더를 받아 온 저장소의 최신 릴리스를 받아 설치한다. 실패하면 오류 문구를 그대로 읽고 고친 뒤 다시 실행한다.
