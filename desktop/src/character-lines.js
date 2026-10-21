@@ -1105,13 +1105,13 @@ export const CHARACTER_LINES = {
       "focusAlready": "벌써 {mins}분째 집중 중이잖아. 또 누르게?",
       "focusStop": "{duration} 집중했어? 이제 날 봐 줘! 위로해 줘!",
       "focusIdle": "집중 안 하고 있잖아. 뭘 그만해?",
-      "weatherMorning": "아앙? 오늘 {place} 날씨는 {summary}. 지금 {now} · 최고 {max}/최저 {min}.{rain}",
-      "weatherLeave": "퇴근길 {place}는 {summary}, 지금 {now}. 빨리 가랏!",
-      "weatherLeaveRain": "퇴근길 {what} 온다고! 우산 챙겨! {when}쯤 {what} {prob}, {place} 지금 {now}.",
-      "weatherNow": "아앙? 지금 {place}는 {summary}, {now}야. 오늘 최고 {max}/최저 {min}.{rain}",
-      "weatherRain": " {when}쯤 {what} {prob}. 우산 안 챙기면 몰라!",
-      "weatherNoPlace": "설정에서 지역부터 골라. 그럼 알려 주지.",
-      "weatherFail": "날씨 못 가져왔잖아. 이따 다시 물어봐!"
+      "weatherMorning": "내가 날씨도 알아왔지! 오늘 {place}는 {summary}. 지금 {now} · 최고 {max}/최저 {min}.{rain}",
+      "weatherLeave": "퇴근할 시간이네! {place}는 {summary}, 지금 {now}. 조심히 가라고!",
+      "weatherLeaveRain": "퇴근길 우산 챙겨! {when}쯤 {what} {prob}, {place} 지금 {now}. 내가 알려 줬다!",
+      "weatherNow": "날씨가 궁금해? 지금 {place}는 {summary}, {now}야. 오늘 최고 {max}/최저 {min}.{rain}",
+      "weatherRain": " {when}쯤 {what} {prob}. 우산도 챙겨 두라고!",
+      "weatherNoPlace": "설정의 날씨 지역·알림에서 지역을 골라 줘! 내가 알려 줄게.",
+      "weatherFail": "날씨 소식이 아직 안 왔네! 조금 뒤에 다시 보자."
     },
     "cheer": [
       "날 응원하란 말이야아아아!!! …아, 네가 응원받고 싶다고? 할 수 있어! 그러니까 날 칭찬해!",

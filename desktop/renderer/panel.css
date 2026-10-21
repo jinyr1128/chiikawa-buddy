@@ -1466,3 +1466,7 @@ button.focus-tab.on { background: var(--surface); color: var(--fg); box-shadow: 
 .cal-mac { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
 .cal-mac-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; align-self: center; }
 .cal-mac-list .cal-top { align-items: center; }
+
+#sec-help { max-width: 850px; line-height: 1.8; }
+#sec-help h3 { margin-top: 28px; }
+#sec-help li { margin-bottom: 8px; }

@@ -1,3 +1,4 @@
+import { notionWriteType } from './notion-work.ts';
 // 사용자가 확인하는 쓰기 동작(confirmed actions)과 승인 카드 대기열.
 //
 // 흐름(확인 동작): 모델은 `actions` 로 **제안만** 내고, 데몬이 검증해서 `pending_actions` 에 대기(pending)로 둔다 →
@@ -69,6 +70,7 @@ export interface ActionType<P> {
   verify(p: P, ctx: VerifyCtx): Promise<Result<P>>;    // 대상이 진짜인지 + 카드에 쓸 확인된 데이터 채우기
   call(p: P): ToolCall;                                // 실행할 정확한 호출(이것 말고는 훅이 막는다)
   card(p: P): ActionCard;
+  execute?(p: P): Promise<{ok:boolean;message:string}>;
   result(raw: unknown, p: P): { ok: boolean; message: string };
 }
 
@@ -79,7 +81,7 @@ export function kstWhen(iso: string): string {
 }
 
 // 등록된 확인 동작 종류(type → 정의). 지금은 비어 있다 — 쓰기는 도구 승인 카드로
-export const TYPES: Record<string, ActionType<any>> = {};
+export const TYPES: Record<string, ActionType<any>> = {notion_write:notionWriteType()};
 
 // 카드를 한 줄 글로: "📅 〈주간 회의〉 (10/15 목 10:00) — **수락**으로 응답할까요? 주최자에게 알림이 가요"
 export function cardLine(c: ActionCard): string {
@@ -547,6 +549,7 @@ export class Actions {
       const origin = this.originOf(id);
       res = await withRun({ kind: "action", title: `실행: ${cardLine(t.card(payload)).replace(/\*\*/g, "").slice(0, 100)}`, model: this.cfg.models.light, ref: id, ...(origin ? { origin } : {}) }, async (run) => {
         run.log({ type: "system", text: `승인된 호출: ${JSON.stringify(call)}` });
+        if (t.execute) return t.execute(payload);
         const out = await this.deps.execute(this.cfg, call, run);
         if (!out.called) return { ok: false, message: out.error ? `보내지 못했어요: ${out.error}` : "응답 도구가 호출되지 않았어요 — 보내지 않았어요" };
         const r = t.result(out.raw, payload);

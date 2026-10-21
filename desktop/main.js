@@ -1641,6 +1641,9 @@ function setupIPC() {
   // 캘린더: 목록(별칭·가린 주소·결과) · 더하기(별칭 + 주소, 데몬이 시험으로 읽고 저장) · 별칭 고치기 · 켜기/끄기 · 하나 빼기(id)
   ipcMain.handle('calendar-list', async (e) => (fromOurs(e) ? { ok: true, items: await calendarList() } : denied()));
   // 노션 연결(GET·POST /connectors/notion) — 열쇠는 데몬이 확인하고 config.json 에만 둔다
+  ipcMain.handle('notion-daily-status', e => fromOurs(e) ? request('GET', '/notion-daily') : denied());
+  ipcMain.handle('notion-daily-configure', (e,b) => fromOurs(e) && b && typeof b.enabled === 'boolean' && (b.parent === undefined || typeof b.parent === 'string' && b.parent.length < 500) ? post('/notion-daily', b, 30_000) : denied());
+  ipcMain.handle('notion-daily-run', e => fromOurs(e) ? post('/notion-daily/run', {}) : denied());
   ipcMain.handle('notion-status', (e) => (fromOurs(e) ? request('GET', '/connectors/notion') : denied()));
   ipcMain.handle('notion-connect', (e, b) => (fromOurs(e) && b && typeof b.token === 'string' && b.token.length < 300 && typeof b.email === 'string' && b.email.length < 200 ? post('/connectors/notion', { token: b.token, email: b.email }, 60_000) : denied()));
   ipcMain.handle('notion-disconnect', (e) => (fromOurs(e) ? post('/connectors/notion/disconnect', {}) : denied()));

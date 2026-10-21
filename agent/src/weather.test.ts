@@ -1,3 +1,4 @@
+import { localWeatherPlace } from './weather-local.ts';
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync } from "node:fs";
@@ -43,8 +44,8 @@ function fakeFetch(answer: (url: string) => unknown, calls: Call[] = []): Weathe
   };
 }
 
-test("설정: 기본은 지역 없음(꺼짐)·출근 후·퇴근 20분 전 켬, 이상한 값은 버리고, 검증은 모르는 키·틀린 시각을 막는다", () => {
-  assert.deepEqual(weatherOf(undefined), { place: null, morning: true, leave: true, times: [] });
+test("설정: 기본은 컴퓨터 시간대 대표 도시·출근 후·퇴근 20분 전 켬, 이상한 값은 버리고, 검증은 모르는 키·틀린 시각을 막는다", () => {
+  assert.deepEqual(weatherOf(undefined), { place: localWeatherPlace(), morning: true, leave: true, times: [] });
   assert.deepEqual(loadConfig({}, {}).weather, weatherOf({}));
   const w = weatherOf({ place: { name: " 서울 ", latitude: 37.5665123, longitude: 126.978, timezone: "Asia/Seoul" }, morning: false, times: ["15:00", "08:30", "8:30", "15:00"] });
   assert.equal(w.place?.name, "서울");
@@ -63,13 +64,13 @@ test("설정: 기본은 지역 없음(꺼짐)·출근 후·퇴근 20분 전 켬,
   assert.equal(mergeWeather(weatherOf({ place: SEOUL }), { place: null }).place, null);
 });
 
-test("설정 창 저장: PUT weather → config.json·메모리, 지역 지우면 place 가 빠진다, 출처가 같이 간다", () => {
+test("설정 창 저장: PUT weather → config.json·메모리, 지역 지우면 place:null을 저장한다, 출처가 같이 간다", () => {
   const dir = tmp();
   const path = join(dir, "config.json");
   const cfg = loadConfig({}, {});
   const seen: string[][] = [];
   const s = new Settings(cfg, { path, env: {}, onChange: (k) => seen.push(k) });
-  assert.equal(s.view().weather.place, null);
+  assert.deepEqual(s.view().weather.place, localWeatherPlace());
   assert.equal(s.view().weather.attribution.label, "날씨: Open-Meteo");
   const r = s.put({ weather: { place: SEOUL, times: ["13:00"] } });
   assert.ok(r.ok);
@@ -79,7 +80,7 @@ test("설정 창 저장: PUT weather → config.json·메모리, 지역 지우�
   assert.ok(s.put({ weather: { morning: false } }).ok);
   assert.equal(cfg.weather?.place?.name, "서울", "준 칸만 바뀐다");
   assert.ok(s.put({ weather: { place: null } }).ok);
-  assert.equal(JSON.parse(readFileSync(path, "utf8")).weather.place, undefined);
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).weather.place, null);
   assert.equal(JSON.parse(readFileSync(path, "utf8")).weather.morning, false);
   const bad = s.put({ weather: { times: ["9시"] } });
   assert.ok(!bad.ok && bad.status === 400);
@@ -109,7 +110,7 @@ test("지역 검색 후보: 「마포구 · 서울특별시 · 대한민국」, 
 
 test("지역 검색: 한국어로 묻고, 붙인 이름까지 모아, 같은 글자는 캐시 · 실패는 이유", async () => {
   const calls: string[] = [];
-  const w = new Weather(() => weatherOf({}), { fetch: fakeFetch((u) => {
+  const w = new Weather(() => weatherOf({place:null}), { fetch: fakeFetch((u) => {
     const name = new URL(u).searchParams.get("name");
     if (name === "부산광역시") return { results: [{ id: 9, name: "부산광역시", latitude: 35.1, longitude: 129, feature_code: "PPLA", country: "대한민국", admin1: "부산광역시" }] };
     if (name === "부산시") return 500;
@@ -124,7 +125,7 @@ test("지역 검색: 한국어로 묻고, 붙인 이름까지 모아, 같은 글
   assert.equal(calls.length, 4, "같은 글자는 다시 묻지 않는다");
   assert.deepEqual(await w.search("부"), { ok: true, items: [] }, "한 글자는 안 묻는다");
   assert.equal(calls.length, 4);
-  const off = new Weather(() => weatherOf({}), { fetch: fakeFetch(() => new Error("getaddrinfo ENOTFOUND")) });
+  const off = new Weather(() => weatherOf({place:null}), { fetch: fakeFetch(() => new Error("getaddrinfo ENOTFOUND")) });
   const f = await off.search("서울");
   assert.ok(!f.ok && /인터넷/.test(f.error));
 });
@@ -255,7 +256,7 @@ test("가져오기: 45분 캐시, 동시에 한 번, 실패는 조용히 이유�
   const bad = new Weather(() => weatherOf({ place: SEOUL }), { fetch: fakeFetch(() => 503) });
   assert.equal(await bad.forecast(), null);
   assert.match((bad.state() as { reason: string }).reason, /503/);
-  assert.deepEqual(new Weather(() => weatherOf({})).state(), { phase: "off" });
+  assert.deepEqual(new Weather(() => weatherOf({place:null})).state(), { phase: "off" });
 });
 
 test("연결 상태 줄: 「서울 · 방금 · 14°C」 / 실패 이유 / 지역 없으면 꺼짐", () => {
@@ -320,7 +321,7 @@ test("알림 시각: 출근 후는 인사·브리핑 뒤(브리핑 없으면 1�
   assert.equal(due("13:10", { ...times, done: (k: string) => k === "weatherMorning" || k === "weather@13:00" }), null);
   // 근무 요일만, 지역을 골랐을 때만
   assert.equal(due("09:30", {}, "2026-10-18"), null, "일요일");
-  assert.equal(due("09:30", { cfg: weatherOf({}) }), null, "지역 없으면 꺼짐");
+  assert.equal(due("09:30", { cfg: weatherOf({place:null}) }), null, "지역 없으면 꺼짐");
 });
 
 test("하루 한 번 기록: 근무 시간과 같은 lunch.json 에 날씨 키, 같은 날 다시 켜도 또 안 뜬다", () => {

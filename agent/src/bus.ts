@@ -291,6 +291,7 @@ export class Bus {
   slackToken?: () => string | undefined;
   // 노션 연동(notion.ts) — 데몬이 꽂는다
   notion?: { status(): unknown; connect(b: unknown): Promise<unknown>; disconnect(): unknown };
+  notionDaily?: { status(): unknown; configure(b: unknown): Promise<{ok:boolean;error?:string}>; tick(force?: boolean): Promise<unknown> };
   // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
   inbox?: Inbox;
   // 새 알림 하나 → 캐릭터 위 팝업(앱이 몰려 오면 묶어서 보여 준다)
@@ -413,6 +414,7 @@ export class Bus {
     if (req.method === "GET" && url.pathname === "/connections/overview") return this.connections ? json(res, 200, await this.connections.overview()) : json(res, 503, { error: "unavailable" });
     if (req.method === "GET" && url.pathname === "/activity") return json(res, 200, this.state());
     if (req.method === "GET" && url.pathname === "/usage") return json(res, 200, this.usage.snapshot());
+    if (req.method === "GET" && url.pathname === "/notion-daily") return this.notionDaily ? json(res, 200, this.notionDaily.status()) : json(res, 503, {error:"unavailable"});
     if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
       try { return json(res, 200, { calendars: await listMacCalendars() }); } catch (e: any) { return json(res, 503, { error: String(e?.message ?? e) }); }
@@ -679,6 +681,11 @@ export class Bus {
         if (!ids) return json(res, 400, { error: "ids must be a list or \"all\"" });
         const source = typeof b.source === "string" && (INBOX_SOURCES as readonly string[]).includes(b.source) ? b.source : undefined;
         return json(res, 200, { changed: this.inbox.mark(ids, b.read !== false, source), unread: this.inbox.unread() });
+      }
+      if (url.pathname === '/notion-daily' || url.pathname === '/notion-daily/run') {
+        if (!this.notionDaily) return json(res,503,{error:'unavailable'});
+        if (url.pathname.endsWith('/run')) { void this.notionDaily.tick(true); return json(res,202,{ok:true}); }
+        const result=await this.notionDaily.configure(await readJson(req));return json(res,result.ok?200:400,result);
       }
       if (url.pathname === "/connectors/notion" || url.pathname === "/connectors/notion/disconnect") {
         if (!this.notion) return json(res, 503, { error: "notion unavailable" });

@@ -66,7 +66,7 @@ export function normalizeAction(raw) {
     const fields = c.fields.filter((f) => f && typeof f === 'object').slice(0, 10).map((f) => ({ label: str(f.label, 40), value: str(f.value, 400) })).filter((f) => f.label && f.value);
     if (fields.length) card.fields = fields;
   }
-  if (str(c.body, 2000)) { card.body = str(c.body, 2000); card.bodyKind = ['code', 'diff', 'text'].includes(c.bodyKind) ? c.bodyKind : 'text'; }
+  if (str(c.body, raw.type === 'notion_write' ? 18000 : 2000)) { card.body = str(c.body, raw.type === 'notion_write' ? 18000 : 2000); card.bodyKind = ['code', 'diff', 'text'].includes(c.bodyKind) ? c.bodyKind : 'text'; }
   if (str(c.always, 300)) card.always = str(c.always, 300);
   const merge = normalizeMerge(c.merge);
   if (merge) card.merge = merge;
@@ -214,8 +214,8 @@ export function cardView(a, local = null) {
     showButtons: pending,
     disabled: busy,
     permission: perm,
-    fields: perm ? c.fields ?? [] : [],
-    body: perm ? c.body ?? '' : '',
+    fields: perm || a.type === 'notion_write' ? c.fields ?? [] : [],
+    body: perm || a.type === 'notion_write' ? c.body ?? '' : '',
     bodyKind: c.bodyKind ?? 'text',
     buttons: pending ? actionButtons(a, local) : [],
   };

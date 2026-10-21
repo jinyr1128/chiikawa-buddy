@@ -127,6 +127,7 @@ function overlay({ ready }) {
     panelToggles: 0,
     showBubble: (b) => queue.add(normalizeBubble(b)),
     dismiss: (id) => queue.remove(id),
+    document: { getElementById: () => ({ setAttribute: () => {} }) },
     requestAnimationFrame: () => {}, recheckHit: () => {},
     setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
     clearTimeout: (t) => { if (t && timers[t - 1]) timers[t - 1].fn = null; },

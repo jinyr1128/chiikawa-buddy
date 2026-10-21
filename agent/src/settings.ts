@@ -5,6 +5,7 @@
 import { todayReminderOf, validateTodayReminder, type TodayReminder } from "./daily-plan.ts";
 import { calendarAlertOf, validateCalendarAlert, type CalendarAlertConfig } from "./calendar-alert.ts";
 import { cleanDays, isHhmm, minutesOf, workHoursOf } from "./work-hours.ts";
+import { localWeatherPlace } from './weather-local.ts';
 import { ATTRIBUTION, mergeWeather, validateWeather, weatherOf, type WeatherConfig, type WeatherPatch } from "./weather.ts";
 import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { stripBom, writeFileAtomic } from "./fs-atomic.ts";
@@ -67,7 +68,7 @@ export type SettingsView = {
   // 근무 시간(work-hours.ts): 출근·점심·퇴근 HH:MM, 요일(0 일~6 토), 출근 인사·퇴근 10분 전 인사
   workStart: string; lunchTime: string; workEnd: string; workDays: number[]; startAlert: boolean; leaveAlert: boolean;
   // 날씨 알리미(weather.ts): 고른 지역(null = 꺼짐)·출근 후 브리핑 다음·퇴근 20분 전·정한 시각 + 출처(Open-Meteo)
-  weather: WeatherConfig & { attribution: typeof ATTRIBUTION };
+  weather: WeatherConfig & { attribution: typeof ATTRIBUTION; localDefault: ReturnType<typeof localWeatherPlace> };
   // 뇌: 키는 절대 내보내지 않는다 — 있나 없나만
   brain: { provider: BrainProvider; model: string; keys: Record<BrainKey, boolean> };
   // 캐릭터(characters.ts): 그림·영상·말투·고정 문구 기본값이 바뀐다
@@ -367,7 +368,7 @@ export function mergeConfigFile(path: string, patch: SettingsPatch): void {
   for (const k of ["workStart", "lunchTime", "workEnd", "workDays", "startAlert", "leaveAlert"] as const) if (patch[k] !== undefined) next[k] = patch[k];
   if (patch.weather) {
     const w = mergeWeather(weatherOf(cur.weather), patch.weather);
-    next.weather = { ...(w.place ? { place: w.place } : {}), morning: w.morning, leave: w.leave, times: w.times };
+    next.weather = { place: w.place, morning: w.morning, leave: w.leave, times: w.times };
   }
   if (patch.character) next.character = patch.character;
   mkdirSync(dirname(path), { recursive: true });
@@ -439,7 +440,7 @@ export class Settings {
       todayReminder: todayReminderOf(c.todayReminder),
       calendarAlert: calendarAlertOf(c.calendarAlert),
       ...workHoursOf(c as unknown as Record<string, unknown>), // lunchAlert·근무 시간(새 배열이라 그대로 내보낸다)
-      weather: { ...weatherOf(c.weather), attribution: ATTRIBUTION },
+      weather: { ...weatherOf(c.weather), attribution: ATTRIBUTION, localDefault: localWeatherPlace() },
       brain: {
         provider: c.brain?.provider ?? "claude-code", model: roleModel(c, "general") ?? "",
         // genspark: 설정에 키가 있거나, Genspark 를 고른 채 gsk login 파일에 키가 있으면 true(키 값은 내보내지 않는다).

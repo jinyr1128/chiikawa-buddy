@@ -929,6 +929,7 @@ const askInput = document.getElementById('ask-input');
 const LEAVE_HIDE = 1800;
 let leaveTimer = null;
 let askOpen = false;
+let askPinned = false; // 채팅 버튼으로 열면 Esc 또는 전송까지 유지
 let askFocused = false; // 메인이 창을 포커스 가능하게 바꾼 뒤에만 blur 로 닫는다
 let askPauseTimer = null; // 칩 행동 동안 입력창을 잠깐 숨긴 타이머(pauseAsk)
 let hoverArmed = true; // 닫은 뒤엔 마우스가 캐릭터를 한 번 벗어나야 다시 뜬다
@@ -944,6 +945,7 @@ const hoverAsk = createHoverAsk({ gate: () => hoverAskAllowed(hoverAskState()), 
 async function showAsk() {
   if (askOpen) return;
   askOpen = true;
+  document.getElementById("open-chat").setAttribute("aria-expanded", "true");
   ask.hidden = false;
   requestAnimationFrame(recheckHit);
   const ok = await cy.chatFocus(true).catch(() => false);
@@ -957,6 +959,8 @@ function hideAsk() {
   leaveTimer = null;
   if (!askOpen) return;
   askOpen = false;
+  askPinned = false;
+  document.getElementById("open-chat").setAttribute("aria-expanded", "false");
   askFocused = false;
   hoverArmed = false;
   ask.hidden = true;
@@ -1025,18 +1029,18 @@ askInput.addEventListener('keydown', async (e) => {
   hideAsk();
   sendChat(text, ids);
 });
-askInput.addEventListener('blur', () => { if (askFocused && !picking && !askPauseTimer) hideAsk(); }); // 칩 행동 동안 잠깐 숨긴 건 닫는 게 아니다
-window.addEventListener('blur', () => { if (askFocused && !picking && !askPauseTimer) hideAsk(); if (mergeAskFocused) closeMergeAsk(mergeAskFocused, true); });
+askInput.addEventListener('blur', () => { if (!askPinned && askFocused && !picking && !askPauseTimer) hideAsk(); }); // 칩 행동 동안 잠깐 숨긴 건 닫는 게 아니다
+window.addEventListener('blur', () => { if (!askPinned && askFocused && !picking && !askPauseTimer) hideAsk(); if (mergeAskFocused) closeMergeAsk(mergeAskFocused, true); });
 
 // 호버 판정 — 클릭 투과 중에도 mousemove 는 넘어오니 좌표로 본다
 function updateHover(el) {
   const onChar = !!el?.closest('#char-wrap');
-  const onAsk = !!el?.closest('#ask, #char-wrap, #stack .item'); // 말풍선(＋ 로 띄운 칩·그 답) 위에 있는 동안도 입력창을 닫지 않는다
+  const onAsk = !!el?.closest('#ask, #open-chat, #char-wrap, #stack .item'); // 말풍선(＋ 로 띄운 칩·그 답) 위에 있는 동안도 입력창을 닫지 않는다
   if (el && !onChar) hoverArmed = true;
   // 입력창은 더블클릭으로 연다. 다만 설정이 켜져 있고 패널이 열려 있으면 캐릭터 위에 2초 머물러도 뜬다(패널을 안 건드리고 말 걸기)
   hoverAsk.move(onChar);
   // 입력 안 했는데 마우스가 떠나면 잠시 뒤 닫는다
-  if (askOpen && !onAsk && !askInput.value && !tray.has() && !picking && !leaveTimer && !askPauseTimer) { // 잠깐 숨긴 동안은 닫지 않는다
+  if (!askPinned && askOpen && !onAsk && !askInput.value && !tray.has() && !picking && !leaveTimer && !askPauseTimer) { // 잠깐 숨긴 동안은 닫지 않는다
     leaveTimer = setTimeout(() => { leaveTimer = null; if (!askInput.value && !tray.has() && !picking && !askPauseTimer) hideAsk(); }, LEAVE_HIDE);
   } else if (onAsk && leaveTimer) {
     clearTimeout(leaveTimer);
@@ -1207,6 +1211,16 @@ function talk() {
   if (a === 'quick') return noBrain();
   showAsk();
 }
+// Explicit desktop entry; retain draft and focus when already open.
+const openChatButton = document.getElementById("open-chat");
+openChatButton.addEventListener("mousedown", (e) => e.preventDefault());
+openChatButton.addEventListener("click", () => {
+  clearTimeout(leaveTimer); leaveTimer = null;
+  if (brain.ready === false) { cy.openPanel?.("chat"); return; }
+  askPinned = true;
+  if (askOpen) { askInput.focus(); return; }
+  showAsk();
+});
 function closeQuick() {
   quickGen++;
   dismiss(QUICK_ID); // 칩을 눌러 나온 답 말풍선(local-ask-*)·둘러보기 말풍선은 그대로

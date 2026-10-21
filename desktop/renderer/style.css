@@ -676,7 +676,10 @@ body.char-hidden #stage { visibility: hidden; }
 #char-wrap { zoom: var(--character-zoom, 1); }
 #stack { width: 380px; max-width: none; }
 #toasts { width: 380px; max-width: none; }
-body.bubbles-hidden :is(#stack, #focus, #doing, #ask, #caption) { display: none !important; }
+body.bubbles-hidden :is(#stack, #focus, #doing, #caption) { display: none !important; }
 body.notifications-hidden #toasts { display: none !important; }
 #visibility-controls { display: flex; gap: 4px; margin-bottom: 4px; }
 #visibility-controls button { border: 1px solid var(--bubble-border); border-radius: 9px; padding: 3px 8px; margin: 0 0 4px; font: inherit; font-size: 11px; color: var(--bubble-muted); background: var(--bubble-bg); cursor: pointer; }
+
+#visibility-controls #open-chat { color: #fff; background: #6750d8; border-color: #6750d8; font-weight: 600; }
+#visibility-controls #open-chat:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

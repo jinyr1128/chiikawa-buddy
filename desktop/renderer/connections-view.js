@@ -11,7 +11,7 @@ const IS_MAC = /Mac/i.test(globalThis.navigator?.platform || globalThis.navigato
 export function createConnectionsView({ h, cy, el }) {
   let visible = false;
   let d = { ov: null, local: null, cals: [], mac: null, macErr: '' };
-  const ui = { open: '', busy: '', msg: {}, slackToken: '', mail: { service: 'gmail', user: '', password: '' }, notion: { token: '', email: '' }, ical: { name: '', url: '' } };
+  const ui = { open: '', busy: '', msg: {}, slackToken: '', mail: { service: 'gmail', user: '', password: '' }, notion: { token: '', email: '', parent: '' }, ical: { name: '', url: '' } };
 
   async function load() {
     const [ov, local, cals] = await Promise.all([
@@ -23,6 +23,8 @@ export function createConnectionsView({ h, cy, el }) {
     d.local = local ?? d.local;
     d.cals = cals?.ok && Array.isArray(cals.items) ? cals.items : d.cals;
     if (!ui.notion.email) ui.notion.email = d.ov?.mail?.accounts?.[0]?.user ?? '';
+    try { d.daily = (await cy.notionDailyStatus?.())?.data; } catch { d.daily = null; }
+    if (!ui.notion.parent && d.daily?.parentId) ui.notion.parent = d.daily.parentId;
     render();
   }
   const say = (key, ok, text) => { ui.msg[key] = { ok, text }; render(); };
@@ -188,6 +190,23 @@ export function createConnectionsView({ h, cy, el }) {
     });
   }
 
+  function dailyJournal() {
+    const s=d.daily;
+    if (!s) return h('p.conn-blurb', {text:'업무기록 설정을 불러오지 못했어요. 다시 열어 주세요.'});
+    const act=fn=>run('notion',async()=>{try{const r=await fn();say('notion',!!r?.ok&&r.data?.ok!==false,r?.data?.error || (r?.ok?'설정을 반영했어요.':'요청에 실패했어요.'));}catch{say('notion',false,'연결을 확인해 주세요.');}});
+    return h('div.conn-form', {},
+      h('b',{text:'17시 자동 업무기록'}),
+      h('p.conn-blurb',{text:'기본 꺼짐. 본인 노션의 일반 페이지에 날짜별 일지를 저장합니다. 통합에 콘텐츠 읽기·추가 권한을 주고 저장 페이지에 연결하세요. 컴퓨터와 앱이 켜져 있고 인터넷·AI 로그인이 필요합니다. 월~금 17시(한국 시간), 당일 늦게 켜면 실행합니다.'}),
+      h('p.conn-blurb',{text:'치이카와에 기록된 당일 할 일 변경과 작업 제목·상태를 정리합니다. 컴퓨터 전체 활동을 수집하지 않으며, 같은 날짜의 일지를 덮어쓰지 않습니다.'}),
+      h('label',{},h('span',{text:'저장할 상위 노션 페이지 주소'}),input('notion',ui.notion,'parent',{placeholder:'https://www.notion.so/…'})),
+      h('p',{text:`${s.enabled?'켜짐':'꺼짐'} · ${s.phase}`}),
+      h('div.conn-btns',{},
+        btn('이 페이지에 자동 기록 켜기','primary',()=>act(()=>cy.notionDailyConfigure({enabled:true,parent:ui.notion.parent})),{disabled:s.busy}),
+        btn('끄기','ghost',()=>act(()=>cy.notionDailyConfigure({enabled:false})),{disabled:s.busy}),
+        btn('오늘 기록 지금 실행','ghost',()=>act(()=>cy.notionDailyRun()),{disabled:!s.enabled||s.busy}),
+        btn('상태 새로고침','ghost',()=>load()),
+        ...(s.lastUrl?[link('저장된 일지 열기',s.lastUrl)]:[])));
+  }
   function notionCard() {
     const n = d.ov?.notion ?? {};
     const ok = n.connected;
@@ -196,9 +215,11 @@ export function createConnectionsView({ h, cy, el }) {
       status: ok ? (n.phase === 'failed' ? n.error || '못 가져옴' : `마감 임박 ${n.mine ?? 0} · 최근 바뀐 페이지 ${n.recent ?? 0}`) : '연결 안 됨',
       body: ok ? [
         h('p.conn-blurb', { text: `연결한 페이지의 내 할 일 마감·수정·새 댓글을 알려 줘요.${n.email ? ` (${n.email})` : ''} 알림받을 페이지마다 노션에서 ··· → 연결 → 「치이카와 매니저」를 추가해 두세요.` }),
+        h('p.conn-blurb', {text:'채팅에서 노션 페이지 찾기·요약, 새 페이지 만들기, 본문 추가, 제목 변경, 문단 수정을 요청할 수 있어요. 변경 내용은 실행 카드에서 확인합니다. 사용할 상위 페이지마다 이 통합을 연결하고, 콘텐츠 읽기·추가·업데이트 권한을 켜 주세요.'}),
+        dailyJournal(),
         btn('연결 해제', 'ghost danger', () => run('notion', async () => { await cy.notionDisconnect?.(); say('notion', true, '노션 연결을 끊었어요.'); })),
       ] : [
-        steps(['「노션 통합 만들기」 → 새 통합 → 이름 「치이카와 매니저」, 종류 내부', '기능: 콘텐츠 읽기 · 댓글 읽기 · 사용자 정보(이메일 포함) 읽기', '「내부 통합 시크릿」(ntn_…)을 아래에 붙이고 이메일 확인 → [연결]', '알림받을 페이지·DB 에서 ··· → 연결 → 「치이카와 매니저」']),
+        steps(['「노션 통합 만들기」 → 새 통합 → 이름 「치이카와 매니저」, 종류 내부', '기능: 콘텐츠 읽기·추가·업데이트 (채팅 작업용) · 댓글 읽기 · 사용자 정보(이메일 포함) 읽기', '「내부 통합 시크릿」(ntn_…)을 아래에 붙이고 이메일 확인 → [연결]', '알림받을 페이지·DB 에서 ··· → 연결 → 「치이카와 매니저」']),
         h('p.conn-blurb', { text: '조회 범위는 이 통합에 접근을 허용한 모든 페이지입니다. 노션 로그인만으로 계정 전체를 읽을 수는 없어요. 사용할 상위 페이지마다 연결 메뉴에서 이 통합을 추가하세요. 데이터베이스 할 일과 페이지 안 체크리스트를 오늘 할 일 화면에서 확인할 수 있어요.' }),
         h('div.conn-btns', {}, link('노션 통합 만들기', 'https://www.notion.so/profile/integrations')),
         h('div.conn-form', {},

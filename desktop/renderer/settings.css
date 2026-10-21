@@ -288,3 +288,19 @@ details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin:
 .appearance-size span { min-width: 120px; }
 .appearance-size input { flex: 1; min-width: 80px; }
 .appearance-size output { min-width: 42px; text-align: right; }
+
+/* Appearance settings need full rows; the wrapping chip layout made sliders jump. */
+[hidden] { display: none !important; }
+.app-prefs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.app-prefs .toggle { border-radius: 9px; width: 100%; align-items: flex-start; }
+.app-prefs .toggle input { flex: 0 0 auto; margin-top: 3px; }
+.app-prefs > button { justify-self: start; white-space: normal; }
+.appearance-size { display: grid; grid-template-columns: 120px minmax(80px, 1fr) 48px; width: 100%; min-width: 0; }
+.appearance-size input[type="range"] { width: 100%; min-width: 0; cursor: pointer; accent-color: var(--accent); }
+#top { flex-wrap: wrap; }
+@media (max-width: 480px) { #app { padding: 14px 12px; } .appearance-size { grid-template-columns: minmax(0, 1fr) 48px; } .appearance-size > span { grid-column: 1 / -1; } .model-row { grid-template-columns: minmax(0, 1fr); } }
+
+.settings-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.settings-tabs button[aria-pressed="true"] { background: #6750d8; color: white; }
+body:not(.weather-tab) #weather-card { display: none; }
+body.weather-tab #app > .card:not(#weather-card) { display: none; }

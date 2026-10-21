@@ -249,7 +249,7 @@ function renderAppPrefs() {
   const rows = [
     { key: 'openAtLogin', on: login.on === true, label: `로그인할 때 ${who()} 켜기`, disabled: !login.available },
     { key: 'updateCheck', on: appPrefs.updateCheck !== false, label: '새 버전이 나오면 알려 주기 (하루 한 번 확인)' },
-    { key: 'bubblesVisible', on: appPrefs.bubblesVisible !== false, label: '말풍선 표시 (대화·작업 상태·입력창)' },
+    { key: 'bubblesVisible', on: appPrefs.bubblesVisible !== false, label: '말풍선 표시 (대화·작업 상태)' },
     { key: 'notificationsVisible', on: appPrefs.notificationsVisible !== false, label: '반투명 알림 표시 (숨겨도 알림은 홈에 쌓여요)' },
     { key: 'panelOverlay', on: appPrefs.panelOverlay !== false, label: '캐릭터 위에 답·입력창 (패널이나 다른 창에서 한 대화의 답도 캐릭터 위에 띄워요 · 캐릭터 위에 마우스를 2초 두면 입력창이 열려요)' },
   ];
@@ -262,7 +262,7 @@ function renderAppPrefs() {
     cb.addEventListener('change', async () => {
       cb.disabled = true;
       const res = await cy.setAppPrefs?.({ [r.key]: cb.checked }).catch(() => null);
-      if (res?.ok) { appPrefs = res; flash('저장했어요'); }
+      if (res?.ok) { appPrefs = res; flash('저장했어요'); } else flash(res?.error || '설정을 저장하지 못했어요. 다시 시도해 주세요.', true);
       renderAppPrefs();
     });
     lab.append(cb, document.createTextNode(r.label));
@@ -300,7 +300,7 @@ function renderAppPrefs() {
 }
 async function loadAppPrefs() {
   const r = await cy.getAppPrefs?.().catch(() => null);
-  if (r?.ok) { appPrefs = r; renderAppPrefs(); }
+  if (r?.ok && JSON.stringify(appPrefs) !== JSON.stringify(r)) { appPrefs = r; renderAppPrefs(); }
 }
 
 // ---- 브리핑 출처 ----
@@ -1006,9 +1006,9 @@ createPlaceSearch({
 function renderWeather() {
   if (!settings) return;
   const v = weatherView(settings);
-  const picked = !!v.place && !weatherEditing;
+  const picked = !!v.place;
   $('weather-picked').hidden = !picked;
-  $('weather-find').hidden = picked;
+  $('weather-find').hidden = false;
   if (v.place) { $('weather-name').textContent = v.place.name; $('weather-label').textContent = v.place.label && v.place.label !== v.place.name ? v.place.label : ''; }
   $('weather-when').hidden = !v.place;
   $('weather-morning').checked = v.morning;
@@ -1037,6 +1037,7 @@ function renderWeather() {
 }
 $('weather-change').addEventListener('click', () => { weatherEditing = true; renderWeather(); $('weather-q').focus(); });
 $('weather-q').addEventListener('keydown', (e) => { if (e.key === 'Escape' && weatherEditing && $('weather-list').hidden) { weatherEditing = false; renderWeather(); } });
+$('weather-local').addEventListener('click', async () => { const place=settings?.weather?.localDefault; if(!place){flash('이 컴퓨터 시간대의 기본 도시를 찾지 못했어요. 지역을 검색해 주세요.',true);return;} weatherEditing=false; if(await saveWeather({place})) flash('컴퓨터 시간대 지역으로 설정했어요'); });
 $('weather-clear').addEventListener('click', async () => { weatherEditing = false; if (await saveWeather({ place: null })) flash('날씨 알림을 껐어요'); });
 for (const [id, k, on, off] of [['weather-morning', 'morning', '출근 후 날씨를 켰어요', '출근 후 날씨를 껐어요'], ['weather-leave', 'leave', '퇴근 전 날씨를 켰어요', '퇴근 전 날씨를 껐어요']]) {
   $(id).addEventListener('change', async (e) => {
@@ -1317,3 +1318,13 @@ load();
 
 // 캐릭터 옆 버튼으로 바꾼 표시 설정도 창으로 돌아오면 맞춘다.
 window.addEventListener('focus', () => loadAppPrefs());
+
+// Separate weather settings, available directly from the top of settings.
+for (const kind of ["general", "weather"]) {
+  document.getElementById(`settings-${kind}-tab`).addEventListener("click", () => {
+    document.body.classList.toggle("weather-tab", kind === "weather");
+    for (const tab of ["general", "weather"]) document.getElementById(`settings-${tab}-tab`).setAttribute("aria-pressed", String(tab === kind));
+    window.scrollTo(0, 0);
+    if (kind === "weather") document.getElementById("weather-q").focus();
+  });
+}

@@ -15,7 +15,7 @@ const VERSION = "2022-06-28";
 export const okNotionToken = (t: unknown): t is string => typeof t === "string" && /^(ntn_|secret_)[A-Za-z0-9]{20,}$/.test(t.trim());
 
 type Fetch = typeof fetch;
-async function call(token: string, path: string, init: { method?: string; body?: unknown } = {}, f: Fetch = fetch): Promise<any> {
+export async function notionRequest(token: string, path: string, init: { method?: string; body?: unknown } = {}, f: Fetch = fetch): Promise<any> {
   const r = await f(API + path, {
     method: init.method ?? "GET",
     headers: { authorization: `Bearer ${token}`, "notion-version": VERSION, "content-type": "application/json" },
@@ -37,7 +37,7 @@ export async function collectNotionTasks(token: string, f: Fetch = fetch): Promi
   const read = async (path: string, init: { method?: string; body?: unknown } = {}) => {
     if (++requests > 1000) throw new Error("조회량이 커서 일부만 가져왔어요. 페이지 접근 범위를 줄여 주세요.");
     if (f === fetch) await new Promise((r) => setTimeout(r, 350));
-    return call(token, path, init, f);
+    return notionRequest(token, path, init, f);
   };
   try {
     do {
@@ -83,7 +83,7 @@ export async function collectNotionTasks(token: string, f: Fetch = fetch): Promi
 export async function probeNotion(token: string, f: Fetch = fetch): Promise<{ ok: true; bot: string; workspace: string } | { ok: false; error: string }> {
   if (!okNotionToken(token)) return { ok: false, error: "노션 열쇠 모양이 아니에요(ntn_ 로 시작하는 「내부 통합 시크릿」을 붙여 주세요)." };
   try {
-    const me = await call(token.trim(), "/users/me", {}, f);
+    const me = await notionRequest(token.trim(), "/users/me", {}, f);
     return { ok: true, bot: String(me?.name ?? "통합"), workspace: String(me?.bot?.workspace_name ?? "") };
   } catch (e: any) { return { ok: false, error: String(e?.message ?? e) }; }
 }
@@ -170,7 +170,7 @@ export class NotionSync {
       let meId = st.meId;
       if (!meId && c.email) {
         try {
-          const users = await call(c.token, "/users?page_size=100", {}, this.f);
+          const users = await notionRequest(c.token, "/users?page_size=100", {}, this.f);
           meId = (users.results ?? []).find((u: any) => u?.person?.email?.toLowerCase() === c.email!.toLowerCase())?.id;
         } catch { /* 권한 없음 */ }
       }
@@ -200,7 +200,7 @@ export class NotionSync {
         const pid = pages.find((p) => String(p.url) === r.url)?.id;
         if (!pid) continue;
         try {
-          const cm = await call(c.token, `/comments?block_id=${encodeURIComponent(pid)}&page_size=50`, {}, this.f);
+          const cm = await notionRequest(c.token, `/comments?block_id=${encodeURIComponent(pid)}&page_size=50`, {}, this.f);
           for (const x of cm.results ?? []) {
             if (String(x.created_time ?? "") <= since || (meId && x.created_by?.id === meId)) continue;
             const text = (x.rich_text ?? []).map((t: any) => t?.plain_text ?? "").join("").trim();
@@ -259,11 +259,12 @@ export function notionApi(configPath: string, sync: NotionSync, f: Fetch = fetch
 
 // ---- 채팅 도구(ctx-tools): 노션 찾기·페이지 글 읽기(읽기 전용) ----
 let toolConn: () => NotionConn | undefined = () => undefined;
+export const notionWorkConn = () => toolConn();
 export function setNotionToolConn(f: () => NotionConn | undefined) { toolConn = f; }
 export async function notionSearchText(query: string, f: Fetch = fetch): Promise<string> {
   const c = toolConn();
   if (!c) return "(노션이 연결돼 있지 않다 — 설치 탭 「더 연결하기 → 노션」에서 연결)";
-  const r = await call(c.token, "/search", { method: "POST", body: { query: String(query ?? "").slice(0, 200), page_size: 15, sort: { direction: "descending", timestamp: "last_edited_time" } } }, f);
+  const r = await notionRequest(c.token, "/search", { method: "POST", body: { query: String(query ?? "").slice(0, 200), page_size: 15, sort: { direction: "descending", timestamp: "last_edited_time" } } }, f);
   const xs = (r.results ?? []).map((p: any) => `- ${p.object === "database" ? (p.title ?? []).map((t: any) => t.plain_text).join("") || "(DB)" : pageTitle(p)} · id=${p.id} · ${String(p.last_edited_time ?? "").slice(0, 10)} · ${p.url ?? ""}`);
   return xs.length ? xs.join("\n") : "(찾은 페이지가 없다 — 그 페이지에 이 통합이 「연결」돼 있어야 보인다)";
 }
@@ -274,10 +275,11 @@ export async function notionReadText(pageId: string, f: Fetch = fetch): Promise<
   const out: string[] = [];
   let cursor: string | undefined;
   for (let i = 0; i < 4 && out.join("\n").length < 12000; i++) {
-    const r = await call(c.token, `/blocks/${pageId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ""}`, {}, f);
+    const r = await notionRequest(c.token, `/blocks/${pageId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ""}`, {}, f);
     for (const b of r.results ?? []) {
       const v = b?.[b?.type];
       const text = (v?.rich_text ?? []).map((t: any) => t?.plain_text ?? "").join("");
+      out.push(`[block id=${b.id} type=${b.type}]`);
       if (b.type === "to_do") out.push(`${v?.checked ? "[x]" : "[ ]"} ${text}`);
       else if (/^heading_/.test(b.type)) out.push(`\n# ${text}`);
       else if (b.type === "bulleted_list_item" || b.type === "numbered_list_item") out.push(`- ${text}`);

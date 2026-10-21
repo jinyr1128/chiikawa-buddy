@@ -1,10 +1,11 @@
 // 날씨 알리미: AI 없이 돈다. Open-Meteo(키·가입 없음, 비상업 무료, 데이터 CC BY 4.0)에서 사용자가 고른 지역의 예보만 가져온다.
-//  - 켜지는 때: 설정 창 「날씨」에서 지역을 골랐을 때만(config.json weather.place). GPS·IP 위치는 쓰지 않는다.
+//  - 최초 기본 지역은 OS 시간대의 대표 도시. 사용자가 고른 지역/명시적으로 끈 설정은 유지한다. GPS·IP 위치는 쓰지 않는다.
 //    Open-Meteo 로 가는 건 고른 지역의 좌표(위도·경도)와 시간대뿐이다. 지역 검색 때는 사용자가 친 글자만 간다.
 //  - 지역 검색: Geocoding API(language=ko). 한국 지명은 「서울」보다 「서울특별시」로 실려 있어 글자 뒤에 시·특별시·광역시를 붙여 같이 찾는다
 //  - 예보: Forecast API(지금 기온·날씨 코드, 오늘 최고·최저, 시간별 강수 확률·강수량). 45분 캐시, 실패하면 5분 쉬고 다시(조용히 — 연결 상태 줄에 이유)
 //  - 알림(weatherDue): 근무 요일에 하루 한 번씩. 「출근 후 브리핑 다음」(morning) · 「퇴근 20분 전」(leave) · 사용자가 정한 시각(times)
 //    기록은 근무 시간과 같은 lunch.json(work-hours.ts WorkAlerts — 키 weatherMorning·weatherLeave·weather@HH:MM)
+import { localWeatherPlace } from './weather-local.ts';
 import { isHhmm, minutesOf, isWorkDay, type WorkHours } from "./work-hours.ts";
 
 // ---- 설정(config.json weather) ----
@@ -36,7 +37,7 @@ const cleanTimes = (v: unknown): string[] | null => {
 // config.json 값 → 날씨 설정(빠지거나 이상한 값은 기본값)
 export function weatherOf(v: unknown): WeatherConfig {
   const o = isObj(v) ? v : {};
-  return { place: placeOf(o.place), morning: o.morning !== false, leave: o.leave !== false, times: cleanTimes(o.times) ?? [] };
+  return { place: Object.keys(o).length ? placeOf(o.place) : localWeatherPlace(), morning: o.morning !== false, leave: o.leave !== false, times: cleanTimes(o.times) ?? [] };
 }
 // PUT /settings { weather: { place?: {...} | null, morning?, leave?, times? } } 검증. 틀리면 던진다
 export type WeatherPatch = { place?: WeatherPlace | null; morning?: boolean; leave?: boolean; times?: string[] };
