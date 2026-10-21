@@ -1,6 +1,7 @@
+import { setupWorkConnections } from "./src/work-connections.js";
 // 데스크톱 마스코트 — 메인 프로세스.
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
-import { app, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
+import { app, safeStorage, Notification, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
 import { faceBox } from './src/tray-face.js';
 import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks, refreshInstalled as refreshClaudeHooks } from './src/claude-hooks.js';
 import { isInstalled as hermesHooksOn, setInstalled as setHermesHooks, hermesAvailable } from './src/hermes-hooks.js';
@@ -1466,6 +1467,7 @@ function endDrag() {
 const fromOurs = (e) => e.sender === win?.webContents || e.sender === panel?.webContents || e.sender === sessionWin?.webContents;
 const fromDebug = (e) => e.sender === debugWin?.webContents;
 function setupIPC() {
+  setupWorkConnections({app,ipcMain,dialog,shell,clipboard,safeStorage,powerMonitor,Notification,fromOurs,request});
   // 설정 창: 모델·브리핑 출처·연결 상태(트레이 "설정…", 패널 ⚙, ⌘,)
   settingsUi = setupSettings({
     BrowserWindow, ipcMain, shell, request, fromOurs, debug: DEBUG,

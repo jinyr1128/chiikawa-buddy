@@ -1,3 +1,4 @@
+import {createWorkSummary} from "./work-summary.ts";
 // 데몬 엔트리포인트: 버스 + Slack + 주기 작업(세션·Slack 수집, 프로필 학습, 브리핑)
 import { NotionDaily, journalFacts } from "./notion-daily.ts";
 import { ask, TEXT_SCHEMA } from "./brain.ts";
@@ -135,6 +136,7 @@ const notionDaily = new NotionDaily({
   },
 });
 bus.notionDaily = notionDaily;
+bus.workSummary=createWorkSummary(async text=>{if(!modelWorkAllowed(cfg)||cfg.brain.provider==="local")throw Error("AI 연결 필요");const r=await asRoutine(()=>ask<{reply:string}>(cfg,text,TEXT_SCHEMA,undefined,{tools:false,run:{kind:"other",title:"옵시디언 자동 업무기록"}}))();return r.reply;});
 setInterval(() => { void notionDaily.tick(); }, 60000).unref();
 void notionDaily.tick();
 // GitHub(gh 로그인): 3분마다 알림·머지할 수 있는 내 PR → 알림함([머지]·[답장]) — github-sync.ts

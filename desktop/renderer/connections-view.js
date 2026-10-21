@@ -1,3 +1,4 @@
+import { createWorkConnectionsCard } from "./work-connections-view.js";
 // 연결 관리: 연결마다 카드 하나 — 지금 상태(초록·회색·주황) + 그 자리에서 끝나는 연결 버튼/입력칸. 터미널은 쓰지 않는다.
 // AI 작업(Claude Code·Codex·Hermes) · Slack · 메일 · 캘린더 · 노션 · GitHub
 import { MAIL_SERVICES, mailConnectBody, mailFormCheck, guessService } from '../src/mail-connect.js';
@@ -10,6 +11,7 @@ const IS_MAC = /Mac/i.test(globalThis.navigator?.platform || globalThis.navigato
 
 export function createConnectionsView({ h, cy, el }) {
   let visible = false;
+  let workCard = null;
   let d = { ov: null, local: null, cals: [], mac: null, macErr: '' };
   const ui = { open: '', busy: '', msg: {}, slackToken: '', mail: { service: 'gmail', user: '', password: '' }, notion: { token: '', email: '', parent: '' }, ical: { name: '', url: '' } };
 
@@ -254,6 +256,7 @@ export function createConnectionsView({ h, cy, el }) {
     el.replaceChildren(
       h('div.conn-top', {}, h('p.conn-blurb', { text: '카드를 누르면 연결 방법이 펼쳐져요. 초록 = 연결됨 · 주황 = 확인 필요 · 회색 = 안 씀. 열쇠·비밀번호는 이 맥의 설정 파일에만 저장해요.' }), btn('새로 고침', 'ghost small', () => load())),
       ...cards,
+      ...(cy.workConnections ? [workCard ||= createWorkConnectionsCard({h,cy})] : []),
     );
   }
 

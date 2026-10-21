@@ -1,3 +1,4 @@
+import { profileStatus } from "./slack-profile.ts";
 // 캐릭터 오버레이와 통신하는 로컬 HTTP 서버(127.0.0.1 전용). SSE로 말풍선·상태를 보낸다.
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http";
 import { randomUUID } from "node:crypto";
@@ -291,6 +292,7 @@ export class Bus {
   slackToken?: () => string | undefined;
   // 노션 연동(notion.ts) — 데몬이 꽂는다
   notion?: { status(): unknown; connect(b: unknown): Promise<unknown>; disconnect(): unknown };
+  workSummary?: {start(body:unknown):{id:string};status(id:string):unknown};
   notionDaily?: { status(): unknown; configure(b: unknown): Promise<{ok:boolean;error?:string}>; tick(force?: boolean): Promise<unknown> };
   // 알림함(inbox.ts) — 데몬이 꽂는다. 없으면 /inbox 는 503
   inbox?: Inbox;
@@ -409,11 +411,13 @@ export class Bus {
     // DNS 리바인딩 막기: Host 가 127.0.0.1:포트 · localhost:포트 가 아니면(다른 이름이 127.0.0.1 을 가리켜도) 모든 경로 403(/events 포함)
     if (!hostOk(req.headers.host, (this.server?.address() as AddressInfo | null)?.port)) return json(res, 403, { error: "forbidden host" });
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
+    if (req.method === "GET" && url.pathname === "/slack/profile-status") return json(res,200,await profileStatus(this.slackToken?.()));
     if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, mood: this.mood, activity: this.activity.snapshot().activity });
     // 홈 화면: 지금 캐릭터 상태(돌고 있는 일 — Claude·Codex·Hermes 작업 포함)
     if (req.method === "GET" && url.pathname === "/connections/overview") return this.connections ? json(res, 200, await this.connections.overview()) : json(res, 503, { error: "unavailable" });
     if (req.method === "GET" && url.pathname === "/activity") return json(res, 200, this.state());
     if (req.method === "GET" && url.pathname === "/usage") return json(res, 200, this.usage.snapshot());
+    if(req.method==="GET"&&url.pathname.startsWith("/work-summary/")){if(req.headers["x-cy-agent"]!=="1")return json(res,403,{error:"forbidden"});return this.workSummary?json(res,200,this.workSummary.status(url.pathname.slice(14))):json(res,503,{error:"unavailable"});}
     if (req.method === "GET" && url.pathname === "/notion-daily") return this.notionDaily ? json(res, 200, this.notionDaily.status()) : json(res, 503, {error:"unavailable"});
     if (req.method === "GET" && url.pathname === "/connectors/notion") return this.notion ? json(res, 200, this.notion.status()) : json(res, 503, { error: "notion unavailable" });
     if (req.method === "GET" && url.pathname === "/calendars/mac") {
@@ -701,6 +705,8 @@ export class Bus {
       }
       if (url.pathname === "/github/merge") return json(res, 200, await githubMerge(await readJson(req)));
       if (url.pathname === "/github/reply") return json(res, 200, await githubReply(await readJson(req)));
+      if (url.pathname === "/slack/profile-status") return json(res,200,await profileStatus(this.slackToken?.(),await readJson(req)));
+      if(url.pathname==="/work-summary"){try{return this.workSummary?json(res,202,this.workSummary.start(await readJson(req))):json(res,503,{error:"unavailable"});}catch(e){return json(res,400,{error:(e as Error).message});}}
       if (url.pathname === "/slack/reply") return json(res, 200, await slackReply(await readJson(req), this.slackToken?.()));
       if (url.pathname === "/hermes/hook") {
         const ev = hermesToClaude(await readJson(req));

@@ -1,0 +1,9 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>치이카와 그룹웨어 연결 설정</title></head><body>
+<h1>그룹웨어 알림 연결</h1>
+<p>본인이 로그인한 그룹웨어에서 표시된 알림 제목만 읽습니다. 비밀번호·쿠키·본문·첨부파일은 수집하지 않습니다. 이 확장은 선택한 탭을 2분마다 확인합니다.</p>
+<label>그룹웨어 주소 <input id="url" type="url" placeholder="https://회사-그룹웨어-주소"></label><br>
+<label>치이카와 연결 키 <input id="key" type="password"></label><br>
+<label>알림 한 줄을 나타내는 CSS 선택자 <input id="selector" value="#intergratedNotificationBtn .integratedNotification li.h-box .botline .h-box .text" size="95"></label>
+<p>기본 선택자는 이 알림 목록 구조를 사용하는 그룹웨어용입니다. 다른 제품은 관리자가 알림 제목에 해당하는 선택자를 지정해야 합니다. 전체 본문(body) 선택자는 사용할 수 없습니다.</p>
+<button id="save">이 사이트 연결 허용·저장</button><button id="stop">자동 확인 중지</button><p id="status" role="status"></p>
+<script src="options.js"></script></body></html>

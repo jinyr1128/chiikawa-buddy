@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "치이카와 그룹웨어 알림 연결",
+  "version": "0.6.0",
+  "description": "사용자가 지정한 사이트의 표시된 알림 제목만 본인 컴퓨터의 치이카와에 전달합니다.",
+  "permissions": ["storage", "scripting", "activeTab", "alarms"],
+  "optional_host_permissions": ["https://*/*", "http://127.0.0.1/*"],
+  "background": {"service_worker": "background.js"},
+  "options_page": "options.html",
+  "action": {"default_title": "이 그룹웨어 탭에서 알림 확인 시작"}
+}

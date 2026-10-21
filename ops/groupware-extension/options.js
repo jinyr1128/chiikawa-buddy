@@ -1,0 +1,4 @@
+const $=id=>document.getElementById(id);
+chrome.storage.local.get(['url','key','selector']).then(s=>{for(const k of ['url','key','selector'])if(s[k])$(k).value=s[k];});
+$('save').onclick=async()=>{try{const u=new URL($('url').value);if(u.protocol!=='https:')throw Error('HTTPS 주소를 입력하세요.');const selector=$('selector').value.trim();if(!selector||/^(?:body|html|\*|:root)$/i.test(selector))throw Error('알림 제목만 선택하세요.');const key=$('key').value.trim();if(!/^[a-f0-9]{64}$/.test(key))throw Error('앱의 연결 키를 복사하세요.');const ok=await chrome.permissions.request({origins:[u.origin+'/*','http://127.0.0.1/*']});if(!ok)throw Error('사이트 접근 허용이 필요합니다.');await chrome.storage.local.set({url:u.origin,key,selector});$('status').textContent='저장했습니다. 그룹웨어 알림 목록을 연 다음 확장 아이콘을 누르세요.';}catch(e){$('status').textContent=e.message;}};
+$('stop').onclick=async()=>{await chrome.storage.local.remove('tabId');await chrome.alarms.clear('collect');$('status').textContent='자동 확인을 중지했습니다.';};

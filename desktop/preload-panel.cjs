@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('cy', {
   getDashboard: () => ipcRenderer.invoke('get-dashboard'),
   briefingNow: () => ipcRenderer.invoke('briefing-now'),
   refreshSources: () => ipcRenderer.invoke('refresh-sources'), // ↻: 슬랙·메일 지금 다시 읽고 할 일 반영
+  workConnections: (action, arg) => ipcRenderer.invoke("work-connections", String(action), arg),
   openSettings: () => ipcRenderer.send('open-settings'), // ⚙ 설정 창(모델·브리핑 출처·연결 상태)
   getChatHistory: () => ipcRenderer.invoke('get-chat-history'),
   todoDone: (id) => ipcRenderer.invoke('todo-done', String(id)),
