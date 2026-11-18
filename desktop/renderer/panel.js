@@ -1,3 +1,4 @@
+import { setupWallpaper } from './wallpaper.js';
 // 패널 렌더러 — 대시보드(개요·프로젝트·할 일·오늘 할 일)와 채팅. 네트워크는 전부 메인을 거친다.
 import { hasCoder as canCodeWith } from '../src/caps.js';
 import DOMPurify from './vendor/purify.js';
@@ -39,7 +40,7 @@ import { cleanChatModels, pickGroups, encodePick, decodePick, pickSendOpts, okPi
 import { normalizeActions, upsertAction, placeActions, cardView, decideResult, aroundAnswer, foldedPermission, foldApprovals } from '../src/actions.js';
 import { normalizePermissionRules, ruleUsage, withoutPending } from '../src/permissions.js';
 import { normAgents, agentStrip, agentCard, canStopAgent, placeAgents, agentsSig, normSessions, sessionCard, placeSessions, sessionsSig, sessionsPlaceSig } from '../src/agents.js';
-import { characterAssets, okCharacter, appName } from '../src/character.js';
+import { characterName, characterAssets, okCharacter, appName } from '../src/character.js';
 import { applyCharacters } from '../src/character-registry.js';
 import { who, whoId, setWho, onWho } from './who.js';
 import { normWorktrees, worktreeCard, openTarget, placeWorktrees, worktreesSig, worktreesPlaceSig } from '../src/worktrees.js';
@@ -50,6 +51,8 @@ const $ = (id) => document.getElementById(id);
 if (new URLSearchParams(location.search).get('vibrancy') === '1') document.body.classList.add('vibrant');
 
 const brand = $('brand-img');
+const setWallpaper = setupWallpaper($('main'), $('wall-file'), $('wall-reset'), $('wall-feedback'));
+$('wall-site').onclick = () => cy.openLink('https://chiikawawallpaper.com/ko/desktop-wallpaper');
 // 사이드바 아이콘: 고른 캐릭터(눈 뜬 기본 표정) → 번들 png → svg. 캐릭터는 데몬 state(메인이 'character' 로 알린다)
 let character = 'shisa';
 let wantChar = 'shisa'; // 데몬이 고른 id 그대로(사용자 캐릭터는 목록을 받은 뒤에 안다)
@@ -63,6 +66,7 @@ function setBrand(id) {
   const conn = $('conn'); // 켜짐·꺼짐 글(연결 상태는 클래스로 — connected 변수는 아래에서 선언된다)
   if (conn) { conn.textContent = `${who()} ${conn.classList.contains('off') ? '꺼짐' : '켜짐'}`; conn.title = conn.textContent; }
   const a = characterAssets(character);
+  setWallpaper(character, a.open, characterName(character));
   BRAND_SRCS = [a.retina ? a.open.replace(/\.png$/, '@2x.png') : a.open, ...a.stills.slice(1)];
   brandAt = 0;
   brand.src = BRAND_SRCS[0];
@@ -282,6 +286,7 @@ let chat = initialChat();
 
 // ---- 탭 ----
 const nav = $('nav');
+$('open-meetings').onclick = () => cy.openMeetings();
 const badges = {};
 for (const s of SECTIONS) badges[s] = h('span.badge');
 // 위: 자주 쓰는 탭 · 구분선 · 아래: 연결 관리·AI 설정(개요는 홈으로 합쳐 탭이 없다)

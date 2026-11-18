@@ -1470,3 +1470,12 @@ button.focus-tab.on { background: var(--surface); color: var(--fg); box-shadow: 
 #sec-help { max-width: 850px; line-height: 1.8; }
 #sec-help h3 { margin-top: 28px; }
 #sec-help li { margin-bottom: 8px; }
+
+/* Always available below the sidebar task/navigation buttons. */
+#open-meetings { width: 100%; text-align: left; padding: 10px 12px; margin: 10px 0; flex-shrink: 0; color: var(--accent); }
+
+#main {
+  background-image:linear-gradient(100deg,color-mix(in srgb,var(--surface) 94%,transparent),color-mix(in srgb,var(--surface) 32%,transparent)),var(--buddy-art,none),var(--buddy-scene,none);
+  background-repeat:no-repeat; background-position:center,right 6% bottom 8%,center; background-size:cover,auto 38%,cover;
+}
+#main[data-custom-wallpaper="true"] { background-image:linear-gradient(100deg,color-mix(in srgb,var(--surface) 91%,transparent),color-mix(in srgb,var(--surface) 62%,transparent)),var(--buddy-art);background-position:center; background-size:cover; }

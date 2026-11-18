@@ -683,3 +683,15 @@ body.notifications-hidden #toasts { display: none !important; }
 
 #visibility-controls #open-chat { color: #fff; background: #6750d8; border-color: #6750d8; font-weight: 600; }
 #visibility-controls #open-chat:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+#motion-label { width:max-content; max-width:min(260px, 80vw); text-align:center; line-height:1.3; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); white-space:normal; word-break:keep-all; z-index:4; background:#363440ed; color:white; padding:2px 7px; border-radius:8px; font-size:11px; pointer-events:none; }
+[data-view="ai"] #motion-label { background:#5942a2; }
+[data-view="studying"] #motion-label { background:#205d59; }
+[data-view="typing"] #motion-label { background:#31567d; }
+
+@keyframes typing-tap { 50% { transform: translateY(-2px) rotate(-2deg); } }
+@keyframes thinking-nod { 50% { transform: rotate(3deg); } }
+@media (prefers-reduced-motion: no-preference) {
+ #char-wrap[data-view="typing"]:not(.video-on) #char-body { animation: typing-tap .48s infinite; }
+ #char-wrap[data-view="ai"]:not(.video-on) #char-body { animation: thinking-nod 1.2s infinite; }
+}

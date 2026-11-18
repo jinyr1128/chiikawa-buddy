@@ -4,3 +4,5 @@ out/
 .DS_Store
 dist/
 assets/icon.*
+
+native/bin/

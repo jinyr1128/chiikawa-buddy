@@ -1,3 +1,4 @@
+import { buildMeetingAudio } from './build-meeting-audio.mjs';
 // 배포용 dmg 만들기: 데몬(agent/)까지 든 「시사.app」 → ad-hoc 서명 → hdiutil 로 「시사.app + 응용 프로그램 바로가기」 dmg.
 // 사용: npm run dist                 (이 맥의 아키텍처: 애플 실리콘이면 arm64)
 //       npm run dist -- --arch=x64   (인텔 맥용. 데몬 의존성은 npm 이 x64 용으로 받고, Electron x64 는 packager 가 받는다)
@@ -100,8 +101,9 @@ if (process.env.CY_ICON_SOURCE) {
 
 // 4) 앱 번들. 앱 코드(asar)에는 실행에 필요한 것만 넣는다(허용 목록) — 생성 아이콘·개발용 파일이 섞이지 않게
 step('앱 번들 만들기');
-const KEEP = [/^\/package\.json$/, /^\/main\.js$/, /^\/preload[\w-]*\.cjs$/, /^\/renderer(\/|$)/, /^\/src(\/|$)/,
-  /^\/assets$/, /^\/assets\/(character\.(png|svg)|trayTemplate(@2x)?\.png)$/];
+const meetingBinary=buildMeetingAudio();
+const KEEP = [/^\/meeting(?:-preload\.cjs|-renderer\.js|\.html|\.css)$/, /^\/package\.json$/, /^\/main\.js$/, /^\/preload[\w-]*\.cjs$/, /^\/renderer(\/|$)/, /^\/src(\/|$)/,
+  /^\/assets\/motions(\/|$)/, /^\/assets$/, /^\/assets\/(character\.(png|svg)|trayTemplate(@2x)?\.png)$/];
 const OUT = path.join(DIST, 'app');
 const paths = await packager({
   dir: ROOT,
@@ -121,12 +123,13 @@ const paths = await packager({
   asar: true,
   prune: true,
   ignore: (p) => p !== '' && !KEEP.some((re) => re.test(p)),
-  extraResource: [AGENT, ASSETS],
+  extraResource: [AGENT, ASSETS, path.dirname(meetingBinary)],
   extendInfo: {
     CFBundleDisplayName: APP_NAME,
     CFBundleName: APP_NAME,
     LSUIElement: true, // Dock·⌘Tab 에 안 보이고 메뉴 막대에만
     LSMinimumSystemVersion: '12.0',
+    NSMicrophoneUsageDescription: '사용자가 시작한 회의 음성을 이 맥에 녹음합니다.',
     NSCalendarsFullAccessUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',
     NSCalendarsUsageDescription: '맥 캘린더(회사 구글·네이버 등)의 일정을 읽어 회의 알림과 브리핑에 보여 줘요. 일정을 바꾸지는 않아요.',
   },

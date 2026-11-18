@@ -213,3 +213,20 @@ test("bus: GET /todos/ledger?day= — 형식 틀리면 400, 핸들러 없으면 
   await bare.listen(0, { approve: async () => "", hold: async () => "", briefing: async () => "", dashboard: async () => ({}), todoDone: () => true, chat: () => "c", chatHistory: () => [] });
   try { assert.equal((await fetch(`http://127.0.0.1:${(bare.server!.address() as any).port}/todos/ledger`)).status, 503); } finally { bare.close(); }
 });
+
+
+test("장기 아카이브: 30일 이전 날짜와 하루 1,000건 초과 변경도 누락 없이 조회", () => {
+  const s = new Store(":memory:");
+  try {
+    const insert = s.db.prepare("INSERT INTO todo_ledger(day,at,todo_id,title,action,by) VALUES(?,?,?,?,?,?)");
+    for (let i=0;i<1005;i++) insert.run("2020-01-01", "2020-01-01T01:00:00Z", "t"+i, "업무", "done", "user");
+    for (let i=1;i<=40;i++) {
+      const day = new Date(Date.UTC(2020,0,1+i)).toISOString().slice(0,10);
+      insert.run(day, day+"T01:00:00Z", "daily"+i, "업무", "added", "user");
+    }
+    const archive=ledgerDay(s,"2020-01-01");
+    assert.equal(archive.entries.length,1005);
+    assert.equal(archive.days.length,41);
+    assert.equal(archive.days.at(-1)?.day,"2020-01-01");
+  } finally { s.db.close(); }
+});

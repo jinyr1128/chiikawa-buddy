@@ -1,3 +1,4 @@
+import {handleObsidianChat} from './obsidian-chat.ts';
 import { NOTION_ACTION_SCHEMA, NOTION_READ_SCHEMA } from './notion-work.ts';
 import { notionSearchText, notionReadText } from './notion.ts';
 // 데스크톱 대화(패널 채팅 탭·캐릭터 호버). 스레드마다 한 번에 하나씩(그 스레드의 줄), 다른 스레드끼리는 동시에(상한 없음) —
@@ -347,6 +348,8 @@ export function chatPrompt(cfg: Config, store: Store, history: ChatTurn[], text:
 export async function converse(
   cfg: Config, store: Store, history: ChatTurn[], text: string, onStep: (s: string) => void, summary?: string, focus?: Todo, threadId?: string, model?: string, abort?: AbortController, ctx?: CtxDeps, attachments?: Attachment[],
 ): Promise<ChatReply> {
+  const recorded = await handleObsidianChat(text, history, abort?.signal);
+  if (recorded) return recorded;
   // inline 일 때만 대시보드 요약(git 훑기)을 미리 만든다 — tools 면 모델이 dashboard_summary 를 부를 때만
   if (inlineContext(cfg)) summary ??= dashboardSummary(await buildDashboard(cfg, store));
   let repo: RelatedRepo | undefined;

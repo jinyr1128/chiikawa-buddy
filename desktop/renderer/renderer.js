@@ -1,3 +1,6 @@
+import { motionLine, statusNames } from '../src/motion-voice.js';
+import { MOTIONS } from '../src/motion-catalog.js';
+import { motionView, nextMotionIndex, idleDelay } from '../src/ambient-motion.js';
 // 렌더러 — 말풍선 그리기, 캐릭터 상태, 클릭 투과 토글, 드래그, 호버 채팅.
 import { BubbleQueue, normalizeBubble, assetUrl, sequence, stickerTtl, clickTarget, cleanMergeQuestion, linkLabel, looksMarkdown, bubbleMd, isListBubble, keepClasses, BUBBLE_PURIFY, isWaitingApproval, approvalButtons, tourButtons, carryButtons } from '../src/bubbles.js';
 import { quickBubble, chipsOf, chipAction, answerBubble, dblclickAction, isFocusChip, QUICK_ID } from '../src/quick-ask.js';
@@ -12,7 +15,7 @@ import { hasFiles, filesFromTransfer, ATTACH_ERRORS } from '../src/attachments.j
 import { normFocus, focusBubble, doingBubble, claudeBubble, focusSend } from '../src/focus.js';
 import { who, setWho } from './who.js';
 import { renderSpeech, paintSpeaker, characterColor } from '../src/speakers.js';
-import { characterAssets, redrawCharacter, okCharacter, localSay, clipFor, danceClipOf, danceVariantOf, variantsOf, pickVariant, DANCE_MAX_MS, nextBlinkDelay, blinkPlan, initialActivity, activityReducer, viewOf, fitBox } from '../src/character.js';
+import { characterAssets, redrawCharacter, okCharacter, localSay, clipFor, danceClipOf, danceVariantOf, variantsOf, studyIndexes, pickVariant, DANCE_MAX_MS, nextBlinkDelay, blinkPlan, initialActivity, activityReducer, viewOf, fitBox } from '../src/character.js';
 import { applyCharacters } from '../src/character-registry.js';
 import { BubbleExpiry } from '../src/bubble-expiry.js';
 import { createHoverAsk, hoverAskAllowed } from '../src/hover-ask.js';
@@ -121,6 +124,69 @@ const videos = { studying: document.getElementById('vid-studying'), dancing: doc
 const clipImg = document.getElementById('clip-img');
 let act = initialActivity();
 let shownView = 'idle';
+let typingActive = false, animationBusy = false, ambientIndex = 0;
+let typingEnabled = localStorage.getItem('cy-typing-motion') !== 'off';
+function ambientPack() {
+  const meta = charMeta[charA.id];
+  // Existing custom characters keep their own work clips and identity.
+  const family = charA.id === 'chiikawa' || meta?.from === 'chiikawa' ? 'chiikawa'
+    : charA.id === 'momonga' || meta?.name === '짭몽가' ? 'momonga' : null;
+  return MOTIONS[family];
+}
+let typingIndex = -1;
+function reactionList(kind) {
+  const pack = ambientPack();
+  if (!pack) return [];
+  if (kind !== 'typing') return pack[kind] ?? [];
+  const names = pack === MOTIONS.momonga
+    ? ['rice-making', 'buddy-drag', 'jump']
+    : ['typing', 'typingFast', 'enter'];
+  return names.map(name => pack.all[name]);
+}
+function ambientClip(kind) {
+  const list = reactionList(kind);
+  const index = kind === 'typing' ? Math.max(0, typingIndex) : ambientIndex;
+  return list[index % list.length] ?? null;
+}
+let ambientTimer, restTimer;
+let manualWork = false, aiRun = false, externalCodex = false;
+cy.onCodexActivity?.(active => { externalCodex = active === true; applyActivity(); });
+const motionLabel = document.getElementById('motion-label');
+function showMotionLabel(id = charA.id) {
+  motionLabel.textContent = motionLine(id, charMeta[id], shownView);
+  motionLabel.title = statusNames[shownView];
+}
+showMotionLabel();
+function armAmbient() {
+  clearTimeout(ambientTimer);
+  clearTimeout(restTimer);
+  if (!['idle', 'typing'].includes(shownView)) return;
+  const clip = ambientClip(shownView);
+  if (shownView === 'idle' && clip) {
+    restTimer = setTimeout(() => {
+      if (shownView === 'idle') showVideo(null);
+    }, clip.duration);
+  }
+  ambientTimer = setTimeout(() => {
+    if (shownView === 'typing') typingIndex = nextMotionIndex(reactionList('typing').length, typingIndex);
+    else ambientIndex = nextMotionIndex(reactionList('idle').length, ambientIndex);
+    startVideo(shownView);
+    armAmbient();
+  }, idleDelay(ambientClip(shownView), reducedMotion.matches, shownView));
+}
+cy.onTyping?.((active) => { typingActive = active === true; applyActivity(); });
+cy.onMotionControl?.((action) => {
+  if (action === 'toggle-typing') {
+    typingEnabled = !typingEnabled;
+    localStorage.setItem('cy-typing-motion', typingEnabled ? 'on' : 'off');
+    applyActivity();
+    showBubble({ id: 'typing-setting', text: `타이핑 반응을 ${typingEnabled ? '켰어요' : '껐어요'}.`, kind: 'info', ttlMs: 3500 });
+  } else if (action === 'next' && shownView === 'idle') {
+    ambientIndex = nextMotionIndex(ambientPack()?.idle?.length ?? 0, ambientIndex);
+    startVideo('idle'); armAmbient();
+  }
+});
+
 let danceCap = null;
 const setPoster = (v, p) => { if (p) v.poster = p; else v.removeAttribute('poster'); };
 for (const [k, v] of Object.entries(videos)) {
@@ -136,12 +202,12 @@ for (const [k, v] of Object.entries(videos)) {
   });
 }
 clipImg.addEventListener('load', () => {
-  const c = shownView !== 'idle' ? clipOf(shownView) : null;
+  const c = clipOf(shownView);
   if (c?.kind !== 'img' || c.src !== clipImg.dataset.clip) return;
   fitEl(clipImg, clipImg.naturalWidth, clipImg.naturalHeight, true);
   showVideo(shownView);
 });
-clipImg.addEventListener('error', () => { if (shownView !== 'idle' && clipOf(shownView)?.kind === 'img') showVideo(null); });
+clipImg.addEventListener('error', () => { if (clipOf(shownView)?.kind === 'img') showVideo(null); });
 function showVideo(k) {
   const useImg = !!k && clipOf(k)?.kind === 'img';
   for (const [name, v] of Object.entries(videos)) {
@@ -158,7 +224,17 @@ let studyVariant = 0;
 let lastStudy;
 const STUDY_ROTATE_MS = 10_000;
 let studyRotate = null;
-const clipOf = (k) => (k === 'dancing' ? clipFor(charA, danceClipOf(act), danceVariantOf(act)) : k === 'studying' ? clipFor(charA, 'study', studyVariant) : null);
+function clipOf(kind) {
+  const pack = ambientPack();
+  if (kind === 'ai') return pack?.all[pack === MOTIONS.momonga ? 'directing' : 'following-fast'];
+  if (kind === 'dancing') return clipFor(charA, danceClipOf(act), danceVariantOf(act));
+  if (kind === 'studying') {
+    const study = clipFor(charA, 'study', studyVariant);
+    if (study?.kind === 'video' || !pack) return study;
+    return pack.all[pack === MOTIONS.momonga ? 'following' : 'following-slow'];
+  }
+  return ambientClip(kind);
+}
 function startVideo(k) {
   const v = videos[k];
   const c = clipOf(k);
@@ -177,14 +253,15 @@ function startVideo(k) {
 }
 let shownClip = null;
 function applyActivity() {
-  const view = viewOf(act);
+  const view = motionView(viewOf(act), animationBusy || aiRun || externalCodex, typingEnabled && typingActive, manualWork);
   const clip = view === 'dancing' ? `${danceClipOf(act)}:${danceVariantOf(act)}` : null; // 종류·번호가 바뀌면 새 영상
   if (view === shownView && clip === shownClip) return;
+  if (view === 'typing' && shownView !== 'typing') typingIndex = nextMotionIndex(reactionList('typing').length, typingIndex);
   if (view === 'studying' && shownView !== 'studying') pickStudy();
-  const sameView = view === shownView;
   shownView = view;
   shownClip = clip;
   wrap.dataset.view = view;
+  showMotionLabel();
   wrap.classList.remove('blink');
   clearTimeout(danceCap);
   clearInterval(studyRotate);
@@ -193,21 +270,24 @@ function applyActivity() {
   // 개수는 돌 때마다 본다: 일하는 도중 캐릭터를 바꾸거나 영상을 더해도(처음엔 하나였어도) 번갈아 나오게
   if (view === 'studying') {
     studyRotate = setInterval(() => {
-      if (shownView !== 'studying' || variantsOf(charA, 'study').length < 2) return;
+      if (shownView !== 'studying' || studyIndexes(charA).length < 2) return;
       pickStudy();
       startVideo('studying');
     }, STUDY_ROTATE_MS);
   }
-  if (view === 'idle') return showVideo(null);
+  armAmbient();
+  if (view === 'idle' || view === 'typing') return startVideo(view);
   if (view === 'dancing') danceCap = setTimeout(() => dispatchActivity({ type: 'danceEnd' }), DANCE_MAX_MS);
-  if (sameView) showVideo(null); // 춤 종류만 바뀜(예: 칩 춤 → 데몬 응원) — 새 영상 첫 장면이 나올 때 다시 켠다
+  showVideo(null); // 춤 종류만 바뀜(예: 칩 춤 → 데몬 응원) — 새 영상 첫 장면이 나올 때 다시 켠다
   startVideo(view);
 }
 // 집중 영상 고르기(여러 개면 지난번과 다른 것). 그 영상에 한마디가 있으면 잠깐 말풍선으로
 function pickStudy() {
   const list = variantsOf(charA, 'study');
-  studyVariant = pickVariant(list.length, lastStudy);
-  if (list.length > 1) lastStudy = studyVariant;
+  const candidates = studyIndexes(charA);
+  const picked = pickVariant(candidates.length, candidates.indexOf(lastStudy));
+  studyVariant = candidates[picked] ?? 0;
+  if (candidates.length > 1) lastStudy = studyVariant;
   const say = list[studyVariant]?.say;
   if (say) showBubble({ id: 'study-say', text: say, kind: 'info', ttlMs: 6000 });
 }
@@ -217,6 +297,7 @@ function setCharacter(id, force = false) {
   wantChar = id;
   const cid = okCharacter(id);
   const next = characterAssets(cid);
+  showMotionLabel(cid);
   setWho(cid); // 이름만 바뀌었을 수도
   document.getElementById('ask-input')?.setAttribute('aria-label', `${who()}에게 물어보기`);
   try { localStorage.setItem(CHAR_KEY, typeof id === 'string' ? id : cid); } catch { /* 못 적어도 그림은 바뀐다 */ }
@@ -240,7 +321,8 @@ function setCharacter(id, force = false) {
   }
   clipImg.removeAttribute('src');
   delete clipImg.dataset.clip;
-  if (shownView !== 'idle') { showVideo(null); startVideo(shownView); }
+  ambientIndex = 0;
+  showVideo(null); startVideo(shownView); armAmbient();
 }
 wrap.dataset.character = charA.id;
 
@@ -249,6 +331,7 @@ function dispatchActivity(a) {
   applyActivity();
 }
 wrap.dataset.view = 'idle';
+startVideo('idle'); armAmbient();
 
 // ---- 말풍선 ----
 // 한 항목 = (그림 말풍선) + 글 말풍선. 그림이 먼저 뜨고 글은 SEQUENCE_GAP 뒤에.
@@ -730,7 +813,7 @@ function takeCharacters(data) {
 }
 cy.getCharacters?.().then(takeCharacters).catch(() => {});
 cy.onCharacters?.(takeCharacters);
-cy.onState((p) => { if (typeof p?.character === 'string') setCharacter(p.character); setMood(p?.mood); dispatchActivity({ type: 'state', activity: p?.activity, runs: p?.runs, danceId: p?.danceId, danceClip: p?.danceClip, danceVariant: p?.danceVariant }); }); // danceClip: 일정 알림·춤·응원·점심 중 어느 칸 · danceVariant: 그 칸의 몇 번째 영상(데몬이 고른다)
+cy.onState((p) => { if (typeof p?.character === 'string') setCharacter(p.character); setMood(p?.mood); aiRun = p?.mood === 'thinking' || (p?.runs ?? []).some(r => ['claude','codex','hermes','chat'].includes(r.kind)); dispatchActivity({ type: 'state', activity: p?.activity, runs: p?.runs, danceId: p?.danceId, danceClip: p?.danceClip, danceVariant: p?.danceVariant }); }); // danceClip: 일정 알림·춤·응원·점심 중 어느 칸 · danceVariant: 그 칸의 몇 번째 영상(데몬이 고른다)
 
 cy.onState(catchUp); // 데몬 상태가 올 때마다(타이머가 늦게 깨도) 지난 말풍선을 치운다
 
@@ -740,6 +823,7 @@ cy.onConnection(({ connected }) => {
   if (connected) loadFocus();
   else setFocus(null); // 끊기면 집중 말풍선도 걷는다(다시 붙으면 데몬 상태로)
   if (!connected) {
+    aiRun = false; manualWork = false; agentsRunning = 0;
     setMood('idle');
     chat = { ...chat, pending: {} }; // 끊기면 진행 중 표시 정리
     syncChat();
@@ -833,6 +917,8 @@ async function loadDoing() {
   const r = await cy.doingGet?.().catch(() => null);
   if (seq !== doingSeq || !r?.ok) return; // 못 읽었으면 그대로(데몬이 잠깐 끊긴 것)
   doingTodos = Array.isArray(r.todos) ? r.todos : [];
+  manualWork = doingTodos.some(t => t.doing === true && t.status !== 'done');
+  applyActivity();
   drawDoing();
 }
 let doingTimer = null;
@@ -860,6 +946,8 @@ function dispatchChat(action) {
 
 function syncChat() {
   const busy = isBusy(chat);
+  animationBusy = busy || agentsRunning > 0;
+  applyActivity();
   applyMood(busy ? 'thinking' : daemonMood);
   const agentsNote = runningCaption(agentsRunning); // "에이전트 N개 실행 중"(터미널에서 띄운 것도)
   // 지금 단계(여러 대화가 동시에 답하면 「대화 N개 답하는 중」) · 기다리는 말(같은 대화 차례 + 같은 레포 잠금 — 패널을 닫아 둬도 보이게)

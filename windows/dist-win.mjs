@@ -135,8 +135,8 @@ const ICO = makeIco(path.join(STAGE, 'icon', `${EXE_NAME}.ico`));
 
 // 4) 앱 폴더. 앱 코드(asar)에는 실행에 필요한 것만 넣는다(허용 목록, dist.mjs 와 같다) — 트레이는 assets/character.png 를 쓴다
 step('앱 폴더 만들기');
-const KEEP = [/^\/package\.json$/, /^\/main\.js$/, /^\/preload[\w-]*\.cjs$/, /^\/renderer(\/|$)/, /^\/src(\/|$)/,
-  /^\/assets$/, /^\/assets\/(character\.(png|svg)|trayTemplate(@2x)?\.png)$/];
+const KEEP = [/^\/meeting(?:-preload\.cjs|-renderer\.js|\.html|\.css)$/, /^\/package\.json$/, /^\/main\.js$/, /^\/preload[\w-]*\.cjs$/, /^\/renderer(\/|$)/, /^\/src(\/|$)/,
+  /^\/assets\/motions(\/|$)/, /^\/assets$/, /^\/assets\/(character\.(png|svg)|trayTemplate(@2x)?\.png)$/];
 const OUT = path.join(DIST, 'app');
 const paths = await packager({
   dir: DESKTOP,

@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { HOME_DIR, type Config } from "./config.ts";
 import type { Bus } from "./bus.ts";
-import { LEDGER_KEEP_DAYS, TRASH_KEEP_DAYS, type Store, type Proposal, type Todo, type TodoPatch, type AutoEvidence, type TrashedTodo } from "./store.ts";
+import { TRASH_KEEP_DAYS, type Store, type Proposal, type Todo, type TodoPatch, type AutoEvidence, type TrashedTodo } from "./store.ts";
 import { buildPreview, focusOps, opPatch, opsSummary, todoRev, trashedNote, type NewTodo, type PreviewItem, type TodoOp } from "./todos.ts";
 import { askTodo as realAskTodo, getAsk, lastExchange, markAsk, saveAsk, type AskTodo, type AskOutcome } from "./todo-ask.ts";
 import { TodoRules, evaluateRules, parseRule, ruleChanges, ruleMatches, ruleSummary, withNote, RULE_GUIDE, type RuleProposal, type RuleChange, type RuleSkip, type TodoRule } from "./todo-rules.ts";
@@ -1021,7 +1021,7 @@ ${meetingsContext(this.store)}`,
   // 휴지통에 30일 넘게 있던 것 정리(데몬 시작·하루 한 번)
   purgeOldTrash(now = new Date(), days = TRASH_KEEP_DAYS): number {
     const n = this.store.emptyTrash(new Date(now.getTime() - days * 864e5).toISOString());
-    this.store.pruneLedger(new Date(now.getTime() - LEDGER_KEEP_DAYS * 864e5).toISOString()); // 할 일 일지도 오래된 건 정리
+    // 업무 변경 이력은 장기 아카이브다. 휴지통 정리와 함께 자동 삭제하지 않는다.
     if (n) this.changed();
     return n;
   }

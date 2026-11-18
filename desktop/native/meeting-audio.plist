@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>com.cy-agent.meeting-audio</string><key>NSMicrophoneUsageDescription</key><string>사용자가 시작한 회의 음성을 이 맥에 녹음합니다.</string></dict></plist>

@@ -10,6 +10,9 @@ const on = (channel) => (cb) => {
 contextBridge.exposeInMainWorld('cy', {
   onBubble: on('bubble'),
   onState: on('state'),
+  onCodexActivity: on('codex-activity'),
+  onTyping: on('typing-activity'),
+  onMotionControl: on('motion-control'),
   onClear: on('clear'),
   onConnection: on('connection'),
   onVisibility: on('visibility'),

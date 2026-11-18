@@ -37,5 +37,5 @@ export function ledgerContext(store: Store, now = new Date()): string {
 // 하루치 일지(GET /todos/ledger) — day 없으면 오늘(KST)
 export function ledgerDay(store: Store, day?: string, now = new Date()): { day: string; entries: LedgerEntry[]; days: { day: string; count: number }[] } {
   const d = day ?? kstDay(now);
-  return { day: d, entries: store.ledger({ day: d, limit: 500 }), days: store.ledgerDays(30) };
+  return { day: d, entries: store.ledgerForDay(d), days: store.ledgerDays() };
 }

@@ -1,3 +1,5 @@
+import { setupMeetings } from './src/meeting-window.js';
+let meetingsUi;
 import { setupWorkConnections } from "./src/work-connections.js";
 // 데스크톱 마스코트 — 메인 프로세스.
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
@@ -556,6 +558,7 @@ function createWindow() {
   win.on('show', () => keepOnTop(win)); // showInactive 마다(트레이·메뉴 보이기)
   win.webContents.on('did-finish-load', () => {
     winLoaded = true;
+    send('codex-activity', externalCodexBusy);
     send('connection', { connected });
     sendVisibility();
     sendOverlayPrefs();
@@ -567,6 +570,22 @@ function createWindow() {
 }
 
 // 오버레이가 아직 안 떴으면 말풍선·상태는 잠깐 모아 둔다(최근 50개)
+let externalCodexBusy = false;
+function refreshCodexActivity() {
+  const dir = path.join(app.getPath('home'), '.cy-agent', 'codex-active');
+  let active = false;
+  try {
+    active = fs.readdirSync(dir).some(name => {
+      if (!/^[a-f0-9]{64}$/.test(name)) return false;
+      try { return Date.now() - fs.statSync(path.join(dir, name)).mtimeMs < 30 * 60_000; }
+      catch { return false; }
+    });
+  } catch { /* Hook has not run yet. */ }
+  if (active !== externalCodexBusy) {
+    externalCodexBusy = active;
+    send('codex-activity', active);
+  }
+}
 let winLoaded = false;
 const early = [];
 function send(channel, payload) {
@@ -1047,6 +1066,7 @@ function menuTemplate() {
     { label: '패널 열기', click: () => showPanel(null) },
     ...(coder() ? [{ label: '작업 세션 열기', click: openSessionMenu }] : []),
     { label: '홈', click: () => showPanel('home') },
+    { label: '회의 녹음 · 요약', click: () => meetingsUi?.show() },
     { label: inboxUnread ? `알림함 (안 읽음 ${inboxUnread})` : '알림함', click: () => showPanel('inbox') },
     {
       label: quietNow() ? `방해 금지 중${inMeeting ? '(회의)' : dndUntil > Date.now() ? ` · ${new Date(dndUntil).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}까지` : ''}` : '방해 금지',
@@ -1228,6 +1248,7 @@ function createAppMenu() {
     {
       label: '윈도우',
       submenu: [
+        { label: '회의 녹음 · 요약', accelerator: 'CmdOrCtrl+Shift+M', click: () => meetingsUi?.show() },
         { label: '대시보드 열기', accelerator: 'CmdOrCtrl+0', click: () => showPanel(null) },
         { label: '작업 세션 열기', accelerator: 'CmdOrCtrl+Shift+S', click: openSessionMenu },
         { label: '도움 보내기', accelerator: 'CmdOrCtrl+Shift+D', registerAccelerator: false, click: () => showDebugWindow() },
@@ -1467,6 +1488,7 @@ function endDrag() {
 const fromOurs = (e) => e.sender === win?.webContents || e.sender === panel?.webContents || e.sender === sessionWin?.webContents;
 const fromDebug = (e) => e.sender === debugWin?.webContents;
 function setupIPC() {
+  meetingsUi = setupMeetings({app,BrowserWindow,ipcMain,dialog,shell,powerMonitor});
   setupWorkConnections({app,ipcMain,dialog,shell,clipboard,safeStorage,powerMonitor,Notification,fromOurs,request});
   // 설정 창: 모델·브리핑 출처·연결 상태(트레이 "설정…", 패널 ⚙, ⌘,)
   settingsUi = setupSettings({
@@ -1525,6 +1547,8 @@ function setupIPC() {
     Menu.buildFromTemplate([
       { label: '패널 열기', click: () => showPanel(null) },
       ...(coder() ? [{ label: '작업 세션 열기', click: openSessionMenu }] : []),
+      { label: '다음 대기 동작 보기', click: () => win.webContents.send('motion-control', 'next') },
+      { label: '타이핑 반응 켜기/끄기', click: () => win.webContents.send('motion-control', 'toggle-typing') },
       { label: '지금 브리핑', click: triggerBriefing },
       { label: '사용법 다시 보기', click: startTour },
       { type: 'separator' },
@@ -1665,6 +1689,7 @@ function setupIPC() {
   // 홈: 지금 상태·방해 금지
   ipcMain.handle('activity', (e) => (fromOurs(e) ? request('GET', '/activity') : denied()));
   ipcMain.handle('ai-usage', (e) => (fromOurs(e) ? request('GET', '/usage') : denied()));
+  ipcMain.on('meetings-open', (e) => { if (fromOurs(e)) meetingsUi?.show(); });
   ipcMain.handle('dnd-get', (e) => (fromOurs(e) ? dndView() : denied()));
   ipcMain.handle('dnd-set', (e, mins) => { if (!fromOurs(e)) return denied(); setDnd(mins === 'eod' ? 'eod' : Math.max(0, Math.min(24 * 60, Number(mins) || 0))); return dndView(); });
   // 맥 캘린더 목록(GET /calendars/mac) — 처음엔 macOS 허락 창을 기다리느라 오래 걸릴 수 있다
@@ -2449,6 +2474,26 @@ if (SQUIRREL) {
   // 받을 언어(기본: 앱 로캘 ko)를 비워야 멈춘다(Electron 44 실측). 나중에 생기는 세션(fromPartition 등)도 같게
   const noSpellcheck = (s) => { s.setSpellCheckerLanguages([]); s.setSpellCheckerEnabled(false); };
   app.on('session-created', noSpellcheck);
+  let typingHelper = null;
+  function startTypingActivity() {
+    if (process.platform !== 'darwin') return;
+    const file = app.isPackaged ? path.join(process.resourcesPath, 'bin', 'typing-activity') : path.join(__dirname, 'native', 'typing-activity');
+    if (!fs.existsSync(file)) return;
+    typingHelper = spawn(file, [], { stdio: ['ignore', 'pipe', 'ignore'] });
+    let pending = '';
+    typingHelper.stdout.on('data', chunk => {
+      pending += chunk.toString();
+      const lines = pending.split('\n'); pending = lines.pop();
+      for (const line of lines) if (line === '1' || line === '0') {
+        if (win && !win.isDestroyed()) win.webContents.send('typing-activity', line === '1');
+      }
+    });
+    typingHelper.on('error', () => {});
+    typingHelper.on('exit', () => {
+      if (win && !win.isDestroyed()) win.webContents.send('typing-activity', false);
+    });
+  }
+  app.on('before-quit', () => { typingHelper?.kill(); typingHelper = null; });
   app.whenReady().then(() => {
     noSpellcheck(session.defaultSession); // 창보다 먼저
     const firstRun = !fs.existsSync(statePath()); // 이 앱 저장소를 처음 쓴다 → 마법사를 바로 연다
@@ -2461,6 +2506,10 @@ if (SQUIRREL) {
     setupAppActivation();
     registerDebugShortcut();
     createWindow();
+    startTypingActivity();
+    refreshCodexActivity();
+    const signalTimer = setInterval(refreshCodexActivity, 1000);
+    app.once('will-quit', () => clearInterval(signalTimer));
     // 윈도우 로그오프·종료는 before-quit 을 안 거친다(창의 session-end 만 온다) → 집중 기록·데몬 끄기를 여기서 짧게
     if (process.platform === 'win32') win?.on('session-end', onSessionEnd);
     createTray();
@@ -2501,6 +2550,7 @@ if (SQUIRREL) {
   });
 
   app.on('before-quit', (e) => {
+    if (meetingsUi?.blockQuit(e)) return;
     // 집중 중에 앱을 끄면 그때까지를 기록하고 끝낸다(데몬만 남아 혼자 세지 않게). 잠깐만 기다린다
     if (lastFocus?.active && connected && !focusStopped) {
       focusStopped = true;

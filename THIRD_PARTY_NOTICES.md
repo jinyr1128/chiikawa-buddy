@@ -30,3 +30,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### 0.7.0 캐릭터 모션과 대시보드 그림
+
+치이카와·모몽가 모션은 제공받은 Desktop Buddy Studio 캐릭터 자료에서 가져왔습니다. 원본 manifest와 자료에 동봉된 MIT 표기를 desktop/assets/motions 아래 각 폴더에 함께 보관합니다. 캐릭터 저작권 표기는 위와 같습니다. 대시보드의 장소 그림 13장은 이 버전을 위해 AI로 새로 제작했습니다.

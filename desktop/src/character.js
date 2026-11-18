@@ -250,3 +250,6 @@ export function viewOf(s) {
   if (!s.connected) return 'idle';
   return s.dancing ? 'dancing' : s.studying || s.focus === 'on' ? 'studying' : 'idle';
 }
+
+// Prefer moving video over still-image variants while working.
+export function studyIndexes(assets) { const list=variantsOf(assets, "study"); const videos=list.map((c,i)=>c.kind === "video" ? i : -1).filter(i=>i>=0); return videos.length ? videos : list.map((_,i)=>i); }

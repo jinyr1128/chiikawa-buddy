@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildMeetingAudio } from './build-meeting-audio.mjs';
 import { packager } from '@electron/packager';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -18,6 +19,7 @@ if (mtime(icns) < mtime(src)) {
   execFileSync(process.execPath, [path.join(ROOT, 'scripts', 'make-icon.mjs')], { stdio: 'inherit' });
 }
 
+const meetingBinary=buildMeetingAudio();
 const paths = await packager({
   dir: ROOT,
   out: path.join(ROOT, 'dist'),
@@ -30,6 +32,7 @@ const paths = await packager({
   appCategoryType: 'public.app-category.productivity',
   icon: icns,
   asar: true,
+  extraResource: [path.dirname(meetingBinary)],
   prune: true,
   // 번들엔 실행에 필요한 것만 (main.js, preload, renderer, src, assets, package.json)
   ignore: [/^\/(test|scripts|dist|out|node_modules)(\/|$)/, /^\/README\.md$/, /^\/\.gitignore$/],
@@ -37,6 +40,7 @@ const paths = await packager({
     CFBundleDisplayName: '치이카와 매니저', // Cmd+Tab·Dock 에 보이는 이름 (번들 파일명은 cy.app 유지)
     CFBundleName: '치이카와 매니저',
     LSUIElement: false,
+    NSMicrophoneUsageDescription: '사용자가 시작한 회의 음성을 이 맥에 녹음합니다.',
   },
   quiet: true,
 });

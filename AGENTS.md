@@ -28,7 +28,7 @@
 6. macOS 가 「캘린더 접근」을 물으면 [전체 접근 허용]을 누르라고 알린다.
 7. AI 작업 표시 확인(사용자가 쓰는 도구만):
    - Claude Code: `node ops/claude-hooks.mjs status` 가 「연동 켜짐」이면 된다. 터미널용 `claude` 가 로그인 전이면 **사용자가 직접** `claude auth login` 으로 브라우저에서 승인한다.
-   - Codex: 설정이 필요 없다. CLI 를 원하면 `npm i -g @openai/codex` 후 사용자가 `codex login`.
+   - Codex: 맥에서 사용자가 작업 표시를 원하면 저장소에서 `node ops/codex-activity.mjs`를 실행하고 Codex 설정 → Hooks에서 chiikawa-buddy 연결을 직접 검토·신뢰하도록 안내한다. CLI 를 원하면 `npm i -g @openai/codex` 후 사용자가 `codex login`.
    - `curl -s http://127.0.0.1:47823/usage` 로 AI 사용량(한도 %·오늘 토큰)이 읽히는지 본다. 한도 %는 그 도구를 한 번 쓰고 나면 채워진다.
 
 업데이트: 저장소 폴더에서 `./ops/update.sh` (앱을 끄고 새 버전으로 바꾼 뒤 다시 켠다. 계정 연결·설정·캐릭터·기록은 그대로).

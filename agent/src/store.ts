@@ -36,7 +36,7 @@ export type TodoActor = "user" | "briefing" | "rule" | "auto";
 export type LedgerAction = "added" | "edited" | "done" | "reopened" | "trashed" | "restored" | "purged" | "progress" | "blocked" | "merged";
 export type LedgerEntry = { n: number; day: string; at: string; todoId: string; title: string; action: LedgerAction; by: TodoActor; detail?: string };
 export type UpsertResult = "added" | "updated" | "skipped" | "merged" | "blocked";
-export const LEDGER_KEEP_DAYS = 90;
+// 업무 변경 이력은 사용자가 별도로 삭제하기 전까지 보존한다.
 // 이 맥의 시간대 기준 날짜(YYYY-MM-DD). 이름은 예전 그대로(예전엔 KST 고정)
 export const kstDay = (iso: string | number | Date) => {
   const t = new Date(iso).getTime();
@@ -347,8 +347,15 @@ export class Store {
       .map((r) => ({ n: Number(r.n), day: r.day, at: r.at, todoId: r.todo_id, title: r.title, action: r.action, by: r.by, ...(r.detail ? { detail: r.detail } : {}) }));
   }
   // 기록이 있는 날(최신 먼저)과 건수
-  ledgerDays(limit = 30): { day: string; count: number }[] {
-    return (this.db.prepare("SELECT day, COUNT(*) AS c FROM todo_ledger GROUP BY day ORDER BY day DESC LIMIT ?").all(limit) as any[]).map((r) => ({ day: r.day, count: Number(r.c) }));
+  ledgerDays(limit?: number): { day: string; count: number }[] {
+    const sql = "SELECT day, COUNT(*) AS c FROM todo_ledger GROUP BY day ORDER BY day DESC";
+    const rows = limit === undefined ? this.db.prepare(sql).all() : this.db.prepare(sql + " LIMIT ?").all(limit);
+    return (rows as any[]).map((r) => ({ day: r.day, count: Number(r.c) }));
+  }
+  // 하루 아카이브는 AI 맥락용 ledger()의 1,000건 제한을 적용하지 않는다.
+  ledgerForDay(day: string): LedgerEntry[] {
+    return (this.db.prepare("SELECT * FROM todo_ledger WHERE day = ? ORDER BY at DESC, n DESC").all(day) as any[])
+      .map((r) => ({ n: Number(r.n), day: r.day, at: r.at, todoId: r.todo_id, title: r.title, action: r.action, by: r.by, ...(r.detail ? { detail: r.detail } : {}) }));
   }
   pruneLedger(before: string): number {
     return Number(this.db.prepare("DELETE FROM todo_ledger WHERE at < ?").run(before).changes);

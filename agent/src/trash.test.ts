@@ -111,7 +111,8 @@ test("store: 예전 DB(휴지통 열 없음)에 열을 덧붙인다", () => {
   assert.equal(s.trashCount(), 1);
 });
 
-test("휴지통은 대시보드 집계·캔버스·브리핑 맥락에서 빠지고, 대시보드에 trash·trashCount", async () => {
+test("휴지통은 대시보드 집계·캔버스·브리핑 맥락에서 빠지고, 대시보드에 trash·trashCount", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-13T00:00:00Z") });
   const s = new Store(":memory:");
   s.upsertTodo({ id: "mail:1", title: "버린 답장", source: "mail", priority: 1 });
   s.upsertTodo({ id: "mail:2", title: "남은 답장", source: "mail", priority: 2 });
@@ -210,7 +211,10 @@ test("Agent: 지우기=휴지통(todo_ignored), 되살리기·영구 삭제·비
   s.store.trashTodo(c.id, new Date(Date.now() - 31 * DAY).toISOString());
   const d = s.agent.addTodo({ title: "D" });
   s.agent.deleteTodo(d.id);
+  s.store.db.prepare("UPDATE todo_ledger SET at = '2020-01-01T00:00:00Z', day = '2020-01-01'").run();
+  const archiveCount = s.store.ledgerForDay('2020-01-01').length;
   assert.equal(s.agent.purgeOldTrash(), 1);
+  assert.equal(s.store.ledgerForDay('2020-01-01').length, archiveCount, '90일이 지난 업무 이력도 자동 삭제하지 않는다');
   assert.deepEqual(s.store.trashedTodos().map((x) => x.title), ["D"]);
 });
 
