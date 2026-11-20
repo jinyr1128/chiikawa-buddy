@@ -51,7 +51,8 @@ import { NEW_DAEMON_CONFIG, cleanSetupPatch, openSetupAtLaunch, setupView } from
 import { attachConsole, assembleBundle, collectLogFiles, createRing, formatLogLine, redact, shapeConnectorsSafe } from './src/debug-share.js';
 import { bundlePaths, launchdOwns, spawnDecision, daemonEnv, daemonArgs, loginItemPlan, loginItemHint, defaultLoginPref, daemonStatusKind, LAUNCHD_DAEMON, DAEMON_LOG } from './src/bundle.js';
 import { createDaemonHost, portFree } from './src/daemon-host.js';
-import { RELEASES_API, checkDue, newestRelease, shouldNotify, updateBubble } from './src/update-check.js';
+import { RELEASES_API, checkDue, newestRelease, isNewer } from './src/update-check.js';
+import { installerFor, prepareInstall } from './src/install-update.js';
 import { denied } from './src/denied.js';
 import { okCalendarColor, okEventsQuery } from './src/calendar-tab.js';
 import { withCalendarColor, withCalendarRemoved, withCalendarRenamed, withCalendarEnabled, withCalendarResults, calendarRows, calendarUrlById, calendarUrls, calendarKind, cardOfKind, hubDoneFor, calendarReloadNote, okCalendarId, okCalendarName, okCalendarUrl, CALENDAR_DUP, CAL_TEXT } from './src/calendars.js';
@@ -2367,32 +2368,63 @@ async function loginDefaultFromDaemon() {
 }
 
 // ---- 새 버전 알림(src/update-check.js): 하루 한 번 GitHub Releases 최신판을 본다 ----
-const isCheckout = () => !app.isPackaged || launchdPlist(); // 터미널 설치(레포 체크아웃)는 ./ops/update.sh 로 받는다
 // 윈도우 휴대용 zip: Squirrel 설치본이면 ChiikawaManager.exe 한 칸 위(%LOCALAPPDATA%\ChiikawaManager)에 Update.exe 가 있다
 const isPortableWin = () => process.platform === 'win32' && app.isPackaged && !fs.existsSync(path.join(path.dirname(process.execPath), '..', 'Update.exe'));
 
-async function checkForUpdate() {
+let checkingUpdate = false;
+async function checkForUpdate(manual = false) {
+  if (checkingUpdate) return { ok: true, message: '이미 업데이트를 확인하거나 내려받고 있어요.' };
   const now = Date.now();
-  if (!checkDue({ enabled: state.updateCheck !== false, lastCheck: state.updateCheckedAt, now })) return;
-  state.updateCheckedAt = now;
-  saveState();
+  if (!manual && !checkDue({ enabled: state.updateCheck !== false, lastCheck: state.updateCheckedAt, now })) return;
+  checkingUpdate = true;
+  let prompted = false;
+  let prepared;
   try {
     const r = await fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'chiikawa-manager-desktop' }, signal: AbortSignal.timeout(15000) });
-    if (!r.ok) return; // 아직 릴리스가 없으면 404
-    const target = { platform: process.platform, arch: process.arch, portable: isPortableWin(), checkout: isCheckout() };
-    // 이 PC 용 파일(Setup.exe·zip·dmg)이 아직 안 올라왔으면 null: 알림 기록을 안 남기니 다음 확인 때 다시 본다
-    const rel = newestRelease(await r.json(), target);
-    if (!rel || !shouldNotify({ latest: rel.version, current: app.getVersion(), notified: state.updateNotified })) return;
-    state.updateNotified = rel.version;
+    if (!r.ok) throw Error('GitHub에 연결할 수 없어요. 인터넷 연결 후 다시 시도해 주세요.');
+    const releases = await r.json();
+    const target = { platform: process.platform, arch: process.arch, portable: isPortableWin(), checkout: !app.isPackaged };
+    const rel = newestRelease(releases, target);
+    if (!manual && state.updateCheck === false) return;
+    state.updateCheckedAt = Date.now();
     saveState();
-    send('bubble', updateBubble({ version: rel.version, url: rel.url, assetUrl: rel.asset?.url, ...target }));
-  } catch (e) {
-    if (DEBUG) console.error('[update]', e?.message ?? e);
+    if (!rel) return { ok: true, message: '이 설치 방식에 맞는 배포 파일이 아직 없어요.' };
+    if (!isNewer(rel.version, app.getVersion())) return { ok: true, message: '현재 최신 버전을 사용하고 있어요.' };
+    const kind = installerFor(rel, target);
+    const title = '치이카와 매니저 업데이트';
+    const ask = (message, detail, buttons) => dialog.showMessageBox({ type: 'info', title, message, detail, buttons, defaultId: 0, cancelId: 1, noLink: true });
+    prompted = true;
+    const answer = await ask('새 버전 v' + rel.version + '이 나왔어요. 업데이트할까요?',
+      '현재 v' + app.getVersion() + (kind ? ' · 파일을 받은 뒤 앱을 다시 시작할 때 설치해요.' : ' · 이 설치 방식은 다운로드 페이지에서 업데이트할 수 있어요.'),
+      [kind ? '지금 업데이트' : '다운로드 페이지 열기', '나중에']);
+    if (answer.response !== 0) return { ok: true, message: '미뤘어요. 설정에서 언제든 다시 확인할 수 있어요.' };
+    if (!kind) { await shell.openExternal(rel.url); return { ok: true, message: '다운로드 페이지를 열었어요.' }; }
+    const meta = releases.find(item => item.tag_name === rel.tag)?.assets?.find(asset => asset.browser_download_url === rel.asset.url);
+    prepared = await prepareInstall(kind, rel, meta, process.resourcesPath);
+    const ready = await ask('v' + rel.version + ' 설치 준비가 끝났어요.', '다시 시작하면 열려 있는 앱 창이 닫혀요. 계정 연결과 설정, 업무기록은 유지돼요.', ['설치하고 다시 시작', '나중에']);
+    if (ready.response !== 0) return { ok: true, message: '설치를 미뤘어요.' };
+    if (meetingsUi?.busy) throw Error('회의 녹음이나 처리를 마친 뒤 설정에서 다시 시도해 주세요.');
+    const plan = prepared;
+    app.once('will-quit', () => {
+      const child = spawn(plan.command, plan.args, { detached: true, stdio: 'ignore', windowsHide: false });
+      child.on('error', () => dialog.showErrorBox(title, '설치 도구를 열지 못했어요. 설정에서 다운로드 페이지를 열어 주세요.'));
+      child.unref();
+    });
+    prepared = null;
+    app.quit();
+    return { ok: true, message: '업데이트를 설치하고 있어요.' };
+  } catch (error) {
+    const message = error.code === 'EACCES' || error.code === 'EROFS' ? '앱 폴더에 쓸 권한이 없어요. 다운로드 페이지에서 설치 파일을 받아 주세요.' : error.message || '업데이트를 확인하지 못했어요.';
+    if (prompted) await dialog.showMessageBox({ type: 'warning', message: '업데이트를 완료하지 못했어요.', detail: message, buttons: ['확인'] });
+    return { ok: false, message };
+  } finally {
+    try { await prepared?.cleanup(); } finally { checkingUpdate = false; }
   }
 }
 
 // 설정 창 「이 앱」 칸
 const appPrefs = {
+  checkUpdate: () => checkForUpdate(true),
   get() {
     const p = loginPlan();
     let on = false;

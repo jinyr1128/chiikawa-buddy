@@ -84,7 +84,7 @@ export function setupSettings(deps) {
   });
   // 출처 링크(「날씨: Open-Meteo」·CC BY 4.0): 정해 둔 두 주소만 기본 브라우저로
   ipcMain.on('settings-open-source', (e, which) => {
-    const url = { updates: 'https://github.com/jinyr1128/chiikawa-buddy/releases/latest', weather: WEATHER_ATTRIBUTION.url, license: WEATHER_ATTRIBUTION.licenseUrl }[which];
+    const url = { updates: 'https://github.com/jinyr1128/chiikawa-buddy/releases', weather: WEATHER_ATTRIBUTION.url, license: WEATHER_ATTRIBUTION.licenseUrl }[which];
     if (isMine(e) && url) deps.shell?.openExternal?.(url);
   });
   ipcMain.handle('settings-calendars', (e) => (isMine(e) && deps.calendars ? deps.calendars() : denied()));
@@ -100,6 +100,7 @@ export function setupSettings(deps) {
   });
 
   // 「이 앱」: 로그인할 때 켜기 · 새 버전 알림(앱의 state.json)
+  ipcMain.handle('settings-update-check', e => isMine(e) ? deps.appPrefs.checkUpdate() : denied());
   ipcMain.handle('settings-app-get', (e) => (isMine(e) && deps.appPrefs ? deps.appPrefs.get() : denied()));
   ipcMain.handle('settings-app-set', (e, patch) => {
     const p = isMine(e) && deps.appPrefs ? sanitizeAppPrefs(patch) : null;

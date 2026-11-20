@@ -20,5 +20,5 @@ export function setupMeetings({app,BrowserWindow,ipcMain,dialog,shell,powerMonit
  powerMonitor.on('suspend',()=>{if(service.isRecording)service.stop().catch(()=>{});});
  let stopping=false;
  function blockQuit(e){if(service.isRecording){e.preventDefault();if(!stopping){stopping=true;service.stop().finally(()=>{stopping=false;app.quit();});}return true;}if(service.isBusy){e.preventDefault();show();dialog.showMessageBox(win,{message:'회의 처리 중입니다. 작업을 마친 뒤 종료해 주세요.',buttons:['확인']});return true;}return false;}
- return {show,blockQuit};
+ return {show,blockQuit,get busy(){return mutating || service.isRecording || service.isBusy;}};
 }

@@ -291,9 +291,22 @@ function renderAppPrefs() {
     renderAppPrefs();
   });
   box.append(reset, el('p', 'hint', '50~150% · 놓으면 바로 적용되고 다음 실행에도 유지돼요. 작은 화면에서는 화면에 맞춰 줄여요.'));
-  const update = el('button', 'small', '업데이트 다운로드 · 방법 보기');
-  update.type = 'button'; update.addEventListener('click', () => cy.openSource('updates'));
-  box.append(update, el('p', 'hint', '앱을 종료한 뒤 새 버전으로 교체하세요. 연결된 계정·설정·기록은 앱 밖에 보관되어 유지돼요. 앱 삭제/연결 해제는 하지 마세요.'));
+  const check = el('button', 'small', '지금 업데이트 확인');
+  check.type = 'button';
+  const result = el('p', 'hint', '');
+  result.setAttribute('role', 'status');
+  check.onclick = async () => {
+    check.disabled = true;
+    result.textContent = '업데이트를 확인하고 있어요…';
+    try {
+      const reply = await cy.checkUpdate();
+      result.textContent = reply?.message || '다시 시도해 주세요.';
+    } catch { result.textContent = '확인하지 못했어요. 다시 시도해 주세요.'; }
+    finally { check.disabled = false; }
+  };
+  const download = el('button', 'small', '다운로드 페이지');
+  download.type = 'button'; download.onclick = () => cy.openSource('updates');
+  box.append(check, download, result);
   const hint = $('app-hint');
   hint.textContent = login.hint || '';
   hint.hidden = !login.hint;

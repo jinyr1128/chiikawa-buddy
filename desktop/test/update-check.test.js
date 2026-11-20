@@ -145,15 +145,6 @@ test('updateBubble: 받을 파일 주소가 있으면 그 파일로 바로, 터�
   assert.equal(updateBubble({ version: '0.2.0' }).link, RELEASES_PAGE);
 });
 
-test('main.js 배선: 이 PC 용 파일이 있을 때만 알림 기록, 휴대용은 Update.exe 로 가린다', () => {
-  const main = readFileSync(new URL('../main.js', import.meta.url), 'utf8');
-  const fn = main.slice(main.indexOf('async function checkForUpdate()'));
-  assert.match(fn, /newestRelease\(await r\.json\(\), target\)/);
-  assert.ok(fn.indexOf('newestRelease(') < fn.indexOf('state.updateNotified = rel.version'));
-  assert.match(fn, /assetUrl: rel\.asset\?\.url/);
-  assert.match(main, /const isPortableWin = \(\) => process\.platform === 'win32' && app\.isPackaged && !fs\.existsSync\(path\.join\(path\.dirname\(process\.execPath\), '\.\.', 'Update\.exe'\)\);/);
-});
-
 test('newestRelease: 맥(v<버전>)·윈도우(v<버전>-windows) 릴리스가 따로여도 이 PC 용 가장 높은 정식 버전', () => {
   assert.match(RELEASES_API, /\/releases\?per_page=100$/); // /releases/latest 는 맥 릴리스만 준다(윈도우는 --latest=false)
   const rel = (tag, names, extra = {}) => ({ tag_name: tag, html_url: `${RELEASES_PAGE}/tag/${tag}`, assets: names.map((name) => ({ name, browser_download_url: `${RELEASES_PAGE}/download/${tag}/${name}` })), ...extra });

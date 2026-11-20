@@ -15,7 +15,7 @@
 
 새 버전으로 바꿀 때 주의할 점: 이 Squirrel 버전에서 새 `Setup.exe`를 다시 실행하면 **통째로 다시 설치**합니다. `Update.exe`가 `%LOCALAPPDATA%\Shisa` 아래에서 도는 프로세스를 기다려 주지 않고 모두 끈 뒤 폴더를 지우고, 새로 깔고 나서 `--squirrel-install`과 `--squirrel-firstrun`을 보냅니다(`--squirrel-updated`는 오지 않습니다). 그래서
 
-- 켜져 있던 시사는 종료 처리 없이 꺼집니다. 진행 중인 집중 시간이 저장되지 않으니, 사용자에게 **알림 영역 아이콘에서 시사를 「종료」한 뒤** 새 Setup.exe를 실행하라고 안내합니다(새 버전 알림 말풍선과 README가 그렇게 말합니다).
+- 켜져 있던 시사는 종료 처리 없이 꺼집니다. 진행 중인 집중 시간이 저장되지 않으니, 사용자에게 **알림 영역 아이콘에서 시사를 「종료」한 뒤** 새 Setup.exe를 실행하라고 안내합니다(수동 설치 안내에 이 순서를 표시합니다).
 - 업데이트할 때마다 `--squirrel-install`이 와서 바로 가기를 다시 만듭니다. 사용자가 지운 바탕 화면 바로 가기도 되살아납니다.
 - 데이터(`%USERPROFILE%\.cy-agent`)와 앱 설정(`%APPDATA%\cy-agent-desktop`)은 설치 폴더 밖이라 그대로 남습니다.
 
@@ -84,5 +84,5 @@ gh release create "v$v-windows" "$d\Shisa-$v-Setup.exe" "$d\Shisa-$v-win-x64.zip
 ## 남은 것
 
 - 코드 서명이 없어 SmartScreen 「추가 정보 → 실행」을 거칩니다. 인증서가 생기면 electron-winstaller의 `windowsSign`(또는 `certificateFile`)과 packager의 `windowsSign`으로 바꿀 수 있습니다.
-- Squirrel 자동 업데이트(`autoUpdater`, RELEASES 올리기)는 쓰지 않습니다. 새 Setup.exe를 다시 실행하면 같은 자리에 통째로 다시 깔립니다(위 「새 버전으로 바꿀 때 주의할 점」).
+- v0.7.1부터 설치판은 앱에서 동의하면 GitHub의 해당 Setup.exe를 내려받아 파일 크기와 SHA-256을 검증하고, 종료 시점에 실행합니다. 휴대용 ZIP은 해당 릴리스 페이지를 엽니다. Squirrel의 RELEASES 피드는 사용하지 않습니다. 새 Setup.exe를 다시 실행하면 같은 자리에 통째로 다시 깔립니다(위 「새 버전으로 바꿀 때 주의할 점」).
 - 릴리스에 x64만 올립니다. ARM PC는 x64 에뮬레이션으로 돌아갑니다.
