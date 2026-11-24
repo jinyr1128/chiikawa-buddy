@@ -1281,7 +1281,7 @@ function revertAuto(item) {
 function doneRow(t) {
   return h('div.todo.is-done', { dataset: { id: t.id } },
     h('span.t', { text: t.title, title: t.auto && t.reason ? t.reason : null }),
-    t.auto ? h('span.chip.ok.auto', { text: '자동', title: t.reason ? `Slack 대화를 보고 자동 완료: ${t.reason}` : 'Slack 대화를 보고 자동 완료' }) : null,
+    t.auto ? h('span.chip.ok.auto', { text: '자동', title: t.reason || '자동 완료' }) : null,
     t.doneRel ? h('span.muted', { text: t.doneRel }) : null,
     t.auto && t.evidence ? h('button.ghost', { type: 'button', text: '근거', title: '근거 메시지 열기', onclick: () => cy.openLink(t.evidence) }) : null,
     h('button.ghost', { type: 'button', text: '되돌리기', onclick: () => (t.auto ? revertAuto(t) : reopenTodo(t)) }));

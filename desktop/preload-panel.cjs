@@ -59,6 +59,7 @@ contextBridge.exposeInMainWorld('cy', {
   projectsOrder: (ids) => ipcRenderer.invoke('projects-order', Array.isArray(ids) ? ids.map(String) : null),
   projectCalendarEvents: () => ipcRenderer.invoke('project-calendar-events'),
   // 캘린더 탭: 보는 기간 일정 · 캘린더 색 바꾸기(null = 자동)
+  calendarMeetingTask: (id,start) => ipcRenderer.invoke('calendar-meeting-task',{id,start}),
   calendarEvents: (q) => ipcRenderer.invoke('calendar-events', { from: String(q?.from ?? ''), to: String(q?.to ?? ''), fresh: !!q?.fresh }),
   calendarColor: (id, color) => ipcRenderer.invoke('calendar-color', String(id || ''), color === null ? null : String(color ?? '')),
   // 할 일 규칙: 목록 · 켜기/끄기·글 고치기({ enabled?, text? }) · 지우기

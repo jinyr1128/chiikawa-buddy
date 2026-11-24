@@ -3,6 +3,8 @@ let meetingsUi;
 import { setupWorkConnections } from "./src/work-connections.js";
 // 데스크톱 마스코트 — 메인 프로세스.
 // 데몬 SSE 를 여기서 받고 IPC 로 렌더러에 넘긴다. 렌더러는 네트워크 접근 없음.
+import { DatabaseSync } from 'node:sqlite';
+import { calendarCompletion } from './src/calendar-completion.js';
 import { app, safeStorage, Notification, BrowserWindow, Menu, Tray, clipboard, dialog, globalShortcut, ipcMain, nativeImage, net, powerMonitor, protocol, screen, session, shell } from 'electron';
 import { faceBox } from './src/tray-face.js';
 import { isInstalled as claudeHooksOn, setInstalled as setClaudeHooks, refreshInstalled as refreshClaudeHooks } from './src/claude-hooks.js';
@@ -1489,6 +1491,40 @@ function endDrag() {
 const fromOurs = (e) => e.sender === win?.webContents || e.sender === panel?.webContents || e.sender === sessionWin?.webContents;
 const fromDebug = (e) => e.sender === debugWin?.webContents;
 function setupIPC() {
+  let meetingQueue=Promise.resolve();
+  function updateMeetingTasks(pin) {
+    const run=async()=>{
+      const file=process.env.CY_AGENT_DB || readDaemonConfig().dbPath || path.join(AGENT_HOME,'cy.db');
+      if (!connected || !fs.existsSync(file)) return {ok:false,error:'캘린더 연결을 확인해 주세요.'};
+      const db=new DatabaseSync(file);
+      try {
+        const result=await calendarCompletion(db,request,{pin});
+        if(result.changed)sendPanel('dashboard',{});
+        return {ok:true,data:result};
+      }finally{db.close();}
+    };
+    meetingQueue=meetingQueue.then(run).catch(err=>({ok:false,error:err.message}));
+    return meetingQueue;
+  }
+  let checkingMeetings=false;
+  async function checkMeetingEnds() {
+    if(checkingMeetings || !connected)return;
+    checkingMeetings=true;
+    try{await updateMeetingTasks(null);}finally{checkingMeetings=false;}
+  }
+  const firstMeetingCheck=setTimeout(checkMeetingEnds,4500);
+  const meetingInterval=setInterval(checkMeetingEnds,60000);
+  powerMonitor.on('resume',checkMeetingEnds);
+  app.once('will-quit',()=>{
+    clearTimeout(firstMeetingCheck);
+    clearInterval(meetingInterval);
+    powerMonitor.off('resume',checkMeetingEnds);
+  });
+  ipcMain.handle('calendar-meeting-task',(e,arg)=>{
+    if(!fromOurs(e) || !arg || typeof arg.id!=='string' || !arg.id || arg.id.length>4000 ||
+       !Number.isFinite(arg.start) || Math.abs(arg.start)>8640000000000000)return denied();
+    return updateMeetingTasks({id:arg.id,start:arg.start});
+  });
   meetingsUi = setupMeetings({app,BrowserWindow,ipcMain,dialog,shell,powerMonitor});
   setupWorkConnections({app,ipcMain,dialog,shell,clipboard,safeStorage,powerMonitor,Notification,fromOurs,request});
   // 설정 창: 모델·브리핑 출처·연결 상태(트레이 "설정…", 패널 ⚙, ⌘,)

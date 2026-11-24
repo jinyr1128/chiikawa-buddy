@@ -255,6 +255,7 @@ async function mount(reply = { ok: true, status: 200, data: DATA }) {
   const cy = {
     calendarEvents: async (q) => { calls.push(['events', q]); return typeof reply === 'function' ? reply(q) : reply; },
     calendarColor: async (id, c) => { calls.push(['color', id, c]); return { ok: true }; },
+    calendarMeetingTask: async (id,start) => { calls.push(['meeting-task',id,start]); return {ok:true}; },
     todoAdd: async (b) => { calls.push(['todo', b]); return { ok: true }; },
     openLink: (u) => calls.push(['link', u]),
   };
@@ -308,9 +309,8 @@ test('렌더: 일정 카드(때·캘린더·장소·회의 참여·설명) → �
   el.byClass('blk')[0].fire('click');
   el.byClass('cal-mk-todo')[0].fire('click');
   await tick();
-  const todo = calls.find((c) => c[0] === 'todo')[1];
-  assert.equal(todo.title, '디자인 리뷰');
-  assert.match(todo.description, /캘린더: 회사/);
+  assert.deepEqual(calls.find(c=>c[0]==='meeting-task'),['meeting-task','w:1',Date.parse('2026-10-21T05:00:00Z')]);
+  assert.equal(calls.some(c=>c[0]==='todo'),false);
   assert.ok(el.text.includes('「디자인 리뷰」을 할 일에 넣었어요.'));
 });
 

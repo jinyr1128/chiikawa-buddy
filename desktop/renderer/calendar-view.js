@@ -6,7 +6,7 @@
 import {
   CALTAB_TEXT as T, CAL_COLORS, NARROW_PX, VIEWS, periodOf, shiftAnchor, periodTitle, shapeEvents, visibleEvents, toggleHidden,
   readHidden, writeHidden, readView, writeView, layoutDay, layoutBars, monthCells, fitItems, nowLine, agendaDays, zoned, hhmm, dayLabel,
-  eventWhen, responseTag, descHead, todoFromEvent, pickOf, isBar, weekday,
+  eventWhen, responseTag, descHead, isTimedMeeting, todoFromEvent, pickOf, isBar, weekday,
 } from '../src/calendar-tab.js';
 import { who } from './who.js';
 
@@ -198,6 +198,7 @@ export function createCalendarView({ h, cy, fill, el, openSetup, openProject, on
       e.joinUrl || e.webLink ? h('div.cal-pop-links', null,
         e.joinUrl ? btn('.primary.small.cal-join', T.join, () => cy.openLink(e.joinUrl)) : null,
         e.webLink ? btn('.ghost.small.cal-open', T.openEvent, () => cy.openLink(e.webLink)) : null) : null,
+      isTimedMeeting(e) && e.e>e.s ? h('div.cal-pop-row.muted',{text:'예정 종료 시각이 지나면 오늘 할 일에서 자동 체크돼요.'}) : null,
       e.description ? h('div.cal-pop-desc', { text: descHead(e.description) }) : null,
       h('div.cal-pop-foot', null,
         btn('.small.cal-mk-project', T.makeProject, () => { pop = null; draw(); openProject(pickOf(e)); }),
@@ -210,7 +211,7 @@ export function createCalendarView({ h, cy, fill, el, openSetup, openProject, on
     pop = null;
     draw();
     let r;
-    try { r = await cy.todoAdd(todoFromEvent(e, calOf(e.calId)?.name ?? '', tz)); } catch { r = null; }
+    try { r = isTimedMeeting(e) && e.e>e.s ? await cy.calendarMeetingTask(e.id,e.s) : await cy.todoAdd(todoFromEvent(e, calOf(e.calId)?.name ?? '', tz)); } catch { r = null; }
     if (r?.ok) { say(true, T.todoAdded(e.title)); onChanged?.(); }
     else say(false, T.todoFail);
   }

@@ -337,3 +337,11 @@ export function okEventsQuery(q) {
   const a = Date.parse(from), b = Date.parse(to);
   return !Number.isNaN(a) && !Number.isNaN(b) && b > a && b - a <= 100 * DAY && (fresh === undefined || typeof fresh === 'boolean');
 }
+
+export function isTimedMeeting(event) {
+  if (event.allDay || event.free || event.cancelled || /^(?:declined|decline)$/i.test(event.response)) return false;
+  const title = String(event.title || '').trim();
+  if (!title || /^(?:취소(?:됨)?|cancelled|canceled)\s*[:：]/i.test(title)) return false;
+  if (!event.joinUrl && /(?:회의|미팅)(?:록|자료)\s*(?:작성|정리|제출|준비|검토)|(?:회의|미팅)\s*준비(?:\s*시간)?$/i.test(title)) return false;
+  return !!event.joinUrl || /회의|미팅|면담|면접|설명회|리허설|간담회|워크숍|스탠드업|\b(?:meeting|interview|sync|stand[ -]?up|workshop|1[ :：-]on[ :：-]1)\b|1\s*[:：]\s*1/i.test(title);
+}
